@@ -1,0 +1,360 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "windows", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model usuario {
+  id     Int            @id @default(autoincrement())
+  nome   String
+  email  String         @unique
+  senha  String
+  tipo   tipo_usuario   @default(funcionario)
+  status status_usuario @default(ativo)
+
+  oficina_id Int
+  oficina    oficina @relation("OficinaUsuarios", fields: [oficina_id], references: [id])
+
+  funcionario_id Int?         @unique
+  funcionario    funcionario? @relation("FuncionarioUsuario")
+
+  cliente        cliente? @relation("UsuarioCliente")
+  gestor_oficina oficina? @relation("GestorOficina")
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model cliente {
+  id              Int       @id @default(autoincrement())
+  nome            String
+  email           String?   @unique
+  status          String    @default("ativo")
+  telefone        String?
+  data_nascimento DateTime?
+  observacao      String?
+  usuario_id      Int?      @unique
+  oficina_id      Int?
+  criado_em       DateTime  @default(now())
+  atualizado_em   DateTime  @updatedAt
+
+  oficina oficina? @relation(fields: [oficina_id], references: [id])
+  usuario usuario? @relation("UsuarioCliente", fields: [usuario_id], references: [id])
+
+  ordens     ordem_servico[]
+  veiculos   veiculo[]
+  pagamentos pagamento[]
+  orcamentos orcamento[]
+}
+
+model oficina {
+  id                Int     @id @default(autoincrement())
+  gestor_usuario_id Int?    @unique
+  nome              String  @unique
+  logradouro        String
+  numero            String
+  complemento       String?
+  cep               String
+  cidade_id         Int
+  telefone          String?
+  email             String? @unique
+
+  cidade   cidade    @relation(fields: [cidade_id], references: [id])
+  gestor   usuario?  @relation("GestorOficina", fields: [gestor_usuario_id], references: [id])
+  usuarios usuario[] @relation("OficinaUsuarios")
+
+  clientes       cliente[]
+  funcionarios   funcionario[]
+  ordens_servico ordem_servico[]
+  fornecedores   fornecedor[]
+  pecas          peca[]
+  servicos       servico[]
+  estoque_itens  estoque[]
+  compras        compra_peca[]
+  pagamentos     pagamento[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model funcionario {
+  id               Int               @id @default(autoincrement())
+  nome             String
+  email            String?
+  telefone         String?
+  cargo            cargo_funcionario
+  data_contratacao DateTime
+
+  oficina_id Int
+  oficina    oficina @relation(fields: [oficina_id], references: [id])
+
+  usuario_id Int?     @unique
+  usuario    usuario? @relation("FuncionarioUsuario", fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  ordens_servico ordem_servico[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model veiculo {
+  id         Int      @id @default(autoincrement())
+  cliente_id Int
+  marca      String
+  modelo     String
+  ano        Int?
+  placa      String   @unique
+  cor        String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  cliente cliente         @relation(fields: [cliente_id], references: [id])
+  ordens  ordem_servico[]
+  orcamentos orcamento[]
+}
+
+model ordem_servico {
+  id              Int       @id @default(autoincrement())
+  oficina_id      Int
+  veiculo_id      Int
+  cliente_id      Int
+  funcionario_id  Int
+  data_abertura   DateTime  @default(now())
+  data_fechamento DateTime?
+  status          status_os @default(aberta)
+  observacoes     String?
+  valor_total     Decimal   @default(0.00)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  cliente     cliente     @relation(fields: [cliente_id], references: [id])
+  funcionario funcionario @relation(fields: [funcionario_id], references: [id])
+  oficina     oficina     @relation(fields: [oficina_id], references: [id])
+  veiculo     veiculo     @relation(fields: [veiculo_id], references: [id])
+
+  itens      item_ordem_servico[]
+  pagamentos pagamento[]
+}
+
+model item_ordem_servico {
+  id               Int          @id @default(autoincrement())
+  ordem_servico_id Int
+  tipo_item        tipo_item_os
+  servico_id       Int?
+  peca_id          Int?
+  quantidade       Int          @default(1)
+  preco_unitario   Decimal
+  subtotal         Decimal
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+
+  ordem_servico ordem_servico @relation(fields: [ordem_servico_id], references: [id], onDelete: Cascade)
+  servico       servico?      @relation(fields: [servico_id], references: [id])
+  peca          peca?         @relation(fields: [peca_id], references: [id])
+}
+
+model fornecedor {
+  id          Int     @id @default(autoincrement())
+  oficina_id  Int
+  nome        String  @unique
+  contato     String?
+  telefone    String?
+  email       String? @unique
+  logradouro  String?
+  numero      String?
+  complemento String?
+  cep         String?
+  cidade_id   Int?
+
+  cidade     cidade?       @relation(fields: [cidade_id], references: [id])
+  oficina    oficina       @relation(fields: [oficina_id], references: [id])
+  compras    compra_peca[]
+  pagamentos pagamento[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model estoque {
+  id          Int     @id @default(autoincrement())
+  oficina_id  Int
+  nome        String
+  descricao   String
+  preco_custo Decimal
+  preco_venda Decimal
+  estoque_qtd Int
+
+  oficina oficina @relation(fields: [oficina_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model cidade {
+  id           Int          @id @default(autoincrement())
+  nome         String
+  uf           String       @db.Char(2)
+  fornecedores fornecedor[]
+  oficinas     oficina[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model servico {
+  id         Int      @id @default(autoincrement())
+  oficina_id Int
+  nome       String
+  descricao  String?
+  preco      Decimal
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  oficina oficina              @relation(fields: [oficina_id], references: [id])
+  itens   item_ordem_servico[]
+}
+
+model peca {
+  id          Int      @id @default(autoincrement())
+  oficina_id  Int
+  nome        String
+  descricao   String?
+  preco_custo Decimal
+  preco_venda Decimal
+  estoque     Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  oficina oficina              @relation(fields: [oficina_id], references: [id])
+  compras compra_peca[]
+  itens   item_ordem_servico[]
+}
+
+model compra_peca {
+  id                    Int      @id @default(autoincrement())
+  oficina_id            Int
+  fornecedor_id         Int
+  peca_id               Int
+  quantidade            Int
+  preco_compra_unitario Decimal
+  data_compra           DateTime @default(now())
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
+
+  oficina    oficina    @relation(fields: [oficina_id], references: [id])
+  fornecedor fornecedor @relation(fields: [fornecedor_id], references: [id])
+  peca       peca       @relation(fields: [peca_id], references: [id])
+}
+
+model pagamento {
+  id               Int              @id @default(autoincrement())
+  cliente_id       Int
+  oficina_id       Int
+  ordem_servico_id Int?
+  fornecedor_id    Int?
+  tipo             tipo_pagamento
+  metodo           metodo_pagamento
+  valor            Decimal
+  status           status_pagamento
+  data_vencimento  DateTime
+  data_pagamento   DateTime?
+  observacao       String?
+
+  cliente       cliente        @relation(fields: [cliente_id], references: [id])
+  oficina       oficina        @relation(fields: [oficina_id], references: [id])
+  ordem_servico ordem_servico? @relation(fields: [ordem_servico_id], references: [id])
+  fornecedor    fornecedor?    @relation(fields: [fornecedor_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+enum cargo_funcionario {
+  mecanico
+  atendente
+  gerente
+  administrador
+}
+
+enum status_os {
+  aberta
+  em_andamento
+  concluida
+  cancelada
+}
+
+enum tipo_item_os {
+  servico
+  peca
+}
+
+enum tipo_usuario {
+  funcionario
+  cliente
+  gestoroficina
+  sistema
+}
+
+enum status_usuario {
+  ativo
+  inativo
+  bloqueado
+}
+
+enum tipo_pagamento {
+  pagar // contas a pagar (saída)
+  receber // contas a receber (entrada)
+}
+
+enum status_pagamento {
+  pendente
+  pago
+  cancelado
+}
+
+enum metodo_pagamento {
+  dinheiro
+  pix
+  cartao
+  boleto
+  transferencia
+}
+
+model orcamento {
+  id         Int       @id @default(autoincrement())
+  descricao  String
+  valor      Decimal
+  data       DateTime
+  status     status_orcamento @default(analise)
+
+  cliente_id Int
+  veiculo_id Int
+
+  cliente cliente @relation(fields: [cliente_id], references: [id])
+  veiculo veiculo @relation(fields: [veiculo_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+enum status_orcamento {
+  analise
+  aprovado
+  recusado
+}
+
+model Agendamento {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  start       DateTime
+  end         DateTime
+  location    String?
+  oficina_id  Int
+
+  @@map("agendamentos")
+}
