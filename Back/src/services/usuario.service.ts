@@ -1,6 +1,12 @@
 import { prisma } from "../prisma/client";
 import bcrypt from "bcryptjs";
-import { tipo_usuario, status_usuario } from "@prisma/client";
+// enums are provided by Prisma only under the `Prisma` namespace at runtime.
+// importing them directly triggers the same error seen in
+// funcionarios.service.ts; here they were previously only used for typing,
+// so we convert the import to a type-only import and refer to values via
+// `Prisma` when needed.
+import type { tipo_usuario, status_usuario } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 export const UsuarioService = {
   async create(data: {
@@ -11,7 +17,7 @@ export const UsuarioService = {
     status?: status_usuario;
     oficina_id: number;
   }) {
-    const { email, senha, nome, tipo = "gestoroficina", status = "ativo", oficina_id } = data;
+    const { email, senha, nome, tipo = Prisma.tipo_usuario.gestoroficina, status = Prisma.status_usuario.ativo, oficina_id } = data;
 
     if (!email || !senha || !nome || !oficina_id)
       throw new Error("E-mail, senha, nome e oficina_id são obrigatórios.");

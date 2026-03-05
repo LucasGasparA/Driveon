@@ -1,5 +1,17 @@
 import { prisma } from "../prisma/client";
-import { cargo_funcionario, tipo_usuario, status_usuario } from "@prisma/client";
+// prisma/client exports enums under the Prisma namespace at runtime.  When
+// the module is loaded as an ES module the individual enum names are **not**
+// exported, only the `Prisma` object contains them.  Attempting to import
+// them directly causes the runtime error seen in the report:
+//
+//   SyntaxError: The requested module '@prisma/client' does not provide an
+//   export named 'cargo_funcionario'
+//
+// To keep type safety we import the enum types using a type-only import and
+// refer to the runtime values via `Prisma.<enum>`.  The `import type` form is
+// erased from the generated JS, avoiding the invalid import altogether.
+import type { cargo_funcionario, tipo_usuario, status_usuario } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import bcrypt from "bcrypt";
 
 function normTelefone(t?: string) {
@@ -14,15 +26,15 @@ function toCargoEnum(cargo: any): cargo_funcionario {
 
   switch (k) {
     case "mecanico":
-      return cargo_funcionario.mecanico;
+      return Prisma.cargo_funcionario.mecanico;
     case "atendente":
-      return cargo_funcionario.atendente;
+      return Prisma.cargo_funcionario.atendente;
     case "gerente":
-      return cargo_funcionario.gerente;
+      return Prisma.cargo_funcionario.gerente;
     case "administrador":
-      return cargo_funcionario.administrador;
+      return Prisma.cargo_funcionario.administrador;
     default:
-      return cargo_funcionario.mecanico;
+      return Prisma.cargo_funcionario.mecanico;
   }
 }
 
@@ -81,8 +93,11 @@ export const FuncionariosService = {
               nome,
               email,
               senha: senhaHash,
-              tipo: tipo_usuario.funcionario,
-              status: status_usuario.ativo,
+              // `tipo_usuario`/`status_usuario` are only used for typing, the
+              // runtime value is taken from `Prisma` so we don't import them
+              // directly.
+              tipo: Prisma.tipo_usuario.funcionario,
+              status: Prisma.status_usuario.ativo,
               oficina: { connect: { id: oficinaId } },
             },
           },
