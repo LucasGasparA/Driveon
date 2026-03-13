@@ -11,7 +11,7 @@ datasource db {
 model usuario {
   id     Int            @id @default(autoincrement())
   nome   String
-  email  String         @unique
+  email  String
   senha  String
   tipo   tipo_usuario   @default(funcionario)
   status status_usuario @default(ativo)
@@ -27,20 +27,28 @@ model usuario {
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  @@unique([email, oficina_id])
+  @@index([oficina_id])
+  @@index([status])
+  @@index([deleted_at])
 }
 
 model cliente {
-  id              Int       @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   nome            String
-  email           String?   @unique
-  status          String    @default("ativo")
+  email           String?
+  cpf             String?
+  status          status_cliente   @default(ativo)
   telefone        String?
   data_nascimento DateTime?
   observacao      String?
-  usuario_id      Int?      @unique
-  oficina_id      Int?
-  criado_em       DateTime  @default(now())
-  atualizado_em   DateTime  @updatedAt
+  usuario_id      Int?             @unique
+  oficina_id      Int
+  criado_em       DateTime         @default(now())
+  atualizado_em   DateTime         @updatedAt
+  deleted_at      DateTime?
 
   oficina oficina? @relation(fields: [oficina_id], references: [id])
   usuario usuario? @relation("UsuarioCliente", fields: [usuario_id], references: [id])
@@ -49,12 +57,20 @@ model cliente {
   veiculos   veiculo[]
   pagamentos pagamento[]
   orcamentos orcamento[]
+  agendamentos agendamento[]
+
+  @@unique([cpf, oficina_id])
+  @@unique([email, oficina_id])
+  @@index([oficina_id])
+  @@index([status])
+  @@index([deleted_at])
 }
 
 model oficina {
   id                Int     @id @default(autoincrement())
   gestor_usuario_id Int?    @unique
   nome              String  @unique
+  cnpj              String? @unique
   logradouro        String
   numero            String
   complemento       String?
@@ -76,9 +92,14 @@ model oficina {
   estoque_itens  estoque[]
   compras        compra_peca[]
   pagamentos     pagamento[]
+  agendamentos   agendamento[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  @@index([cidade_id])
+  @@index([deleted_at])
 }
 
 model funcionario {
@@ -96,25 +117,37 @@ model funcionario {
   usuario    usuario? @relation("FuncionarioUsuario", fields: [usuario_id], references: [id], onDelete: Cascade)
 
   ordens_servico ordem_servico[]
+  agendamentos   agendamento[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  @@index([oficina_id])
+  @@index([cargo])
+  @@index([deleted_at])
 }
 
 model veiculo {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   cliente_id Int
   marca      String
   modelo     String
   ano        Int?
-  placa      String   @unique
+  placa      String    @unique
   cor        String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
 
-  cliente cliente         @relation(fields: [cliente_id], references: [id])
-  ordens  ordem_servico[]
-  orcamentos orcamento[]
+  cliente      cliente        @relation(fields: [cliente_id], references: [id])
+  ordens       ordem_servico[]
+  orcamentos   orcamento[]
+  agendamentos agendamento[]
+
+  @@index([cliente_id])
+  @@index([placa])
+  @@index([deleted_at])
 }
 
 model ordem_servico {
@@ -130,6 +163,7 @@ model ordem_servico {
   valor_total     Decimal   @default(0.00)
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt
+  deleted_at      DateTime?
 
   cliente     cliente     @relation(fields: [cliente_id], references: [id])
   funcionario funcionario @relation(fields: [funcionario_id], references: [id])
@@ -138,6 +172,12 @@ model ordem_servico {
 
   itens      item_ordem_servico[]
   pagamentos pagamento[]
+
+  @@index([oficina_id])
+  @@index([cliente_id])
+  @@index([status])
+  @@index([data_abertura])
+  @@index([deleted_at])
 }
 
 model item_ordem_servico {
@@ -151,19 +191,23 @@ model item_ordem_servico {
   subtotal         Decimal
   created_at       DateTime     @default(now())
   updated_at       DateTime     @updatedAt
+  deleted_at       DateTime?
 
   ordem_servico ordem_servico @relation(fields: [ordem_servico_id], references: [id], onDelete: Cascade)
   servico       servico?      @relation(fields: [servico_id], references: [id])
   peca          peca?         @relation(fields: [peca_id], references: [id])
+
+  @@index([ordem_servico_id])
+  @@index([deleted_at])
 }
 
 model fornecedor {
   id          Int     @id @default(autoincrement())
   oficina_id  Int
-  nome        String  @unique
+  nome        String
   contato     String?
   telefone    String?
-  email       String? @unique
+  email       String?
   logradouro  String?
   numero      String?
   complemento String?
@@ -177,6 +221,12 @@ model fornecedor {
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  @@unique([nome, oficina_id])
+  @@unique([email, oficina_id])
+  @@index([oficina_id])
+  @@index([deleted_at])
 }
 
 model estoque {
@@ -192,6 +242,10 @@ model estoque {
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  @@index([oficina_id])
+  @@index([deleted_at])
 }
 
 model cidade {
@@ -206,48 +260,64 @@ model cidade {
 }
 
 model servico {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   oficina_id Int
   nome       String
   descricao  String?
   preco      Decimal
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
 
   oficina oficina              @relation(fields: [oficina_id], references: [id])
   itens   item_ordem_servico[]
+
+  @@unique([nome, oficina_id])
+  @@index([oficina_id])
+  @@index([deleted_at])
 }
 
 model peca {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   oficina_id  Int
   nome        String
   descricao   String?
   preco_custo Decimal
   preco_venda Decimal
-  estoque     Int      @default(0)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  estoque     Int       @default(0)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
 
   oficina oficina              @relation(fields: [oficina_id], references: [id])
   compras compra_peca[]
   itens   item_ordem_servico[]
+
+  @@unique([nome, oficina_id])
+  @@index([oficina_id])
+  @@index([deleted_at])
 }
 
 model compra_peca {
-  id                    Int      @id @default(autoincrement())
+  id                    Int       @id @default(autoincrement())
   oficina_id            Int
   fornecedor_id         Int
   peca_id               Int
   quantidade            Int
   preco_compra_unitario Decimal
-  data_compra           DateTime @default(now())
-  created_at            DateTime @default(now())
-  updated_at            DateTime @updatedAt
+  data_compra           DateTime  @default(now())
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+  deleted_at            DateTime?
 
   oficina    oficina    @relation(fields: [oficina_id], references: [id])
   fornecedor fornecedor @relation(fields: [fornecedor_id], references: [id])
   peca       peca       @relation(fields: [peca_id], references: [id])
+
+  @@index([oficina_id])
+  @@index([fornecedor_id])
+  @@index([data_compra])
+  @@index([deleted_at])
 }
 
 model pagamento {
@@ -271,6 +341,13 @@ model pagamento {
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  @@index([oficina_id])
+  @@index([cliente_id])
+  @@index([status])
+  @@index([data_vencimento])
+  @@index([deleted_at])
 }
 
 enum cargo_funcionario {
@@ -299,6 +376,12 @@ enum tipo_usuario {
   sistema
 }
 
+enum status_cliente {
+  ativo
+  inativo
+  bloqueado
+}
+
 enum status_usuario {
   ativo
   inativo
@@ -325,20 +408,25 @@ enum metodo_pagamento {
 }
 
 model orcamento {
-  id         Int       @id @default(autoincrement())
+  id         Int               @id @default(autoincrement())
   descricao  String
   valor      Decimal
   data       DateTime
-  status     status_orcamento @default(analise)
+  status     status_orcamento  @default(analise)
 
   cliente_id Int
   veiculo_id Int
 
-  cliente cliente @relation(fields: [cliente_id], references: [id])
-  veiculo veiculo @relation(fields: [veiculo_id], references: [id])
+  cliente    cliente @relation(fields: [cliente_id], references: [id])
+  veiculo    veiculo @relation(fields: [veiculo_id], references: [id])
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  @@index([cliente_id])
+  @@index([status])
+  @@index([deleted_at])
 }
 
 enum status_orcamento {
@@ -347,14 +435,40 @@ enum status_orcamento {
   recusado
 }
 
-model Agendamento {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String?
-  start       DateTime
-  end         DateTime
-  location    String?
-  oficina_id  Int
+enum status_agendamento {
+  pendente
+  confirmado
+  realizado
+  cancelado
+}
 
-  @@map("agendamentos")
+model agendamento {
+  id              Int       @id @default(autoincrement())
+  titulo          String
+  descricao       String?
+  data_inicio     DateTime
+  data_fim        DateTime
+  localizacao     String?
+  status          status_agendamento @default(pendente)
+  observacao      String?
+
+  oficina_id      Int
+  cliente_id      Int
+  veiculo_id      Int
+  funcionario_id  Int?
+
+  oficina         oficina     @relation(fields: [oficina_id], references: [id])
+  cliente         cliente     @relation(fields: [cliente_id], references: [id])
+  veiculo         veiculo     @relation(fields: [veiculo_id], references: [id])
+  funcionario     funcionario? @relation(fields: [funcionario_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  @@index([oficina_id])
+  @@index([cliente_id])
+  @@index([data_inicio])
+  @@index([status])
+  @@index([deleted_at])
 }
