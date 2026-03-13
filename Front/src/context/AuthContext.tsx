@@ -48,11 +48,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     api.defaults.headers.common["Authorization"] = `Bearer ${t}`;
   };
 
-  // ✅ Login e persistência
-  const signIn = async (email: string, password: string, remember: boolean) => {
-    const { data } = await api.post("/auth/login", { email, senha: password });
-    const normalized = normalizeUser(data.usuario);
-    persist(data.token, normalized, remember);
+  // 🔓 DEV: mock de login — remove esta seção antes de ir para produção
+  const signIn = async (_email: string, _password: string, remember: boolean) => {
+    const fakeToken = "dev-mock-token";
+    const fakeUser: User = { id: 1, email: "dev@driveon.com", nome: "Dev", tipo: "admin", oficina_id: 1 };
+    persist(fakeToken, fakeUser, remember);
   };
 
   // ✅ Logout
