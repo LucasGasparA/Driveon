@@ -23,7 +23,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { paths } from '../../routes/paths';
 import { useSidebar } from '../../context/SidebarContext';
 import { useState } from 'react';
-import logo from '../../assets/logo.png'; 
+import logo from '../../assets/logo.png';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import StoreIcon from '@mui/icons-material/Store';
@@ -243,7 +243,7 @@ export default function AppSidebar({
                 alt="Logo"
                 sx={{
                   mt: 1,
-                  height: 120,
+                  height: 60,
                   width: 'auto',
                   objectFit: 'contain',
                 }}
