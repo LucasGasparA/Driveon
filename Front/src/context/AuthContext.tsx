@@ -50,9 +50,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // ✅ Login e persistência
   const signIn = async (email: string, password: string, remember: boolean) => {
-    const { data } = await api.post("/auth/login", { email, senha: password });
-    const normalized = normalizeUser(data.usuario);
-    persist(data.token, normalized, remember);
+    // Bypass auth: always log in with mock data
+    const mockUser: User = {
+      id: 1,
+      email: email || "admin@admin.com",
+      nome: "Admin Test",
+      tipo: "admin",
+      oficina_id: 1
+    };
+    persist("mock-test-token-123", mockUser, remember);
   };
 
   // ✅ Logout

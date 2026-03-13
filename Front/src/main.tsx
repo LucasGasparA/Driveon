@@ -6,6 +6,13 @@ import Providers from './app/providers';
 import { SidebarProvider } from './context/SidebarContext';
 import { ClientProvider } from './context/ClientContext';
 
+// Import only when environment variable is true
+if (import.meta.env.VITE_USE_MOCK_DATA === 'true') {
+  import('./api/mockApi').then(() => {
+    console.log('Mock API is active.');
+  });
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <SidebarProvider>
