@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { FornecedoresService } from "../services/fornecedores.service";
+import { FornecedoresService } from "../services/fornecedores.service.js";
 
 export const FornecedoresController = {
   async list(req: Request, res: Response) {

@@ -1,6 +1,6 @@
 
 import { Router } from "express";
-import { PagamentosService } from "../services/pagamentos.service";
+import { PagamentosService } from "../services/pagamentos.service.js";
 
 
 const router = Router();

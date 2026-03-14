@@ -1,4 +1,4 @@
-import { prisma } from "../prisma/client";
+import { prisma } from "../prisma/client.js";
 // prisma/client exports enums under the Prisma namespace at runtime.  When
 // the module is loaded as an ES module the individual enum names are **not**
 // exported, only the `Prisma` object contains them.  Attempting to import

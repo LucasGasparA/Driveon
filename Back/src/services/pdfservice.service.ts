@@ -1,6 +1,6 @@
 import puppeteer from "puppeteer";
 import { Response } from "express";
-import { prisma } from "../prisma/client";
+import { prisma } from "../prisma/client.js";
 
 export const PdfHtmlService = {
   async gerarOrdemServicoPDF(id: number, res: Response) {

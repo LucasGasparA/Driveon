@@ -1,4 +1,4 @@
-import { prisma } from "../prisma/client";
+import { prisma } from "../prisma/client.js";
 
 export const ServicosService = {
   list: () => prisma.servico.findMany(),

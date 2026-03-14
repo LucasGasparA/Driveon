@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { OficinaController } from "../controllers/oficinas.controller";
+import { OficinaController } from "../controllers/oficinas.controller.js";
 
 const router = Router();
 

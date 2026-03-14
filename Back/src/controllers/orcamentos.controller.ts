@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { OrcamentoService } from "../services/orcamentos.service";
+import { OrcamentoService } from "../services/orcamentos.service.js";
 
 const service = new OrcamentoService();
 

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { CidadeService } from "../services/cidade.service";
+import { CidadeService } from "../services/cidade.service.js";
 
 export const CidadeController = {
   async create(req: Request, res: Response) {

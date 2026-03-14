@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { PecasController } from "../controllers/pecas.controller";
+import { PecasController } from "../controllers/pecas.controller.js";
 
 const router = Router();
 

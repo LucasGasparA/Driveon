@@ -1,4 +1,4 @@
-import { UserPayload } from "../../middlewares/authMiddleware";
+import type { UserPayload } from "../middlewares/ensureAuth.js";
 
 declare global {
   namespace Express {

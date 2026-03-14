@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { OrdensService } from "../services/ordens.service";
-import { PdfHtmlService } from "../services/pdfservice.service";
+import { OrdensService } from "../services/ordens.service.js";
+import { PdfHtmlService } from "../services/pdfservice.service.js";
 
 const router = Router();
 

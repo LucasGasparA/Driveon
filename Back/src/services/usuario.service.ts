@@ -1,4 +1,4 @@
-import { prisma } from "../prisma/client";
+import { prisma } from "../prisma/client.js";
 import bcrypt from "bcryptjs";
 // enums are provided by Prisma only under the `Prisma` namespace at runtime.
 // importing them directly triggers the same error seen in
