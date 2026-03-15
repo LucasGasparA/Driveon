@@ -10,8 +10,9 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
 import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
-import PaidRoundedIcon from "@mui/icons-material/PaidRounded";
 import { useAuth } from "../../../context/AuthContext";
+import { useToast } from "../../../context/ToastContext";
+import { useConfirm } from "../../../context/ConfirmContext";
 import EstoqueDialog, { type EstoqueItem, type EstoqueForm } from "../dialog";
 import {
   listarEstoque,
@@ -22,6 +23,9 @@ import {
 
 export default function EstoquePage() {
   const { user } = useAuth();
+  const { success, error, warning } = useToast();
+  const confirm = useConfirm();
+
   const [query, setQuery] = React.useState("");
   const [openDialog, setOpenDialog] = React.useState(false);
   const [mode, setMode] = React.useState<"create" | "edit">("create");
@@ -68,32 +72,44 @@ export default function EstoquePage() {
 
   const handleDelete = async () => {
     if (!menuId) return;
-    if (window.confirm("Excluir este item?")) {
-      await onDelete(menuId);
+    const ok = await confirm({
+      title: "Excluir item do estoque?",
+      message: "Esta ação não pode ser desfeita.",
+      confirmLabel: "Sim, excluir",
+      variant: "danger",
+    });
+    if (!ok) { handleMenuClose(); return; }
+    try {
+      await excluirEstoque(menuId);
+      setRows((p) => p.filter((x) => x.id !== menuId));
+      success("Item excluído com sucesso.");
+    } catch {
+      error("Não foi possível excluir o item.");
+    } finally {
+      handleMenuClose();
     }
-    handleMenuClose();
   };
 
   const onSubmit = async (data: EstoqueForm) => {
     try {
       const oficinaId = user?.oficinaId ?? user?.oficina_id ?? 0;
       if (!oficinaId) {
-        alert("Usuário sem oficina vinculada. Refaça o login.");
-        console.error("❌ Usuário logado sem oficinaId:", user);
+        warning("Usuário sem oficina vinculada. Refaça o login.");
         return;
       }
-
       if (mode === "create") {
         const novo = await criarEstoque(data, oficinaId);
         setRows((p) => [novo, ...p]);
+        success("Item adicionado ao estoque!");
       } else if (current) {
         const atualizado = await atualizarEstoque(Number(current.id), data);
         setRows((p) => p.map((r) => (r.id === current.id ? atualizado : r)));
+        success("Item atualizado com sucesso!");
       }
       setOpenDialog(false);
     } catch (err: any) {
       console.error("Erro ao salvar item:", err);
-      alert(err.response?.data?.message || "Erro ao salvar item.");
+      error(err.response?.data?.message || "Não foi possível salvar o item.");
     }
   };
 
@@ -101,8 +117,9 @@ export default function EstoquePage() {
     try {
       await excluirEstoque(id);
       setRows((p) => p.filter((x) => x.id !== id));
-    } catch (err) {
-      console.error("Erro ao excluir item:", err);
+      success("Item excluído com sucesso.");
+    } catch {
+      error("Não foi possível excluir o item.");
     }
   };
 
@@ -162,7 +179,7 @@ export default function EstoquePage() {
         </Stack>
       </Stack>
 
-      {/* Table */}
+      {/* Tabela */}
       <Fade in timeout={400}>
         <TableContainer
           component={Paper}
@@ -172,10 +189,9 @@ export default function EstoquePage() {
             maxHeight: 680,
             border: (t) => `1px solid ${t.palette.divider}`,
             overflowY: "auto",
-            overflow: "hidden",
           }}
         >
-          <Table>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
                 <TableCell>Produto</TableCell>
@@ -199,7 +215,6 @@ export default function EstoquePage() {
                         <Typography fontWeight={400}>{i.nome}</Typography>
                       </Stack>
                     </TableCell>
-
                     <TableCell sx={{ fontSize: 14 }}>{i.descricao || "—"}</TableCell>
                     <TableCell sx={{ fontSize: 14 }}>R$ {Number(i.preco_custo).toFixed(2)}</TableCell>
                     <TableCell sx={{ fontSize: 14, color: "success.main" }}>
@@ -211,15 +226,13 @@ export default function EstoquePage() {
                         size="small"
                         sx={{
                           fontWeight: 600,
-                          bgcolor:
-                            i.estoque_qtd > 0
-                              ? (t) => alpha(t.palette.success.main, 0.1)
-                              : (t) => alpha(t.palette.error.main, 0.1),
+                          bgcolor: i.estoque_qtd > 0
+                            ? (t) => alpha(t.palette.success.main, 0.1)
+                            : (t) => alpha(t.palette.error.main, 0.1),
                           color: i.estoque_qtd > 0 ? "success.main" : "error.main",
                         }}
                       />
                     </TableCell>
-
                     <TableCell align="right">
                       <IconButton onClick={(e) => handleMenuOpen(e, i.id)}>
                         <MoreVertRoundedIcon />
@@ -239,7 +252,7 @@ export default function EstoquePage() {
         </TableContainer>
       </Fade>
 
-      {/* Pagination fora da tabela (pra dar respiro visual) */}
+      {/* Paginação */}
       <TablePagination
         component="div"
         count={filtered.length}
@@ -255,14 +268,10 @@ export default function EstoquePage() {
         labelDisplayedRows={({ from, to, count }) =>
           `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`
         }
-        sx={{
-          mt: 1.5,
-          borderRadius: 2,
-          bgcolor: "background.paper",
-        }}
+        sx={{ mt: 1.5, borderRadius: 2, bgcolor: "background.paper" }}
       />
 
-      {/* Menu */}
+      {/* Menu contextual */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -271,6 +280,7 @@ export default function EstoquePage() {
         transformOrigin={{ vertical: "top", horizontal: "right" }}
       >
         <MenuItem onClick={handleEdit}>Editar</MenuItem>
+        <Divider />
         <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
           Excluir
         </MenuItem>

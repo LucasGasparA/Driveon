@@ -6,23 +6,26 @@ export async function listarClientes() {
 }
 
 export async function criarCliente(data: any) {
-  const res = await api.post("/clientes", {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      nome: data.name,
-      email: data.email,
-      telefone: data.phone,
-      observacao: data.notes,
-      dataNascimento: data.birthDate ? new Date(data.birthDate).toISOString() : null,
-      status:
-        data.plan === 'Permanent'
-          ? 'Ativo'
-          : data.plan === 'Trial'
-          ? 'Em teste'
-          : 'Inativo',
-    }),
-  });
-  if (!res.ok) throw new Error('Erro ao criar cliente');
-  return res.json();
+  const payload = {
+    nome: data.nome || data.name,
+    email: data.email,
+    telefone: data.telefone || data.phone,
+    cpf: data.cpf,
+    data_nascimento: data.data_nascimento || data.birthDate,
+    status: data.status,
+    observacao: data.observacao || data.notes,
+  };
+  
+  const res = await api.post("/clientes", payload);
+  return res.data;
+}
+
+export async function listarVeiculos() {
+  const { data } = await api.get("/veiculos");
+  return data;
+}
+
+export async function listarServicos() {
+  const { data } = await api.get("/servicos");
+  return data;
 }

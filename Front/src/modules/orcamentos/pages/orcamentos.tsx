@@ -1,21 +1,31 @@
 import * as React from "react";
 import {
-  Box, Stack, Typography, Paper, TextField, InputAdornment, Button, Chip,
+  Box, Stack, Typography, Paper, TextField, InputAdornment, Button,
   IconButton, Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, Menu, MenuItem, Dialog, DialogTitle, DialogContent,
-  DialogActions, Fade, TablePagination, CircularProgress
+  TableRow, Menu, MenuItem, Fade, Chip, TablePagination,
+  CircularProgress, Divider, ToggleButton, ToggleButtonGroup, Tooltip,
 } from "@mui/material";
-import axios from "axios";
-import { Controller, useForm } from "react-hook-form";
-import { useAuth } from "../../../context/AuthContext";
-import api from "../../../api/api";
-
+import { alpha } from "@mui/material/styles";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import CancelRoundedIcon from "@mui/icons-material/CancelRounded";
-import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
+import RequestQuoteRoundedIcon from "@mui/icons-material/RequestQuoteRounded";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import BuildRoundedIcon from "@mui/icons-material/BuildRounded";
+import HourglassEmptyRoundedIcon from "@mui/icons-material/HourglassEmptyRounded";
+import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
+
+import { useAuth } from "../../../context/AuthContext";
+import { useToast } from "../../../context/ToastContext";
+import { useConfirm } from "../../../context/ConfirmContext";
+import DialogOrcamento from "../dialog";
+import api from "../../../api/api";
+
+// ─── Tipos ─────────────────────────────────────────────────────────────────
 
 type Orcamento = {
   id: number;
@@ -23,605 +33,474 @@ type Orcamento = {
   valor: number;
   data: string;
   status: "analise" | "aprovado" | "recusado";
-  cliente: { id: number; nome: string };
+  cliente: { id: number; nome: string; telefone?: string };
   veiculo: { id: number; modelo: string; placa: string };
 };
 
-interface FormValues {
-  clienteId: number;
-  veiculoId: number;
-  descricao: string;
-  valor: number;
-  data: string;
-}
+// ─── Config de status ─────────────────────────────────────────────────────
 
-function NovoOrcamentoDialog({
-  open,
-  onClose,
-  onCreate,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onCreate: (data: FormValues) => void;
-}) {
-  const { user } = useAuth();
+const STATUS_CONFIG = {
+  analise: { label: "Em análise", color: "#f59e0b", bg: alpha("#f59e0b", 0.1), chipColor: "warning" as const },
+  aprovado: { label: "Aprovado", color: "#10b981", bg: alpha("#10b981", 0.1), chipColor: "success" as const },
+  recusado: { label: "Recusado", color: "#ef4444", bg: alpha("#ef4444", 0.1), chipColor: "error" as const },
+};
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors, isValid },
-    setValue
-  } = useForm<FormValues>({
-    mode: "onChange",
-    defaultValues: {
-      clienteId: 0,
-      veiculoId: 0,
-      descricao: "",
-      valor: 0,
-      data: "",
-    },
-  });
-
-  const [clientes, setClientes] = React.useState<any[]>([]);
-  const [veiculos, setVeiculos] = React.useState<any[]>([]);
-  const [loadingClientes, setLoadingClientes] = React.useState(false);
-  const [loadingVeiculos, setLoadingVeiculos] = React.useState(false);
-  const [clienteId, setClienteId] = React.useState<number | "">("");
-
-  React.useEffect(() => {
-    if (!open || !user?.oficina_id) return;
-
-    (async () => {
-      setLoadingClientes(true);
-      try {
-        const res = await api.get(`/clientes?oficina_id=${user.oficina_id}`);
-        setClientes(res.data);
-      } catch {
-        setClientes([]);
-      } finally {
-        setLoadingClientes(false);
-      }
-    })();
-  }, [open, user?.oficina_id]);
-
-  React.useEffect(() => {
-    if (!clienteId) {
-      setVeiculos([]);
-      setValue("veiculoId", 0);
-      return;
-    }
-
-    (async () => {
-      setLoadingVeiculos(true);
-      try {
-        const res = await api.get(`/clientes/${clienteId}/veiculos`);
-        setVeiculos(res.data || []);
-      } catch {
-        setVeiculos([]);
-      } finally {
-        setLoadingVeiculos(false);
-      }
-    })();
-  }, [clienteId]);
-
-  const onSubmit = (data: FormValues) => {
-    onCreate(data);
-    reset();
-    setClienteId("");
-    setVeiculos([]);
-    onClose();
-  };
-
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle sx={{ fontWeight: 700 }}>Novo Orçamento</DialogTitle>
-
-      <DialogContent dividers>
-        <Stack spacing={2.5}>
-
-          <Controller
-            name="clienteId"
-            control={control}
-            rules={{ required: "Selecione o cliente" }}
-            render={({ field }) => (
-              <TextField
-                select
-                label="Cliente"
-                fullWidth
-                value={clienteId}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  setClienteId(val);
-                  field.onChange(val);
-                }}
-                error={!!errors.clienteId}
-                helperText={errors.clienteId?.message}
-              >
-                <MenuItem value="">Selecione...</MenuItem>
-
-                {loadingClientes ? (
-                  <MenuItem disabled>
-                    <CircularProgress size={16} /> Carregando...
-                  </MenuItem>
-                ) : (
-                  clientes.map((c) => (
-                    <MenuItem key={c.id} value={c.id}>
-                      {c.nome}
-                    </MenuItem>
-                  ))
-                )}
-              </TextField>
-            )}
-          />
-
-          <Controller
-            name="veiculoId"
-            control={control}
-            rules={{ required: "Selecione o veículo" }}
-            render={({ field }) => (
-              <TextField
-                select
-                label="Veículo"
-                fullWidth
-                disabled={!clienteId}
-                value={field.value}
-                onChange={(e) => field.onChange(Number(e.target.value))}
-                error={!!errors.veiculoId}
-                helperText={errors.veiculoId?.message}
-              >
-                <MenuItem value="">Selecione...</MenuItem>
-
-                {loadingVeiculos ? (
-                  <MenuItem disabled>
-                    <CircularProgress size={16} /> Carregando...
-                  </MenuItem>
-                ) : (
-                  veiculos.map((v) => (
-                    <MenuItem key={v.id} value={v.id}>
-                      {v.modelo} — {v.placa}
-                    </MenuItem>
-                  ))
-                )}
-              </TextField>
-            )}
-          />
-
-          <Controller
-            name="descricao"
-            control={control}
-            rules={{ required: "Informe o serviço" }}
-            render={({ field }) => (
-              <TextField {...field} label="Descrição" fullWidth />
-            )}
-          />
-
-          <Controller
-            name="valor"
-            control={control}
-            rules={{ required: "Informe o valor" }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                type="number"
-                label="Valor"
-                fullWidth
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-                }}
-              />
-            )}
-          />
-
-          <Controller
-            name="data"
-            control={control}
-            rules={{ required: "Informe a data" }}
-            render={({ field }) => (
-              <TextField {...field} type="date" label="Data" fullWidth InputLabelProps={{ shrink: true }} />
-            )}
-          />
-
-        </Stack>
-      </DialogContent>
-
-      <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
-        <Button variant="contained" onClick={handleSubmit(onSubmit)} disabled={!isValid}>
-          Salvar
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
-interface ClienteWhatsDialogProps {
-  open: boolean;
-  onClose: () => void;
-  orcamento?: {
-    valor: number;
-  };
-}
-
-function ClienteWhatsDialog({ open, onClose, orcamento }: ClienteWhatsDialogProps) {
-  const { user } = useAuth();
-
-  const [clientes, setClientes] = React.useState<any[]>([]);
-  const [veiculos, setVeiculos] = React.useState<any[]>([]);
-  const [loadingClientes, setLoadingClientes] = React.useState(true);
-  const [loadingVeiculos, setLoadingVeiculos] = React.useState(false);
-
-  const [clienteId, setClienteId] = React.useState("");
-  const [veiculoId, setVeiculoId] = React.useState("");
-  const [mensagem, setMensagem] = React.useState("");
-
-  const valorFormatado = Number(orcamento?.valor ?? 0);
-
-  const modelos = [
-    { 
-      id: 1, 
-      titulo: "Orçamento disponível", 
-      texto: "Olá! Seu orçamento está disponível. Ele ficou no valor de R$ " + valorFormatado.toFixed(2)
-    },
-    { id: 2, titulo: "Peça chegou", texto: "Boa notícia! Sua peça chegou." },
-    { id: 3, titulo: "Serviço concluído", texto: "Seu veículo está pronto!" },
-  ];
-
-  React.useEffect(() => {
-    if (!open) return;
-
-    (async () => {
-      setLoadingClientes(true);
-      try {
-        const res = await api.get(`/clientes?oficina_id=${user.oficina_id}`);
-        setClientes(res.data);
-      } catch { }
-      setLoadingClientes(false);
-    })();
-  }, [open]);
-
-  React.useEffect(() => {
-    if (!clienteId) return;
-
-    (async () => {
-      setLoadingVeiculos(true);
-      try {
-        const res = await api.get(`/clientes/${clienteId}/veiculos`);
-        setVeiculos(res.data);
-      } catch { }
-      setLoadingVeiculos(false);
-    })();
-  }, [clienteId]);
-
-  const enviar = () => {
-    const cli = clientes.find((c: any) => c.id === Number(clienteId));
-    if (!cli?.telefone) return alert("Cliente sem telefone.");
-
-    const tel = cli.telefone.replace(/\D/g, "");
-    const url = `https://wa.me/55${tel}?text=${encodeURIComponent(mensagem)}`;
-    window.open(url, "_blank");
-
-    onClose();
-  };
-
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Enviar WhatsApp</DialogTitle>
-      <DialogContent dividers>
-        <Stack spacing={2}>
-
-          <TextField
-            select
-            label="Cliente"
-            fullWidth
-            value={clienteId}
-            onChange={(e) => {
-              setClienteId(e.target.value);
-              setVeiculoId("");
-            }}
-          >
-            {loadingClientes ? (
-              <MenuItem>
-                <CircularProgress size={16} /> Carregando...
-              </MenuItem>
-            ) : clientes.length === 0 ? (
-              <MenuItem disabled>Nenhum cliente</MenuItem>
-            ) : (
-              clientes.map((c) => (
-                <MenuItem key={c.id} value={c.id}>{c.nome}</MenuItem>
-              ))
-            )}
-          </TextField>
-
-          <TextField
-            select
-            label="Veículo"
-            fullWidth
-            disabled={!clienteId}
-            value={veiculoId}
-            onChange={(e) => setVeiculoId(e.target.value)}
-          >
-            {loadingVeiculos ? (
-              <MenuItem disabled><CircularProgress size={16} /> Carregando...</MenuItem>
-            ) : (
-              veiculos.map((v: any) => (
-                <MenuItem key={v.id} value={v.id}>{v.modelo} — {v.placa}</MenuItem>
-              ))
-            )}
-          </TextField>
-
-          <TextField
-            select
-            fullWidth
-            label="Modelo de mensagem"
-            onChange={(e) => {
-              const modelo = modelos.find((m) => m.id === Number(e.target.value));
-              setMensagem(modelo?.texto || "");
-            }}
-          >
-            <MenuItem value="">Selecione...</MenuItem>
-            {modelos.map((m) => (
-              <MenuItem key={m.id} value={m.id}>{m.titulo}</MenuItem>
-            ))}
-          </TextField>
-
-          <TextField
-            multiline
-            fullWidth
-            rows={4}
-            label="Mensagem"
-            value={mensagem}
-            onChange={(e) => setMensagem(e.target.value)}
-          />
-
-        </Stack>
-      </DialogContent>
-
-      <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
-        <Button variant="contained" disabled={!clienteId || !mensagem} onClick={enviar}>
-          Enviar
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
+// ─── Componente ────────────────────────────────────────────────────────────
 
 export default function OrcamentosPage() {
+  const { user } = useAuth();
+  const { success, error, warning } = useToast();
+  const confirm = useConfirm();
+
   const [orcamentos, setOrcamentos] = React.useState<Orcamento[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [query, setQuery] = React.useState("");
-
+  const [filtroStatus, setFiltroStatus] = React.useState<string>("todos");
   const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [whatsOpen, setWhatsOpen] = React.useState(false);
-  const [selectedOrcamentoId, setSelectedOrcamentoId] = React.useState<number | null>(null);
-
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [selectedId, setSelectedId] = React.useState<number | null>(null);
-
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
-  const fetchData = async () => {
+  // ── Carrega ──
+  const fetchData = React.useCallback(async () => {
     try {
       const res = await api.get("/orcamentos");
-      setOrcamentos(res.data || []);
+      setOrcamentos(res.data ?? []);
     } catch {
       setOrcamentos([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => { fetchData(); }, [fetchData]);
+
+  // ── Menu ──
+  const handleMenuClick = (e: React.MouseEvent<HTMLElement>, id: number) => { setAnchorEl(e.currentTarget); setSelectedId(id); };
+  const handleMenuClose = () => { setAnchorEl(null); setSelectedId(null); };
+
+  const selectedOrcamento = React.useMemo(
+    () => orcamentos.find((o) => o.id === selectedId) ?? null,
+    [orcamentos, selectedId]
+  );
+
+  // ── Aprovar ──
+  const handleAprovar = async () => {
+    if (!selectedId) return;
+    handleMenuClose();
+    try {
+      await api.patch(`/orcamentos/${selectedId}/aprovado`);
+      setOrcamentos((p) => p.map((o) => o.id === selectedId ? { ...o, status: "aprovado" } : o));
+      success("Orçamento aprovado!");
+    } catch { error("Não foi possível aprovar o orçamento."); }
+  };
+
+  // ── Recusar ──
+  const handleRecusar = async () => {
+    if (!selectedId) return;
+    handleMenuClose();
+    const ok = await confirm({
+      title: "Recusar orçamento?",
+      message: "O cliente será marcado como recusado.",
+      confirmLabel: "Sim, recusar",
+      variant: "warning",
+    });
+    if (!ok) return;
+    try {
+      await api.patch(`/orcamentos/${selectedId}/recusado`);
+      setOrcamentos((p) => p.map((o) => o.id === selectedId ? { ...o, status: "recusado" } : o));
+      success("Orçamento recusado.");
+    } catch { error("Não foi possível recusar o orçamento."); }
+  };
+
+  // ── Excluir ──
+  const handleExcluir = async () => {
+    if (!selectedId) return;
+    handleMenuClose();
+    const ok = await confirm({
+      title: "Excluir orçamento?",
+      message: "Esta ação não pode ser desfeita.",
+      confirmLabel: "Sim, excluir",
+      variant: "danger",
+    });
+    if (!ok) return;
+    try {
+      await api.delete(`/orcamentos/${selectedId}`);
+      setOrcamentos((p) => p.filter((o) => o.id !== selectedId));
+      success("Orçamento excluído.");
+    } catch { error("Não foi possível excluir o orçamento."); }
+  };
+
+  // ── Converter em O.S. ──
+  const handleConverterOS = async () => {
+    if (!selectedOrcamento) return;
+    handleMenuClose();
+
+    const ok = await confirm({
+      title: "Converter em Ordem de Serviço?",
+      message: `O orçamento de R$ ${Number(selectedOrcamento.valor).toFixed(2)} será convertido em uma nova O.S. para ${selectedOrcamento.cliente?.nome}.`,
+      confirmLabel: "Sim, converter",
+      variant: "info",
+    });
+    if (!ok) return;
+
+    try {
+      // Busca um funcionário para atribuir (pega o primeiro disponível)
+      const { data: funcionarios } = await api.get("/funcionarios");
+      const funcionarioId = funcionarios?.[0]?.id ?? null;
+
+      if (!funcionarioId) {
+        warning("Nenhum funcionário cadastrado para atribuir à O.S.");
+        return;
+      }
+
+      const payload = {
+        oficina_id: user?.oficina_id ?? user?.oficinaId ?? 1,
+        cliente_id: selectedOrcamento.cliente.id,
+        veiculo_id: selectedOrcamento.veiculo.id,
+        funcionario_id: funcionarioId,
+        observacoes: `Convertido do orçamento #${selectedOrcamento.id}: ${selectedOrcamento.descricao}`,
+        valor_total: Number(selectedOrcamento.valor),
+        itens: [],
+      };
+
+      await api.post("/ordens", payload);
+
+      // Marca orçamento como aprovado automaticamente
+      await api.patch(`/orcamentos/${selectedOrcamento.id}/aprovado`);
+      setOrcamentos((p) => p.map((o) => o.id === selectedOrcamento.id ? { ...o, status: "aprovado" } : o));
+
+      success(`O.S. criada com sucesso para ${selectedOrcamento.cliente?.nome}!`, "Convertido!");
+    } catch (err) {
+      console.error("Erro ao converter em OS:", err);
+      error("Não foi possível converter o orçamento em O.S.");
     }
   };
 
-  React.useEffect(() => {
-    fetchData();
-  }, []);
+  // ── Enviar WhatsApp ──
+  const handleWhatsApp = () => {
+    if (!selectedOrcamento?.cliente?.telefone) {
+      warning("Este cliente não possui telefone cadastrado.");
+      handleMenuClose();
+      return;
+    }
+    const tel = selectedOrcamento.cliente.telefone.replace(/\D/g, "");
+    const msg = encodeURIComponent(
+      `Olá ${selectedOrcamento.cliente.nome}! Seu orçamento está disponível no valor de R$ ${Number(selectedOrcamento.valor).toFixed(2)}. Entre em contato para mais informações.`
+    );
+    window.open(`https://wa.me/55${tel}?text=${msg}`, "_blank");
+    handleMenuClose();
+  };
 
-  const criarOrcamento = async (data: FormValues) => {
+  // ── Criar orçamento ──
+  const criarOrcamento = async (data: any) => {
     try {
       const res = await api.post("/orcamentos", data);
       setOrcamentos((prev) => [res.data, ...prev]);
+      success("Orçamento criado com sucesso!");
     } catch (err) {
-      console.log(err);
+      console.error(err);
+      error("Não foi possível criar o orçamento.");
     }
   };
 
-  const aprovar = async () => {
-    if (!selectedId) return;
-    await api.patch(`/orcamentos/${selectedId}/aprovado`);
-    handleMenuClose();
-    fetchData();
-  };
+  // ── KPIs ──
+  const kpis = React.useMemo(() => ({
+    total: orcamentos.length,
+    analise: orcamentos.filter((o) => o.status === "analise").length,
+    aprovado: orcamentos.filter((o) => o.status === "aprovado").length,
+    recusado: orcamentos.filter((o) => o.status === "recusado").length,
+    valorAprovado: orcamentos
+      .filter((o) => o.status === "aprovado")
+      .reduce((s, o) => s + Number(o.valor ?? 0), 0),
+  }), [orcamentos]);
 
-  const recusar = async () => {
-    if (!selectedId) return;
-    await api.patch(`/orcamentos/${selectedId}/recusado`);
-    handleMenuClose();
-    fetchData();
-  };
+  // ── Filtros ──
+  const filtered = React.useMemo(() => {
+    return orcamentos.filter((o) => {
+      const matchStatus = filtroStatus === "todos" || o.status === filtroStatus;
+      const matchQuery = [o.cliente?.nome, o.veiculo?.modelo, o.veiculo?.placa, o.descricao]
+        .join(" ").toLowerCase().includes(query.toLowerCase());
+      return matchStatus && matchQuery;
+    });
+  }, [orcamentos, filtroStatus, query]);
 
-  const excluir = async () => {
-    if (!selectedId) return;
-    await api.delete(`/orcamentos/${selectedId}`);
-    handleMenuClose();
-    fetchData();
-  };
+  const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const handleMenuClick = (e: any, id: number) => {
-    setAnchorEl(e.currentTarget);
-    setSelectedId(id);
-  };
-
-  const handleOpenWhats = (orcamentoId: number) => {
-    setSelectedOrcamentoId(orcamentoId);
-    setWhatsOpen(true);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedId(null);
-  };
-
-  const filtered = orcamentos.filter((o) =>
-    [
-      o.cliente?.nome,
-      o.veiculo?.modelo,
-      o.veiculo?.placa,
-      o.descricao,
-    ]
-      .join(" ")
-      .toLowerCase()
-      .includes(query.toLowerCase())
-  );
-
-  const paginated = filtered.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
-
-  const getStatus = (s: string) =>
-    ({
-      analise: { t: "Em análise", c: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
-      aprovado: { t: "Aprovado", c: "#10b981", bg: "rgba(16,185,129,0.1)" },
-      recusado: { t: "Recusado", c: "#ef4444", bg: "rgba(239,68,68,0.1)" },
-    } as any)[s];
+  if (loading) return <Box sx={{ textAlign: "center", mt: 8 }}><CircularProgress /></Box>;
 
   return (
-    <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 3 }}>
-      <Stack mb={3}>
-        <Typography variant="h5" fontWeight={700}>
-          Orçamentos
-        </Typography>
-        <Typography color="text.secondary">
-          Controle de orçamentos e aprovações
-        </Typography>
-      </Stack>
+    <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
 
-      <Stack direction="row" spacing={1.5} mb={2.5}>
-        <TextField
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Pesquisar orçamentos"
-          size="small"
-          sx={{ flex: 1 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchRoundedIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        />
-
+      {/* ── Header ── */}
+      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3} flexWrap="wrap" gap={2}>
+        <Stack spacing={0.3}>
+          <Typography variant="h5" fontWeight={700}>Orçamentos</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Controle de orçamentos, aprovações e conversão em O.S.
+          </Typography>
+        </Stack>
         <Button
           variant="contained"
           startIcon={<AddRoundedIcon />}
           onClick={() => setDialogOpen(true)}
+          disableElevation
+          sx={{
+            borderRadius: 999, textTransform: "none", fontWeight: 700, px: 2.5,
+            background: (t) => `linear-gradient(135deg, ${t.palette.primary.main}, ${t.palette.primary.dark})`,
+          }}
         >
           Novo Orçamento
         </Button>
       </Stack>
 
+      {/* ── KPI Cards ── */}
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={3}>
+        {[
+          { label: "Total", value: kpis.total, icon: <RequestQuoteRoundedIcon />, color: "primary.main", bg: (t: any) => alpha(t.palette.primary.main, 0.08) },
+          { label: "Em análise", value: kpis.analise, icon: <HourglassEmptyRoundedIcon />, color: "#f59e0b", bg: () => alpha("#f59e0b", 0.08) },
+          { label: "Aprovados", value: kpis.aprovado, icon: <CheckCircleOutlineRoundedIcon />, color: "#10b981", bg: () => alpha("#10b981", 0.08) },
+          { label: "Recusados", value: kpis.recusado, icon: <CancelRoundedIcon />, color: "#ef4444", bg: () => alpha("#ef4444", 0.08) },
+        ].map((k) => (
+          <Paper key={k.label} elevation={0}
+            sx={{
+              flex: 1, p: 2.5, borderRadius: 3, border: (t) => `1px solid ${t.palette.divider}`, bgcolor: "background.paper",
+              cursor: k.label !== "Total" ? "pointer" : "default",
+              transition: "box-shadow 0.2s",
+              "&:hover": k.label !== "Total" ? { boxShadow: (t) => `0 4px 16px ${alpha(t.palette.common.black, 0.08)}` } : {},
+            }}
+            onClick={() => k.label !== "Total" && setFiltroStatus(
+              filtroStatus === k.label.toLowerCase().replace(" ", "") ? "todos" :
+                k.label === "Em análise" ? "analise" : k.label === "Aprovados" ? "aprovado" : "recusado"
+            )}
+          >
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Stack spacing={1}>
+                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  {k.label}
+                </Typography>
+                <Typography variant="h4" fontWeight={800} sx={{ color: k.color, lineHeight: 1 }}>
+                  {k.value}
+                </Typography>
+              </Stack>
+              <Box sx={{ width: 44, height: 44, borderRadius: 2.5, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: k.bg, color: k.color, "& svg": { fontSize: 22 } }}>
+                {k.icon}
+              </Box>
+            </Stack>
+          </Paper>
+        ))}
+
+        {/* Card de valor aprovado */}
+        <Paper elevation={0}
+          sx={{ flex: 1, p: 2.5, borderRadius: 3, border: (t) => `1px solid ${alpha(t.palette.success.main, 0.2)}`, bgcolor: (t) => alpha(t.palette.success.main, 0.04) }}>
+          <Stack spacing={1}>
+            <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Valor aprovado
+            </Typography>
+            <Typography variant="h5" fontWeight={800} color="success.main">
+              R$ {kpis.valorAprovado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </Typography>
+          </Stack>
+        </Paper>
+      </Stack>
+
+      {/* ── Busca + Filtros ── */}
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} mb={2.5} alignItems="center">
+        <TextField
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setPage(0); }}
+          placeholder="Pesquisar por cliente, veículo ou descrição"
+          size="small"
+          sx={{ flex: 1, "& .MuiOutlinedInput-root": { borderRadius: 999, bgcolor: "background.paper", px: 1 } }}
+          InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> }}
+        />
+
+        <ToggleButtonGroup
+          value={filtroStatus}
+          exclusive
+          onChange={(_, v) => { if (v !== null) { setFiltroStatus(v); setPage(0); } }}
+          size="small"
+          sx={{ "& .MuiToggleButton-root": { textTransform: "none", fontWeight: 600, px: 2, borderRadius: "999px !important", border: (t) => `1px solid ${t.palette.divider} !important`, mx: 0.25 } }}
+        >
+          <ToggleButton value="todos">Todos</ToggleButton>
+          <ToggleButton value="analise" sx={{ "&.Mui-selected": { bgcolor: alpha("#f59e0b", 0.1), color: "#f59e0b" } }}>Em análise</ToggleButton>
+          <ToggleButton value="aprovado" sx={{ "&.Mui-selected": { bgcolor: alpha("#10b981", 0.1), color: "#10b981" } }}>Aprovados</ToggleButton>
+          <ToggleButton value="recusado" sx={{ "&.Mui-selected": { bgcolor: alpha("#ef4444", 0.1), color: "#ef4444" } }}>Recusados</ToggleButton>
+        </ToggleButtonGroup>
+      </Stack>
+
+      {/* ── Tabela ── */}
       <Fade in timeout={400}>
-        <TableContainer component={Paper} sx={{ borderRadius: 3 }}>
-          <Table>
+        <TableContainer component={Paper} sx={{ borderRadius: 2, border: (t) => `1px solid ${t.palette.divider}`, minHeight: 400, maxHeight: 640, overflowY: "auto" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell>CLIENTE</TableCell>
-                <TableCell>VEÍCULO</TableCell>
-                <TableCell>DESCRIÇÃO</TableCell>
-                <TableCell>VALOR</TableCell>
-                <TableCell>DATA</TableCell>
-                <TableCell>STATUS</TableCell>
-                <TableCell />
+                <TableCell>Cliente</TableCell>
+                <TableCell>Veículo</TableCell>
+                <TableCell>Descrição</TableCell>
+                <TableCell>Valor</TableCell>
+                <TableCell>Data</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align="right">Ações</TableCell>
               </TableRow>
             </TableHead>
-
             <TableBody>
-              {paginated.map((o) => {
-                const st = getStatus(o.status);
-
+              {paginated.length > 0 ? paginated.map((o) => {
+                const st = STATUS_CONFIG[o.status] ?? STATUS_CONFIG.analise;
                 return (
-                  <TableRow key={o.id} hover>
-                    <TableCell sx={{ fontWeight: 600 }}>
-                      {o.cliente?.nome}
-                    </TableCell>
-
+                  <TableRow key={o.id} hover sx={{ height: 56 }}>
+                    {/* Cliente */}
                     <TableCell>
-                      {o.veiculo
-                        ? `${o.veiculo.modelo} — ${o.veiculo.placa}`
-                        : "—"}
+                      <Stack spacing={0.1}>
+                        <Typography variant="body2" fontWeight={600}>{o.cliente?.nome ?? "—"}</Typography>
+                      </Stack>
                     </TableCell>
 
-                    <TableCell sx={{ color: "text.secondary" }}>
-                      {o.descricao}
-                    </TableCell>
-
-                    <TableCell>R$ {Number(o.valor ?? 0).toFixed(2)}</TableCell>
-
+                    {/* Veículo */}
                     <TableCell>
-                      {new Date(o.data).toLocaleDateString("pt-BR")}
+                      {o.veiculo ? (
+                        <Stack spacing={0.1}>
+                          <Typography variant="body2">{o.veiculo.modelo}</Typography>
+                          <Typography variant="caption" fontFamily="monospace" fontWeight={700}
+                            sx={{ px: 0.75, py: 0.1, borderRadius: 0.75, bgcolor: (t) => alpha(t.palette.text.primary, 0.06), display: "inline-block", width: "fit-content" }}>
+                            {o.veiculo.placa}
+                          </Typography>
+                        </Stack>
+                      ) : "—"}
                     </TableCell>
 
+                    {/* Descrição */}
+                    <TableCell sx={{ maxWidth: 220 }}>
+                      <Typography variant="body2" color="text.secondary" noWrap>{o.descricao}</Typography>
+                    </TableCell>
+
+                    {/* Valor */}
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={700} color="success.main">
+                        R$ {Number(o.valor ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </Typography>
+                    </TableCell>
+
+                    {/* Data */}
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {new Date(o.data).toLocaleDateString("pt-BR")}
+                      </Typography>
+                    </TableCell>
+
+                    {/* Status */}
                     <TableCell>
                       <Chip
+                        label={st.label}
                         size="small"
-                        label={st.t}
-                        sx={{ bgcolor: st.bg, color: st.c }}
+                        color={st.chipColor}
+                        sx={{ fontWeight: 700, fontSize: 11 }}
                       />
                     </TableCell>
 
-                    <TableCell>
+                    {/* Ações */}
+                    <TableCell align="right">
+                      {/* Botão rápido: Converter em OS (só para aprovados ou em análise) */}
+                      {o.status !== "recusado" && (
+                        <Tooltip title="Converter em O.S.">
+                          <IconButton
+                            size="small"
+                            onClick={async () => {
+                              setSelectedId(o.id);
+                              // pequeno delay para garantir que selectedOrcamento está atualizado
+                              setTimeout(() => handleConverterOS(), 50);
+                            }}
+                            sx={{ mr: 0.5, color: "primary.main", "&:hover": { bgcolor: (t) => alpha(t.palette.primary.main, 0.08) } }}
+                          >
+                            <BuildRoundedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                       <IconButton size="small" onClick={(e) => handleMenuClick(e, o.id)}>
                         <MoreVertRoundedIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
                   </TableRow>
                 );
-              })}
+              }) : (
+                <TableRow>
+                  <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                    <Stack alignItems="center" spacing={1.5}>
+                      <RequestQuoteRoundedIcon sx={{ fontSize: 40, color: "text.disabled" }} />
+                      <Typography variant="body2" color="text.disabled">
+                        {filtroStatus === "todos"
+                          ? "Nenhum orçamento encontrado"
+                          : `Nenhum orçamento com status "${STATUS_CONFIG[filtroStatus as keyof typeof STATUS_CONFIG]?.label ?? filtroStatus}"`}
+                      </Typography>
+                      {filtroStatus !== "todos" && (
+                        <Button size="small" onClick={() => setFiltroStatus("todos")} sx={{ textTransform: "none" }}>
+                          Ver todos
+                        </Button>
+                      )}
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
-
-          <TablePagination
-            component="div"
-            count={filtered.length}
-            page={page}
-            onPageChange={(_, p) => setPage(p)}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={(e) => {
-              setRowsPerPage(parseInt(e.target.value, 10));
-              setPage(0);
-            }}
-            rowsPerPageOptions={[5, 10, 20]}
-          />
         </TableContainer>
       </Fade>
 
-      <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={handleMenuClose}>
-        <MenuItem onClick={aprovar}>
-          Aprovar
-        </MenuItem>
+      {/* ── Paginação ── */}
+      <TablePagination
+        component="div"
+        count={filtered.length}
+        page={page}
+        onPageChange={(_, p) => setPage(p)}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+        rowsPerPageOptions={[5, 10, 20]}
+        labelRowsPerPage="Linhas por página:"
+        labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`}
+        sx={{ mt: 1.5, borderRadius: 2, bgcolor: "background.paper" }}
+      />
 
-        <MenuItem onClick={recusar}>
-          Recusar
-        </MenuItem>
-
-        <MenuItem onClick={() => { setWhatsOpen(true); handleMenuClose(); }}>
+      {/* ── Menu contextual ── */}
+      <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={handleMenuClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}
+        PaperProps={{ sx: { borderRadius: 2, minWidth: 180, boxShadow: "0 8px 24px rgba(0,0,0,0.10)" } }}
+      >
+        {selectedOrcamento?.status !== "aprovado" && (
+          <MenuItem onClick={handleAprovar} sx={{ gap: 1.5 }}>
+            <CheckCircleOutlineRoundedIcon fontSize="small" color="success" />
+            Aprovar
+          </MenuItem>
+        )}
+        {selectedOrcamento?.status === "analise" && (
+          <MenuItem onClick={handleRecusar} sx={{ gap: 1.5 }}>
+            <CancelRoundedIcon fontSize="small" color="error" />
+            Recusar
+          </MenuItem>
+        )}
+        {selectedOrcamento?.status !== "recusado" && (
+          <MenuItem onClick={handleConverterOS} sx={{ gap: 1.5, fontWeight: 600, color: "primary.main" }}>
+            <BuildRoundedIcon fontSize="small" />
+            Converter em O.S.
+          </MenuItem>
+        )}
+        <MenuItem onClick={handleWhatsApp} sx={{ gap: 1.5 }}>
+          <WhatsAppIcon fontSize="small" sx={{ color: "#25D366" }} />
           Enviar WhatsApp
         </MenuItem>
-
-        <MenuItem sx={{ color: "error.main" }} onClick={excluir}>
+        <Divider />
+        <MenuItem onClick={handleExcluir} sx={{ gap: 1.5, color: "error.main" }}>
+          <DeleteOutlineRoundedIcon fontSize="small" />
           Excluir
         </MenuItem>
       </Menu>
 
-      <NovoOrcamentoDialog
+      {/* ── Dialog de criação ── */}
+      <DialogOrcamento
         open={dialogOpen}
+        mode="create"
         onClose={() => setDialogOpen(false)}
-        onCreate={criarOrcamento}
-      />
-
-      <ClienteWhatsDialog 
-        open={whatsOpen} 
-        onClose={() => setWhatsOpen(false)} 
-        orcamento={orcamentos.find((o: any) => o.id === selectedOrcamentoId)}
+        onSubmit={criarOrcamento}
       />
     </Box>
   );

@@ -6,31 +6,40 @@ import {
   Typography,
   Button,
   IconButton,
+  Avatar,
+  Chip,
+  Divider,
+  LinearProgress,
+  Tooltip,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import { Grid, InputBase } from "@mui/material";
+import { alpha, styled } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
+
+// Icons
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
+import DirectionsCarRoundedIcon from "@mui/icons-material/DirectionsCarRounded";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
+import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
+import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
+import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import BuildRoundedIcon from "@mui/icons-material/BuildRounded";
+import RadioButtonCheckedRoundedIcon from "@mui/icons-material/RadioButtonCheckedRounded";
+import CalendarTodayRoundedIcon from "@mui/icons-material/CalendarTodayRounded";
+import RequestQuoteRoundedIcon from "@mui/icons-material/RequestQuoteRounded";
+
+// Componentes e contexto
 import api from "../../../api/api";
 import DialogCarro from "../../veiculos/dialog/";
 import DialogAgendamento from "../../tarefas/dialog/";
 import DialogCliente from "../../clientes/dialog/";
+import DialogOrcamento from "../../orcamentos/dialog/";
 import { useAuth } from "../../../context/AuthContext";
-import dayjs from "dayjs";
-import "dayjs/locale/pt-br";
-import CalendarTodayRoundedIcon from "@mui/icons-material/CalendarTodayRounded";
-import BuildRoundedIcon from "@mui/icons-material/BuildRounded";
-import DirectionsCarRoundedIcon from "@mui/icons-material/DirectionsCarRounded";
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
-import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
-import LocalActivityRoundedIcon from "@mui/icons-material/LocalActivityRounded";
-import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
-import LinearProgress from "@mui/material/LinearProgress";
 
-dayjs.locale("pt-br");
+// ─── Tipos ─────────────────────────────────────────────────────────────────
 
-// ---- Tipagem auxiliar ----
 interface Payment {
   id?: number;
   tipo?: string;
@@ -41,170 +50,215 @@ interface Payment {
   data_vencimento?: string;
 }
 
-// ---- Botão padrão suave ----
-function SoftButton(props: React.ComponentProps<typeof Button>) {
-  const { sx, ...rest } = props;
-  return (
-    <Button
-      variant="contained"
-      {...rest}
-      sx={{
-        borderRadius: 2.5,
-        px: 2.5,
-        py: 1,
-        bgcolor: "primary.main",
-        color: "white",
-        fontWeight: 600,
-        textTransform: "none",
-        fontSize: 13,
-        boxShadow: "none",
-        "&:hover": {
-          bgcolor: "primary.dark",
-          boxShadow: "none",
-        },
-        ...sx,
-      }}
-    />
-  );
-}
+// ─── Mapeamento de tipo de pagamento ──────────────────────────────────────
 
-// ---- Card genérico ----
-function SectionCard({
-  title,
-  icon,
-  count,
-  action,
-  children,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  count?: number;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-}) {
+const tipoMap: Record<string, "entrada" | "saida" | undefined> = {
+  entrada: "entrada", receita: "entrada", recebimento: "entrada",
+  crédito: "entrada", credito: "entrada", receber: "entrada",
+  pagar: "saida", saida: "saida", saída: "saida",
+  despesa: "saida", débito: "saida", debito: "saida", pagamento: "saida",
+};
+
+// ─── Formatação de moeda ───────────────────────────────────────────────────
+
+const brl = (v: number) =>
+  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+// ─── Styled ────────────────────────────────────────────────────────────────
+
+const MetricCard = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(2.5, 3),
+  borderRadius: 16,
+  border: `1px solid ${theme.palette.divider}`,
+  backgroundColor: theme.palette.background.paper,
+  flex: 1,
+  minWidth: 0,
+  transition: "box-shadow 0.2s, transform 0.2s",
+  "&:hover": {
+    boxShadow: `0 8px 24px ${alpha(theme.palette.common.black, 0.08)}`,
+    transform: "translateY(-2px)",
+  },
+}));
+
+const FinCard = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(2.5, 3),
+  borderRadius: 16,
+  border: `1px solid ${theme.palette.divider}`,
+  backgroundColor: theme.palette.background.paper,
+  flex: 1,
+  minWidth: 0,
+}));
+
+const QuickBtn = styled(Button)(({ theme }) => ({
+  borderRadius: 12,
+  padding: theme.spacing(1.5, 2),
+  textTransform: "none",
+  fontWeight: 600,
+  justifyContent: "flex-start",
+  gap: theme.spacing(1.5),
+  border: `1px solid ${theme.palette.divider}`,
+  backgroundColor: theme.palette.background.paper,
+  color: theme.palette.text.primary,
+  "&:hover": {
+    backgroundColor: alpha(theme.palette.primary.main, 0.05),
+    borderColor: theme.palette.primary.main,
+    color: theme.palette.primary.main,
+  },
+}));
+
+// ─── Status da ordem ──────────────────────────────────────────────────────
+
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  aberta: { label: "Aberta", color: "#f59e0b", bg: alpha("#f59e0b", 0.1) },
+  em_andamento: { label: "Em andamento", color: "#3b82f6", bg: alpha("#3b82f6", 0.1) },
+  concluida: { label: "Concluída", color: "#22c55e", bg: alpha("#22c55e", 0.1) },
+  cancelada: { label: "Cancelada", color: "#ef4444", bg: alpha("#ef4444", 0.1) },
+};
+
+// ─── Componentes auxiliares ───────────────────────────────────────────────
+
+function SectionTitle({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <Paper
-      elevation={0}
-      sx={(theme) => ({
-        p: { xs: 2.5, md: 3 },
-        borderRadius: 3,
-        border: `1px solid ${theme.palette.divider}`,
-        bgcolor: "background.paper",
-        flex: 1,
-        minWidth: 0,
-      })}
-    >
-      <Stack spacing={2}>
-        <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-        >
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Box
-              sx={{
-                width: 44,
-                height: 44,
-                borderRadius: 2.5,
-                display: "grid",
-                placeItems: "center",
-                bgcolor: (t) => alpha(t.palette.primary.main, 0.1),
-                color: "primary.main",
-                flexShrink: 0,
-              }}
-            >
-              {icon}
-            </Box>
-            <Stack spacing={0.3}>
-              <Typography
-                variant="subtitle2"
-                fontWeight={700}
-                sx={{ fontSize: 13 }}
-              >
-                {title}
-              </Typography>
-              {count !== undefined && (
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ fontSize: 12, fontWeight: 500 }}
-                >
-                  {count} {count === 1 ? "item" : "itens"}
-                </Typography>
-              )}
-            </Stack>
-          </Stack>
-          {action}
-        </Stack>
+    <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
+      <Typography variant="subtitle1" fontWeight={700}>
         {children}
-      </Stack>
-    </Paper>
-  );
-}
-
-// ---- Linha da lista (Atividades / Carros / Clientes) ----
-function ListRow({
-  title,
-  subtitle,
-  right,
-}: {
-  title: string;
-  subtitle?: string;
-  right?: React.ReactNode;
-}) {
-  return (
-    <Stack
-      direction="row"
-      alignItems="center"
-      justifyContent="space-between"
-      spacing={2}
-      sx={{
-        py: 1.25,
-        px: 1.25,
-        borderRadius: 2,
-        "&:hover": {
-          bgcolor: (t) => alpha(t.palette.primary.main, 0.04),
-        },
-      }}
-    >
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography variant="body2" fontWeight={600} noWrap sx={{ mb: 0.3 }}>
-          {title}
-        </Typography>
-        {subtitle && (
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ fontSize: 12, lineHeight: 1.6 }}
-            noWrap
-          >
-            {subtitle}
-          </Typography>
-        )}
-      </Box>
-      {right}
+      </Typography>
+      {action}
     </Stack>
   );
 }
 
-// ---- Página principal ----
+function OrderRow({ order, onClick }: { order: any; onClick?: () => void }) {
+  const status = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.aberta;
+  const clienteNome = order.cliente?.nome ?? "—";
+  const veiculoLabel = order.veiculo
+    ? `${order.veiculo.marca} ${order.veiculo.modelo}`
+    : "—";
+  const placa = order.veiculo?.placa ?? "";
+
+  return (
+    <Stack
+      direction="row"
+      alignItems="center"
+      spacing={2}
+      onClick={onClick}
+      sx={{
+        py: 1.5,
+        px: 1.5,
+        borderRadius: 2,
+        cursor: onClick ? "pointer" : "default",
+        "&:hover": onClick
+          ? { bgcolor: (t) => alpha(t.palette.primary.main, 0.04) }
+          : undefined,
+        transition: "background 0.15s",
+      }}
+    >
+      {/* Ícone */}
+      <Box
+        sx={{
+          width: 38,
+          height: 38,
+          borderRadius: 2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          bgcolor: (t) => alpha(t.palette.primary.main, 0.08),
+          flexShrink: 0,
+        }}
+      >
+        <BuildRoundedIcon sx={{ fontSize: 18, color: "primary.main" }} />
+      </Box>
+
+      {/* Info */}
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body2" fontWeight={600} noWrap>
+          {clienteNome}
+        </Typography>
+        <Typography variant="caption" color="text.secondary" noWrap>
+          {veiculoLabel}
+          {placa && (
+            <Box
+              component="span"
+              sx={{
+                ml: 0.75,
+                px: 0.75,
+                py: 0.1,
+                borderRadius: 0.75,
+                bgcolor: (t) => alpha(t.palette.text.primary, 0.07),
+                fontFamily: "monospace",
+                fontWeight: 700,
+                fontSize: 10,
+              }}
+            >
+              {placa}
+            </Box>
+          )}
+        </Typography>
+      </Box>
+
+      {/* Status */}
+      <Chip
+        label={status.label}
+        size="small"
+        sx={{
+          bgcolor: status.bg,
+          color: status.color,
+          fontWeight: 700,
+          fontSize: 11,
+          height: 22,
+          flexShrink: 0,
+        }}
+      />
+    </Stack>
+  );
+}
+
+function ClientRow({ client }: { client: any }) {
+  const initial = (client.nome ?? client.name ?? "?")[0].toUpperCase();
+  const nome = client.nome ?? client.name ?? "—";
+  const telefone = client.telefone ?? client.phone ?? "";
+
+  return (
+    <Stack direction="row" alignItems="center" spacing={1.5} py={1} px={1.5}
+      sx={{ borderRadius: 2, "&:hover": { bgcolor: (t) => alpha(t.palette.primary.main, 0.04) } }}
+    >
+      <Avatar
+        sx={{ width: 34, height: 34, fontSize: 14, fontWeight: 700, bgcolor: "primary.main", flexShrink: 0 }}
+      >
+        {initial}
+      </Avatar>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body2" fontWeight={600} noWrap>{nome}</Typography>
+        {telefone && (
+          <Typography variant="caption" color="text.secondary" noWrap>{telefone}</Typography>
+        )}
+      </Box>
+    </Stack>
+  );
+}
+
+// ─── Página principal ─────────────────────────────────────────────────────
+
 export default function Home() {
   const { user } = useAuth();
+  const nav = useNavigate();
   const oficinaId = user?.oficina_id ?? user?.oficinaId ?? 0;
 
   const [tasks, setTasks] = React.useState<any[]>([]);
   const [cars, setCars] = React.useState<any[]>([]);
   const [clients, setClients] = React.useState<any[]>([]);
   const [payments, setPayments] = React.useState<Payment[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
   const [openTask, setOpenTask] = React.useState(false);
   const [openCar, setOpenCar] = React.useState(false);
   const [openClient, setOpenClient] = React.useState(false);
+  const [openOrcamento, setOpenOrcamento] = React.useState(false);
 
-  const nav = useNavigate();
-
-  // ---- Carregamento inicial ----
+  // ── Carregamento ──
   React.useEffect(() => {
-    const loadData = async () => {
+    if (!oficinaId) return;
+    (async () => {
       try {
         const [resTasks, resCars, resClients, resPayments] = await Promise.all([
           api.get("/ordens"),
@@ -212,350 +266,536 @@ export default function Home() {
           api.get("/clientes"),
           api.get("/pagamentos", { params: { oficina_id: oficinaId } }),
         ]);
-
         setTasks(resTasks.data);
         setCars(resCars.data);
         setClients(resClients.data);
         setPayments(resPayments.data);
-
-        if (import.meta.env.DEV)
-          console.log("🔹 Pagamentos carregados:", resPayments.data);
       } catch (err) {
         console.error("Erro ao carregar dados:", err);
+      } finally {
+        setLoading(false);
       }
-    };
-    if (oficinaId) loadData();
+    })();
   }, [oficinaId]);
 
-  const tipoMap: Record<string, "entrada" | "saida" | undefined> = {
-    entrada: "entrada",
-    receita: "entrada",
-    recebimento: "entrada",
-    crédito: "entrada",
-    credito: "entrada",
-    receber: "entrada",
-    pagar: "saida",
-    saida: "saida",
-    saída: "saida",
-    despesa: "saida",
-    débito: "saida",
-    debito: "saida",
-    pagamento: "saida",
-  };
-
-
-  // ---- Cálculos Operacionais ----
-  const vehiclesInPatio = tasks.filter(t => t.status !== "entregue").length;
-  const lateOrders = tasks.filter(t => t.isLate).length || 2; // Mock fallback for visual
-
-  const todayAppointments = tasks.filter(t => 
-    t.data_agendamento && dayjs(t.data_agendamento).isSame(dayjs(), 'day')
-  );
-
+  // ── Cálculos ──
   const totalEntradas = payments
     .filter((p) => tipoMap[(p.tipo ?? p.tipo_pagamento ?? "").toLowerCase()] === "entrada")
-    .reduce((sum, p) => sum + Number(p.valor ?? p.valor_total ?? 0), 0);
+    .reduce((s, p) => s + Number(p.valor ?? p.valor_total ?? 0), 0);
 
   const totalSaidas = payments
     .filter((p) => tipoMap[(p.tipo ?? p.tipo_pagamento ?? "").toLowerCase()] === "saida")
-    .reduce((sum, p) => sum + Number(p.valor ?? p.valor_total ?? 0), 0);
+    .reduce((s, p) => s + Number(p.valor ?? p.valor_total ?? 0), 0);
 
   const saldo = totalEntradas - totalSaidas;
 
-  // ---- JSX ----
+  const ordensAbertas = tasks.filter(
+    (t) => t.status === "aberta" || t.status === "em_andamento"
+  ).length;
+
+  const saldoPct = totalEntradas > 0
+    ? Math.min(100, Math.round((saldo / totalEntradas) * 100))
+    : 0;
+
+  // ── Saudação ──
+  const hora = new Date().getHours();
+  const saudacao =
+    hora < 12 ? "Bom dia" : hora < 18 ? "Boa tarde" : "Boa noite";
+
+  const hoje = new Date().toLocaleDateString("pt-BR", {
+    weekday: "long", day: "numeric", month: "long",
+  });
+
+  // ── Loading skeleton ──
+  if (loading) {
+    return (
+      <Box sx={{ maxWidth: 1600, mx: "auto", px: { xs: 2, sm: 3, md: 4, lg: 6 }, py: 4 }}>
+        <LinearProgress sx={{ borderRadius: 999 }} />
+        <Typography variant="body2" color="text.secondary" mt={2} textAlign="center">
+          Carregando dados da oficina...
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box
       sx={{
         maxWidth: 1600,
         mx: "auto",
-        px: { xs: 2, sm: 3, md: 4 },
+        px: { xs: 2, sm: 3, md: 4, lg: 6 },
         py: { xs: 3, md: 4 },
-        bgcolor: "#F4F7FC" // Slightly different background for benchmarking feel
       }}
     >
-      {/* Cabeçalho do Benchmarking */}
+      {/* ══════════════════════════════════════════
+          CABEÇALHO
+      ══════════════════════════════════════════ */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
-        alignItems="center"
+        alignItems={{ xs: "flex-start", sm: "center" }}
         justifyContent="space-between"
-        mb={4}
+        mb={{ xs: 3, md: 4 }}
+        spacing={{ xs: 2, sm: 0 }}
       >
-        <Typography
-          variant="h5"
-          fontWeight={700}
-          sx={{ color: "#333", fontSize: "1.4rem" }}
-        >
-          Boa noite, {user?.nome?.split(" ")[0] || "Admin"}.
-        </Typography>
-        
-        <Stack direction="row" spacing={2}>
-          <Button
-            startIcon={<AddRoundedIcon sx={{ color: "#ED6C02" }} />}
-            onClick={() => setOpenTask(true)}
-            sx={{ 
-              textTransform: "uppercase", 
-              fontWeight: 700, 
-              color: "#ED6C02", 
-              fontSize: 12,
-              "&:hover": { bgcolor: "rgba(237, 108, 2, 0.05)" }
-            }}
-          >
-            Nova OS
-          </Button>
-          <Button
-            startIcon={<PersonRoundedIcon sx={{ color: "#1976D2" }} />}
-            onClick={() => setOpenClient(true)}
-            sx={{ 
-              textTransform: "uppercase", 
-              fontWeight: 700, 
-              color: "#1976D2", 
-              fontSize: 12,
-              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.05)" }
-            }}
-          >
-            Novo Cliente
-          </Button>
-          <Button
-            startIcon={<TrendingUpIcon sx={{ color: "#2E7D32" }} />}
-            sx={{ 
-              textTransform: "uppercase", 
-              fontWeight: 700, 
-              color: "#2E7D32", 
-              fontSize: 12,
-              "&:hover": { bgcolor: "rgba(46, 125, 50, 0.05)" }
-            }}
-          >
-            Nova Venda
-          </Button>
+        <Stack spacing={0.5}>
+          <Typography variant="h5" fontWeight={800} sx={{ fontSize: { xs: 22, md: 26 } }}>
+            {saudacao}, {user?.nome?.split(" ")[0] ?? "usuário"} 👋
+          </Typography>
+          <Stack direction="row" spacing={0.75} alignItems="center">
+            <CalendarTodayRoundedIcon sx={{ fontSize: 13, color: "text.disabled" }} />
+            <Typography variant="body2" color="text.secondary" sx={{ textTransform: "capitalize" }}>
+              {hoje}
+            </Typography>
+          </Stack>
+        </Stack>
+
+        {/* Ações rápidas do header */}
+        <Stack direction="row" spacing={1} flexWrap="wrap">
+          {[
+            {
+              label: "Nova O.S.",
+              icon: <AssignmentRoundedIcon sx={{ fontSize: 16 }} />,
+              onClick: () => setOpenTask(true),
+              color: "primary" as const,
+              gradient: true,
+            },
+            {
+              label: "Orçamento",
+              icon: <RequestQuoteRoundedIcon sx={{ fontSize: 16 }} />,
+              onClick: () => setOpenOrcamento(true),
+              color: "secondary" as const,
+              gradient: false,
+            },
+            {
+              label: "Cliente",
+              icon: <PersonOutlineIcon sx={{ fontSize: 16 }} />,
+              onClick: () => setOpenClient(true),
+              color: "inherit" as const,
+              gradient: false,
+            },
+            {
+              label: "Veículo",
+              icon: <DirectionsCarRoundedIcon sx={{ fontSize: 16 }} />,
+              onClick: () => setOpenCar(true),
+              color: "inherit" as const,
+              gradient: false,
+            },
+          ].map((btn) => (
+            <Button
+              key={btn.label}
+              variant={btn.gradient ? "contained" : "outlined"}
+              disableElevation
+              startIcon={btn.icon}
+              onClick={btn.onClick}
+              sx={{
+                borderRadius: 999,
+                textTransform: "none",
+                fontWeight: 700,
+                fontSize: 13,
+                px: 2,
+                py: 0.85,
+                ...(btn.gradient
+                  ? {
+                    background: (t: any) =>
+                      `linear-gradient(135deg, ${t.palette.primary.main}, ${t.palette.primary.dark})`,
+                    color: "#fff",
+                    border: "none",
+                  }
+                  : {
+                    borderColor: (t: any) => t.palette.divider,
+                    color: "text.primary",
+                    bgcolor: "background.paper",
+                    "&:hover": {
+                      borderColor: "primary.main",
+                      color: "primary.main",
+                      bgcolor: (t: any) => alpha(t.palette.primary.main, 0.05),
+                    },
+                  }),
+              }}
+            >
+              {btn.label}
+            </Button>
+          ))}
         </Stack>
       </Stack>
 
-      <Grid container spacing={3} mb={4}>
-        {/* COLUNA ESQUERDA - CARDS MENORES */}
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Stack spacing={3}>
-            {/* CARD 1: VEÍCULOS NO PÁTIO */}
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                borderRadius: 2,
-                border: "1px solid #E0E4EC",
-                display: "flex",
-                flexDirection: "column",
-                position: "relative",
-                height: 140
-              }}
-            >
-              <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
-                Veículos no Pátio
-              </Typography>
-              <Typography variant="h3" fontWeight={800} sx={{ mt: 1, color: "#333" }}>
-                {vehiclesInPatio}
-              </Typography>
-              <DirectionsCarRoundedIcon sx={{ position: "absolute", bottom: 20, right: 20, fontSize: 32, color: alpha("#1976D2", 0.4) }} />
-            </Paper>
-
-            {/* CARD 2: ORDENS ATRASADAS */}
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                borderRadius: 2,
-                border: "1px solid #E0E4EC",
-                display: "flex",
-                flexDirection: "column",
-                position: "relative",
-                height: 140
-              }}
-            >
-              <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
-                Ordens Atrasadas
-              </Typography>
-              <Typography variant="h3" fontWeight={800} sx={{ mt: 1, color: "#D32F2F" }}>
-                {lateOrders}
-              </Typography>
-              <ErrorOutlineRoundedIcon sx={{ position: "absolute", bottom: 20, right: 20, fontSize: 32, color: alpha("#D32F2F", 0.4) }} />
-            </Paper>
-          </Stack>
-        </Grid>
-
-        {/* COLUNA DIREITA - ALERTAS OPERACIONAIS */}
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Paper
+      {/* ══════════════════════════════════════════
+          KPI — 4 cards de métrica
+      ══════════════════════════════════════════ */}
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={3} flexWrap="wrap">
+        {[
+          {
+            label: "Clientes",
+            value: clients.length,
+            icon: <PersonOutlineIcon />,
+            color: "#6366f1",
+            suffix: "cadastrados",
+            onClick: () => nav("/clientes"),
+          },
+          {
+            label: "Ordens abertas",
+            value: ordensAbertas,
+            icon: <AssignmentRoundedIcon />,
+            color: "#f59e0b",
+            suffix: "em andamento",
+            onClick: () => nav("/tarefas"),
+          },
+          {
+            label: "Veículos",
+            value: cars.length,
+            icon: <DirectionsCarRoundedIcon />,
+            color: "#3b82f6",
+            suffix: "cadastrados",
+            onClick: () => nav("/veiculos"),
+          },
+          {
+            label: "Total de O.S.",
+            value: tasks.length,
+            icon: <BuildRoundedIcon />,
+            color: "#22c55e",
+            suffix: "registradas",
+            onClick: () => nav("/tarefas"),
+          },
+        ].map((item) => (
+          <MetricCard
+            key={item.label}
             elevation={0}
-            sx={{
-              p: 0,
-              borderRadius: 2,
-              border: "1px solid #E0E4EC",
-              height: "100%",
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden"
-            }}
+            onClick={item.onClick}
+            sx={{ cursor: "pointer" }}
           >
-            <Box sx={{ px: 3, py: 2, borderBottom: "1px solid #F0F0F0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: "uppercase" }}>
-                Alertas Operacionais do Pátio (4 novos)
-              </Typography>
-              <Typography variant="caption" sx={{ color: "#1976D2", fontWeight: 700, cursor: "pointer" }}>Ver tudo</Typography>
-            </Box>
-            
-            <Box sx={{ p: 3, flex: 1 }}>
-              <Stack spacing={3}>
-                <Stack direction="row" spacing={2}>
-                  <Box sx={{ width: 44, height: 44, borderRadius: "50%", bgcolor: alpha("#9C27B0", 0.1), display: "grid", placeItems: "center", flexShrink: 0 }}>
-                    <NotificationsNoneRoundedIcon sx={{ color: "#9C27B0" }} />
-                  </Box>
-                  <Box>
-                    <Typography variant="body2" sx={{ color: "#555", lineHeight: 1.6 }}>
-                      Ocorreu um atraso na entrega das peças para a <b>OS #1234</b> (Civic - ABC1D23). Previsão atualizada para amanhã às 14:00.
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>14/03/2026 17:29</Typography>
-                  </Box>
-                </Stack>
-
-                <Stack direction="row" spacing={2}>
-                  <Box sx={{ width: 44, height: 44, borderRadius: "50%", bgcolor: alpha("#2E7D32", 0.1), display: "grid", placeItems: "center", flexShrink: 0 }}>
-                    <LocalActivityRoundedIcon sx={{ color: "#2E7D32" }} />
-                  </Box>
-                  <Box>
-                    <Typography variant="body2" sx={{ color: "#555", lineHeight: 1.6 }}>
-                      O orçamento da <b>OS #1240</b> acaba de ser aprovado pelo cliente via app. Pronto para início do serviço.
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>14/03/2026 18:10</Typography>
-                  </Box>
+            <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+              <Stack spacing={1.5}>
+                <Box
+                  sx={{
+                    width: 42, height: 42, borderRadius: 2.5,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    bgcolor: alpha(item.color, 0.12),
+                    color: item.color,
+                    "& svg": { fontSize: 22 },
+                  }}
+                >
+                  {item.icon}
+                </Box>
+                <Stack spacing={0.25}>
+                  <Typography variant="h4" fontWeight={800} lineHeight={1}>
+                    {item.value}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                    {item.label}
+                  </Typography>
+                  <Typography variant="caption" color="text.disabled">
+                    {item.suffix}
+                  </Typography>
                 </Stack>
               </Stack>
-            </Box>
-          </Paper>
-        </Grid>
-      </Grid>
-
-      {/* ÁREA INFERIOR - NOVIDADES Ebanner */}
-      <Grid container spacing={3}>
-        {/* AGENDAMENTOS PARA HOJE */}
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 0,
-              borderRadius: 2,
-              border: "1px solid #E0E4EC",
-              height: "100%",
-            }}
-          >
-            <Box sx={{ px: 3, py: 2, borderBottom: "1px solid #F0F0F0", display: "flex", alignItems: "center", gap: 1 }}>
-              <CalendarTodayRoundedIcon sx={{ fontSize: 18, color: "text.secondary" }} />
-              <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: "uppercase" }}>
-                Agendamentos para Hoje
-              </Typography>
-            </Box>
-            <Box sx={{ p: 3 }}>
-               {todayAppointments.length > 0 ? (
-                 <Stack spacing={2}>
-                   {todayAppointments.slice(0, 3).map((t, idx) => (
-                     <Stack key={idx} direction="row" justifyContent="space-between" alignItems="center">
-                       <Stack direction="row" spacing={2} alignItems="center">
-                         <Typography variant="body2" fontWeight={800} color="primary.main">{dayjs(t.data_agendamento).format("HH:mm")}</Typography>
-                         <Typography variant="body2" fontWeight={600}>{t.veiculo?.placa || "Placa"}</Typography>
-                         <Typography variant="body2" color="text.secondary">{t.veiculo?.modelo || "Veículo"}</Typography>
-                       </Stack>
-                       <Typography variant="caption" sx={{ bgcolor: "#f0f0f0", px: 1, py: 0.5, borderRadius: 1 }}>Mecânico: João</Typography>
-                     </Stack>
-                   ))}
-                 </Stack>
-               ) : (
-                 <Box sx={{ py: 4, textAlign: "center" }}>
-                   <Typography variant="body2" color="text.secondary">Nenhum agendamento para o restante do dia.</Typography>
-                 </Box>
-               )}
-            </Box>
-          </Paper>
-        </Grid>
-
-        {/* BANNER DE META */}
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              borderRadius: 2,
-              bgcolor: "#fff",
-              border: "1px solid #E0E4EC",
-              height: "100%",
-              display: "flex",
-              flexDirection: "column"
-            }}
-          >
-            <Typography variant="h6" fontWeight={800} sx={{ color: "#333", mb: 2 }}>
-              Meta Mensal
-            </Typography>
-            <Typography variant="body2" color="text.secondary" mb={3}>
-              Você já atingiu <b>75%</b> da meta de faturamento deste mês. Mantenha o fluxo!
-            </Typography>
-            
-            <Box sx={{ mt: "auto" }}>
-              <Stack direction="row" justifyContent="space-between" mb={1}>
-                <Typography variant="caption" fontWeight={700}>R$ {totalEntradas.toFixed(0)}</Typography>
-                <Typography variant="caption" fontWeight={700} color="text.secondary">Meta: R$ 50.000</Typography>
-              </Stack>
-              <LinearProgress 
-                variant="determinate" 
-                value={75} 
-                sx={{ 
-                  height: 10, 
-                  borderRadius: 5, 
-                  bgcolor: alpha("#2E7D32", 0.1),
-                  "& .MuiLinearProgress-bar": { borderRadius: 5, bgcolor: "#2E7D32" }
-                }} 
+              <ArrowForwardRoundedIcon
+                sx={{ fontSize: 16, color: "text.disabled", mt: 0.5 }}
               />
-            </Box>
-          </Paper>
-        </Grid>
-      </Grid>
+            </Stack>
+          </MetricCard>
+        ))}
+      </Stack>
 
-      {/* Dialogs */}
+      {/* ══════════════════════════════════════════
+          FINANCEIRO — 3 cards
+      ══════════════════════════════════════════ */}
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={3}>
+
+        {/* Entradas */}
+        <FinCard elevation={0}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Box sx={{ width: 32, height: 32, borderRadius: 1.5, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#22c55e", 0.1) }}>
+                <ArrowDownwardRoundedIcon sx={{ fontSize: 16, color: "#22c55e" }} />
+              </Box>
+              <Typography variant="body2" fontWeight={600} color="text.secondary">
+                Entradas
+              </Typography>
+            </Stack>
+            <TrendingUpRoundedIcon sx={{ fontSize: 16, color: "#22c55e" }} />
+          </Stack>
+          <Typography variant="h5" fontWeight={800} color="#22c55e">
+            {brl(totalEntradas)}
+          </Typography>
+        </FinCard>
+
+        {/* Saídas */}
+        <FinCard elevation={0}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Box sx={{ width: 32, height: 32, borderRadius: 1.5, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: alpha("#ef4444", 0.1) }}>
+                <ArrowUpwardRoundedIcon sx={{ fontSize: 16, color: "#ef4444" }} />
+              </Box>
+              <Typography variant="body2" fontWeight={600} color="text.secondary">
+                Saídas
+              </Typography>
+            </Stack>
+          </Stack>
+          <Typography variant="h5" fontWeight={800} color="#ef4444">
+            {brl(totalSaidas)}
+          </Typography>
+        </FinCard>
+
+        {/* Saldo */}
+        <FinCard
+          elevation={0}
+          sx={{
+            background: (t) =>
+              `linear-gradient(135deg, ${alpha(t.palette.primary.main, 0.08)}, ${alpha(t.palette.primary.light, 0.03)})`,
+            borderColor: (t) => alpha(t.palette.primary.main, 0.2),
+          }}
+        >
+          <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Box sx={{ width: 32, height: 32, borderRadius: 1.5, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: (t) => alpha(t.palette.primary.main, 0.12) }}>
+                <AccountBalanceWalletOutlinedIcon sx={{ fontSize: 16, color: "primary.main" }} />
+              </Box>
+              <Typography variant="body2" fontWeight={600} color="text.secondary">
+                Saldo
+              </Typography>
+            </Stack>
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              color={saldoPct >= 50 ? "success.main" : "warning.main"}
+            >
+              {saldoPct}% receita
+            </Typography>
+          </Stack>
+          <Typography
+            variant="h5"
+            fontWeight={800}
+            color={saldo >= 0 ? "primary.main" : "error.main"}
+          >
+            {brl(saldo)}
+          </Typography>
+          <LinearProgress
+            variant="determinate"
+            value={saldoPct}
+            sx={{
+              mt: 1.5,
+              height: 4,
+              borderRadius: 999,
+              bgcolor: (t) => alpha(t.palette.primary.main, 0.12),
+              "& .MuiLinearProgress-bar": {
+                borderRadius: 999,
+                bgcolor: saldoPct >= 50 ? "success.main" : "warning.main",
+              },
+            }}
+          />
+        </FinCard>
+      </Stack>
+
+      {/* ══════════════════════════════════════════
+          LINHA INFERIOR — Ordens recentes + Clientes + Ações rápidas
+      ══════════════════════════════════════════ */}
+      <Stack direction={{ xs: "column", lg: "row" }} spacing={2.5}>
+
+        {/* Ordens recentes */}
+        <Paper
+          elevation={0}
+          sx={{
+            flex: 2,
+            borderRadius: 3,
+            border: (t) => `1px solid ${t.palette.divider}`,
+            p: { xs: 2.5, md: 3 },
+            minWidth: 0,
+          }}
+        >
+          <SectionTitle
+            action={
+              <Button
+                size="small"
+                endIcon={<ArrowForwardRoundedIcon />}
+                onClick={() => nav("/tarefas")}
+                sx={{ textTransform: "none", fontWeight: 600, borderRadius: 999, fontSize: 12 }}
+              >
+                Ver todas
+              </Button>
+            }
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <AssignmentRoundedIcon sx={{ fontSize: 18, color: "primary.main" }} />
+              <span>Ordens recentes</span>
+              {ordensAbertas > 0 && (
+                <Chip
+                  label={ordensAbertas}
+                  size="small"
+                  color="warning"
+                  sx={{ height: 18, fontSize: 10, fontWeight: 800 }}
+                />
+              )}
+            </Stack>
+          </SectionTitle>
+
+          {tasks.length === 0 ? (
+            <Stack alignItems="center" py={4} spacing={1}>
+              <AssignmentRoundedIcon sx={{ fontSize: 36, color: "text.disabled" }} />
+              <Typography variant="body2" color="text.disabled">
+                Nenhuma ordem registrada ainda
+              </Typography>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<AddRoundedIcon />}
+                onClick={() => setOpenTask(true)}
+                sx={{ textTransform: "none", borderRadius: 999, mt: 0.5 }}
+              >
+                Criar primeira O.S.
+              </Button>
+            </Stack>
+          ) : (
+            <Stack divider={<Divider />}>
+              {tasks.slice(0, 6).map((t, i) => (
+                <OrderRow
+                  key={t.id ?? i}
+                  order={t}
+                  onClick={() => t.id && nav(`/ordens/${t.id}`)}
+                />
+              ))}
+            </Stack>
+          )}
+        </Paper>
+
+        {/* Coluna direita */}
+        <Stack flex={1} spacing={2.5} minWidth={0}>
+
+          {/* Clientes recentes */}
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: 3,
+              border: (t) => `1px solid ${t.palette.divider}`,
+              p: { xs: 2.5, md: 3 },
+            }}
+          >
+            <SectionTitle
+              action={
+                <Button
+                  size="small"
+                  endIcon={<ArrowForwardRoundedIcon />}
+                  onClick={() => nav("/clientes")}
+                  sx={{ textTransform: "none", fontWeight: 600, borderRadius: 999, fontSize: 12 }}
+                >
+                  Ver todos
+                </Button>
+              }
+            >
+              <Stack direction="row" spacing={1} alignItems="center">
+                <PersonOutlineIcon sx={{ fontSize: 18, color: "primary.main" }} />
+                <span>Clientes recentes</span>
+              </Stack>
+            </SectionTitle>
+
+            {clients.length === 0 ? (
+              <Stack alignItems="center" py={3} spacing={1}>
+                <PersonOutlineIcon sx={{ fontSize: 32, color: "text.disabled" }} />
+                <Typography variant="body2" color="text.disabled">
+                  Nenhum cliente ainda
+                </Typography>
+              </Stack>
+            ) : (
+              <Stack divider={<Divider />}>
+                {clients.slice(0, 4).map((c, i) => (
+                  <ClientRow key={c.id ?? i} client={c} />
+                ))}
+              </Stack>
+            )}
+          </Paper>
+
+          {/* Ações rápidas */}
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: 3,
+              border: (t) => `1px solid ${t.palette.divider}`,
+              p: { xs: 2.5, md: 3 },
+            }}
+          >
+            <SectionTitle>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <RadioButtonCheckedRoundedIcon sx={{ fontSize: 18, color: "primary.main" }} />
+                <span>Ações rápidas</span>
+              </Stack>
+            </SectionTitle>
+
+            <Stack spacing={1}>
+              {[
+                { label: "Nova Ordem de Serviço", icon: <AssignmentRoundedIcon fontSize="small" />, action: () => setOpenTask(true) },
+                { label: "Cadastrar cliente", icon: <PersonOutlineIcon fontSize="small" />, action: () => setOpenClient(true) },
+                { label: "Cadastrar veículo", icon: <DirectionsCarRoundedIcon fontSize="small" />, action: () => setOpenCar(true) },
+                { label: "Ver agenda", icon: <CalendarTodayRoundedIcon fontSize="small" />, action: () => nav("/agenda") },
+              ].map((item) => (
+                <QuickBtn
+                  key={item.label}
+                  fullWidth
+                  onClick={item.action}
+                  variant="outlined"
+                  startIcon={item.icon}
+                >
+                  {item.label}
+                </QuickBtn>
+              ))}
+            </Stack>
+          </Paper>
+        </Stack>
+      </Stack>
+
+      {/* ══════════════════════════════════════════
+          DIALOGS
+      ══════════════════════════════════════════ */}
       <DialogAgendamento
         open={openTask}
         onClose={() => setOpenTask(false)}
-        onSubmit={async (data: any) => {
+        onCreate={async (data) => {
           try {
             const res = await api.post("/ordens", data);
             setTasks((prev) => [res.data, ...prev]);
             setOpenTask(false);
           } catch (err) {
-            console.error("Erro ao criar tarefa:", err);
+            console.error("Erro ao criar ordem:", err);
           }
         }}
       />
 
       <DialogCarro
         open={openCar}
-        mode="create"
         onClose={() => setOpenCar(false)}
-        onSubmit={async (data: any) => {
+        mode="create"
+        onSubmit={async (data) => {
           try {
             const res = await api.post("/veiculos", data);
             setCars((prev) => [res.data, ...prev]);
-            setOpenCar(false);
           } catch (err) {
-            console.error("Erro ao criar carro:", err);
+            console.error("Erro ao criar veículo:", err);
           }
         }}
       />
 
       <DialogCliente
         open={openClient}
-        mode="create"
         onClose={() => setOpenClient(false)}
-        onSubmit={async (data: any) => {
+        mode="create"
+        onSubmit={async (data) => {
           try {
             const res = await api.post("/clientes", data);
             setClients((prev) => [res.data, ...prev]);
-            setOpenClient(false);
           } catch (err) {
             console.error("Erro ao criar cliente:", err);
+          }
+        }}
+      />
+
+      <DialogOrcamento
+        open={openOrcamento}
+        onClose={() => setOpenOrcamento(false)}
+        mode="create"
+        onSubmit={async (data) => {
+          try {
+            await api.post("/orcamentos", data);
+            setOpenOrcamento(false);
+          } catch (err) {
+            console.error("Erro ao criar orçamento:", err);
           }
         }}
       />

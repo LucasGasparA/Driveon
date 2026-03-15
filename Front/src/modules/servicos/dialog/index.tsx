@@ -19,17 +19,17 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   Chip,
+  alpha,
 } from "@mui/material";
-import { alpha, styled } from "@mui/material/styles";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import BuildRoundedIcon from "@mui/icons-material/BuildRounded";
 import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded";
-import PaidRoundedIcon from "@mui/icons-material/PaidRounded";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import CategoryRoundedIcon from "@mui/icons-material/CategoryRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import ToggleOffRoundedIcon from "@mui/icons-material/ToggleOffRounded";
 import ToggleOnRoundedIcon from "@mui/icons-material/ToggleOnRounded";
+import { HeaderIcon, SectionLabel, PrecoDisplay } from "../../../components/styled/DialogStyles";
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────
 
@@ -86,10 +86,7 @@ const TEMPOS_RAPIDOS = [
   { label: "8h", value: 480 },
 ];
 
-// ─── Utilitários ──────────────────────────────────────────────────────────
-
 function formatPreco(raw: string): string {
-  // Remove tudo que não for dígito
   const digits = raw.replace(/\D/g, "");
   if (!digits) return "";
   const num = parseFloat(digits) / 100;
@@ -106,41 +103,6 @@ function formatTempo(minutos: number): string {
   const m = minutos % 60;
   return m > 0 ? `${h}h ${m}min` : `${h}h`;
 }
-
-// ─── Styled components ─────────────────────────────────────────────────────
-
-const HeaderIcon = styled(Box)(({ theme }) => ({
-  width: 38,
-  height: 38,
-  borderRadius: 10,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-  color: "#fff",
-  flexShrink: 0,
-  boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.35)}`,
-  "& svg": { fontSize: 20 },
-}));
-
-const SectionLabel = styled(Typography)(({ theme }) => ({
-  fontSize: 11,
-  fontWeight: 700,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  color: theme.palette.text.disabled,
-  marginBottom: theme.spacing(1.5),
-}));
-
-const PrecoDisplay = styled(Box)(({ theme }) => ({
-  display: "inline-flex",
-  alignItems: "baseline",
-  gap: 4,
-  padding: "6px 14px",
-  borderRadius: 8,
-  background: alpha(theme.palette.success.main, 0.08),
-  border: `1.5px solid ${alpha(theme.palette.success.main, 0.2)}`,
-}));
 
 // ─── Componente principal ──────────────────────────────────────────────────
 
@@ -165,7 +127,6 @@ export default function ServicoDialog({
   const [submitAttempted, setSubmitAttempted] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
 
-  // ── Reset ao abrir ──
   React.useEffect(() => {
     if (!open) return;
     setNome(initial?.nome ?? "");
@@ -184,11 +145,9 @@ export default function ServicoDialog({
     setConfirmDelete(false);
   }, [open, initial]);
 
-  // ── Revalida ──
   React.useEffect(() => {
     if (submitAttempted) validate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nome, precoFormatado]);
+  }, [nome, precoFormatado, submitAttempted]);
 
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
@@ -233,7 +192,6 @@ export default function ServicoDialog({
         },
       }}
     >
-      {/* ── Cabeçalho ── */}
       <Paper
         elevation={0}
         square
@@ -266,25 +224,10 @@ export default function ServicoDialog({
         </Stack>
 
         <Stack direction="row" spacing={1.5} alignItems="center">
-          {/* Preview do preço no header */}
           {precoNum > 0 && (
             <PrecoDisplay>
-              <Typography
-                variant="caption"
-                color="success.main"
-                fontWeight={600}
-                lineHeight={1}
-              >
-                R$
-              </Typography>
-              <Typography
-                variant="subtitle1"
-                color="success.main"
-                fontWeight={800}
-                lineHeight={1}
-              >
-                {precoFormatado}
-              </Typography>
+              <Typography variant="caption" color="success.main" fontWeight={600} lineHeight={1}>R$</Typography>
+              <Typography variant="subtitle1" color="success.main" fontWeight={800} lineHeight={1}>{precoFormatado}</Typography>
             </PrecoDisplay>
           )}
           <IconButton onClick={onClose} size="small">
@@ -293,7 +236,6 @@ export default function ServicoDialog({
         </Stack>
       </Paper>
 
-      {/* ── Conteúdo ── */}
       <DialogContent
         sx={{
           px: { xs: 3, sm: 4 },
@@ -303,17 +245,13 @@ export default function ServicoDialog({
         }}
       >
         <Grid container spacing={3}>
-
-          {/* ────── Seção 1: Identificação ────── */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <SectionLabel>
               <BuildRoundedIcon sx={{ fontSize: 12, mr: 0.5, verticalAlign: "middle" }} />
               Identificação do serviço
             </SectionLabel>
             <Grid container spacing={2}>
-
-              {/* Nome */}
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   label="Nome do serviço *"
                   value={nome}
@@ -334,8 +272,7 @@ export default function ServicoDialog({
                 />
               </Grid>
 
-              {/* Categoria */}
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   select
                   label="Categoria"
@@ -352,19 +289,14 @@ export default function ServicoDialog({
                     ),
                   }}
                 >
-                  <MenuItem value="">
-                    <em>Sem categoria</em>
-                  </MenuItem>
+                  <MenuItem value=""><em>Sem categoria</em></MenuItem>
                   {CATEGORIAS.map((c) => (
-                    <MenuItem key={c.value} value={c.value}>
-                      {c.label}
-                    </MenuItem>
+                    <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>
                   ))}
                 </TextField>
               </Grid>
 
-              {/* Preço */}
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Preço *"
                   value={precoFormatado}
@@ -374,34 +306,22 @@ export default function ServicoDialog({
                   fullWidth
                   error={!!errors.preco}
                   helperText={errors.preco || " "}
-                  inputProps={{ inputMode: "numeric" }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <Typography variant="body2" color="text.secondary" fontWeight={600}>
-                          R$
-                        </Typography>
+                        <Typography variant="body2" color="text.secondary" fontWeight={600}>R$</Typography>
                       </InputAdornment>
                     ),
                   }}
-                  sx={{
-                    "& input": {
-                      fontWeight: 700,
-                      fontSize: "1rem",
-                      color: (t) =>
-                        precoNum > 0 ? t.palette.success.main : undefined,
-                    },
-                  }}
+                  sx={{ "& input": { fontWeight: 700, color: (t) => precoNum > 0 ? t.palette.success.main : undefined } }}
                 />
               </Grid>
 
-              {/* Descrição */}
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   label="Descrição"
                   value={descricao}
                   onChange={(e) => setDescricao(e.target.value)}
-                  placeholder="Descreva o que está incluso neste serviço..."
                   size="small"
                   fullWidth
                   multiline
@@ -419,114 +339,70 @@ export default function ServicoDialog({
             </Grid>
           </Grid>
 
-          {/* ────── Seção 2: Detalhes operacionais ────── */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Divider sx={{ mb: 2 }} />
             <SectionLabel>
               <AccessTimeRoundedIcon sx={{ fontSize: 12, mr: 0.5, verticalAlign: "middle" }} />
               Detalhes operacionais
             </SectionLabel>
             <Grid container spacing={2} alignItems="flex-start">
-
-              {/* Tempo estimado */}
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Tempo estimado"
                   type="number"
                   value={tempoEstimado}
-                  onChange={(e) =>
-                    setTempoEstimado(e.target.value === "" ? "" : parseInt(e.target.value, 10))
-                  }
-                  placeholder="Ex.: 60"
+                  onChange={(e) => setTempoEstimado(e.target.value === "" ? "" : parseInt(e.target.value, 10))}
                   size="small"
                   fullWidth
-                  helperText={
-                    tempoEstimado
-                      ? `≈ ${formatTempo(Number(tempoEstimado))}`
-                      : " "
-                  }
-                  inputProps={{ min: 1 }}
+                  helperText={tempoEstimado ? `≈ ${formatTempo(Number(tempoEstimado))}` : " "}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
                         <AccessTimeRoundedIcon fontSize="small" color="action" />
                       </InputAdornment>
                     ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <Typography variant="caption" color="text.disabled">
-                          min
-                        </Typography>
-                      </InputAdornment>
-                    ),
+                    endAdornment: <InputAdornment position="end"><Typography variant="caption" color="text.disabled">min</Typography></InputAdornment>,
                   }}
                 />
-                {/* Atalhos de tempo */}
                 <Stack direction="row" flexWrap="wrap" gap={0.5} mt={-0.5}>
                   {TEMPOS_RAPIDOS.map((t) => (
-                    <Chip
-                      key={t.value}
-                      label={t.label}
-                      size="small"
-                      variant={tempoEstimado === t.value ? "filled" : "outlined"}
-                      color={tempoEstimado === t.value ? "primary" : "default"}
-                      onClick={() =>
-                        setTempoEstimado(tempoEstimado === t.value ? "" : t.value)
-                      }
-                      sx={{ fontSize: 10, height: 20, cursor: "pointer" }}
-                    />
+                    <Chip key={t.value} label={t.label} size="small" variant={tempoEstimado === t.value ? "filled" : "outlined"} color={tempoEstimado === t.value ? "primary" : "default"} onClick={() => setTempoEstimado(tempoEstimado === t.value ? "" : t.value)} sx={{ fontSize: 10, height: 20, cursor: "pointer" }} />
                   ))}
                 </Stack>
               </Grid>
 
-              {/* Ativo / Inativo */}
-              <Grid item xs={12} sm={6}>
-                <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" mb={1}>
-                  Disponibilidade
-                </Typography>
-                <Stack direction="row" spacing={1.5} alignItems="center">
-                  <ToggleButtonGroup
-                    value={ativo ? "ativo" : "inativo"}
-                    exclusive
-                    onChange={(_, val) => {
-                      if (val !== null) setAtivo(val === "ativo");
-                    }}
-                    size="small"
-                    sx={{ "& .MuiToggleButton-root": { textTransform: "none", px: 2 } }}
-                  >
-                    <ToggleButton value="ativo" color="success">
-                      <Stack direction="row" spacing={0.5} alignItems="center">
-                        <ToggleOnRoundedIcon fontSize="small" />
-                        <span>Disponível</span>
-                      </Stack>
-                    </ToggleButton>
-                    <ToggleButton value="inativo">
-                      <Stack direction="row" spacing={0.5} alignItems="center">
-                        <ToggleOffRoundedIcon fontSize="small" />
-                        <span>Indisponível</span>
-                      </Stack>
-                    </ToggleButton>
-                  </ToggleButtonGroup>
-                </Stack>
-                <Typography variant="caption" color="text.disabled" mt={0.5} display="block">
-                  {ativo
-                    ? "Serviço aparece nas ordens de serviço"
-                    : "Serviço oculto nas novas ordens"}
-                </Typography>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" mb={1}>Disponibilidade</Typography>
+                <ToggleButtonGroup
+                  value={ativo ? "ativo" : "inativo"}
+                  exclusive
+                  onChange={(_, val) => { if (val !== null) setAtivo(val === "ativo"); }}
+                  size="small"
+                  sx={{ "& .MuiToggleButton-root": { textTransform: "none", px: 2 } }}
+                >
+                  <ToggleButton value="ativo" color="success">
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                      <ToggleOnRoundedIcon fontSize="small" />
+                      <span>Disponível</span>
+                    </Stack>
+                  </ToggleButton>
+                  <ToggleButton value="inativo">
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                      <ToggleOffRoundedIcon fontSize="small" />
+                      <span>Indisponível</span>
+                    </Stack>
+                  </ToggleButton>
+                </ToggleButtonGroup>
               </Grid>
             </Grid>
           </Grid>
         </Grid>
 
-        {/* ── Alerta ── */}
         <Collapse in={submitAttempted && Object.keys(errors).length > 0}>
-          <Alert severity="error" sx={{ mt: 1, borderRadius: 2 }}>
-            Corrija os campos destacados antes de salvar.
-          </Alert>
+          <Alert severity="error" sx={{ mt: 1, borderRadius: 2 }}>Corrija os campos destacados antes de salvar.</Alert>
         </Collapse>
       </DialogContent>
 
-      {/* ── Rodapé ── */}
       <DialogActions
         sx={{
           px: 4,
@@ -536,70 +412,25 @@ export default function ServicoDialog({
           bgcolor: "background.paper",
         }}
       >
-        {/* Excluir */}
         <Box>
           {isEdit && onDelete && initial && (
             <>
               {!confirmDelete ? (
-                <Button
-                  color="error"
-                  startIcon={<DeleteOutlineRoundedIcon />}
-                  onClick={() => setConfirmDelete(true)}
-                  sx={{ textTransform: "none", borderRadius: 999 }}
-                >
-                  Excluir serviço
-                </Button>
+                <Button color="error" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setConfirmDelete(true)} sx={{ textTransform: "none", borderRadius: 999 }}>Excluir serviço</Button>
               ) : (
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <Typography variant="body2" color="error" fontWeight={600}>
-                    Confirmar exclusão?
-                  </Typography>
-                  <Button
-                    color="error"
-                    variant="contained"
-                    size="small"
-                    disableElevation
-                    onClick={() => onDelete(initial)}
-                    sx={{ textTransform: "none", borderRadius: 999 }}
-                  >
-                    Sim, excluir
-                  </Button>
-                  <Button
-                    size="small"
-                    onClick={() => setConfirmDelete(false)}
-                    sx={{ textTransform: "none", borderRadius: 999 }}
-                  >
-                    Cancelar
-                  </Button>
+                  <Typography variant="body2" color="error" fontWeight={600}>Confirmar exclusão?</Typography>
+                  <Button color="error" variant="contained" size="small" onClick={() => onDelete(initial)} sx={{ textTransform: "none", borderRadius: 999 }}>Sim, excluir</Button>
+                  <Button size="small" onClick={() => setConfirmDelete(false)} sx={{ textTransform: "none", borderRadius: 999 }}>Cancelar</Button>
                 </Stack>
               )}
             </>
           )}
         </Box>
 
-        {/* Ações principais */}
         <Stack direction="row" spacing={1.5}>
-          <Button
-            onClick={onClose}
-            sx={{ textTransform: "none", borderRadius: 999, color: "text.secondary" }}
-          >
-            Cancelar
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disableElevation
-            sx={{
-              textTransform: "none",
-              borderRadius: 999,
-              px: 3.5,
-              fontWeight: 700,
-              background: (t) =>
-                `linear-gradient(135deg, ${t.palette.primary.main}, ${t.palette.primary.dark})`,
-            }}
-          >
-            {isEdit ? "Salvar alterações" : "Cadastrar serviço"}
-          </Button>
+          <Button onClick={onClose} sx={{ textTransform: "none", borderRadius: 999, color: "text.secondary" }}>Cancelar</Button>
+          <Button variant="contained" onClick={handleSubmit} disableElevation sx={{ borderRadius: 999, px: 3.5, fontWeight: 700, background: (t) => `linear-gradient(135deg, ${t.palette.primary.main}, ${t.palette.primary.dark})` }}>{isEdit ? "Salvar alterações" : "Cadastrar serviço"}</Button>
         </Stack>
       </DialogActions>
     </Dialog>

@@ -1,55 +1,78 @@
 import {
   AppBar,
   Toolbar,
-  Typography,
   Box,
   Avatar,
   IconButton,
   Paper,
   InputBase,
   Stack,
+  Divider,
   Menu,
   MenuItem,
   ListItemIcon,
   CircularProgress,
-  Tooltip,
+  Typography,
   Badge,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import NotificationsRoundedIcon from "@mui/icons-material/NotificationsRounded";
-import SearchIcon from "@mui/icons-material/Search";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
-import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
-import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineRounded";
-import ShoppingBagRoundedIcon from "@mui/icons-material/ShoppingBagRounded";
-import { useState, useEffect } from "react";
+import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../api/api";
 import { useNavigate } from "react-router-dom";
 
-export default function AppTopbar({ drawerWidth }: { drawerWidth: number }) {
+// ─── Mapa de cargo para exibição ─────────────────────────────────────────
+
+const CARGO_LABEL: Record<string, string> = {
+  administrador: "Administrador",
+  gestoroficina: "Gestor",
+  gerente: "Gerente",
+  atendente: "Atendente",
+  mecanico: "Mecânico",
+  funcionario: "Funcionário",
+  cliente: "Cliente",
+  sistema: "Sistema",
+};
+
+// ─── Componente ──────────────────────────────────────────────────────────
+
+export default function AppTopbar({
+  drawerWidth,
+}: {
+  drawerWidth: number;
+  onMenuClick?: () => void;
+}) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
+  // Menu de perfil
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
+  const menuOpen = Boolean(anchorEl);
 
+  // Busca
   const [searchTerm, setSearchTerm] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
-  const handleLogout = () => {
-    signOut();
-    window.location.href = "/login";
-  };
+  // ── Fechar busca ao clicar fora ──
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleMenuClose = () => setAnchorEl(null);
-
-  // === SEARCH FUNCTIONAL ===
+  // ── Busca com debounce ──
   useEffect(() => {
     if (searchTerm.trim().length < 2) {
       setResults([]);
@@ -57,13 +80,12 @@ export default function AppTopbar({ drawerWidth }: { drawerWidth: number }) {
       return;
     }
 
-    const delayDebounce = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       try {
         setLoadingSearch(true);
         const { data } = await api.get("/clientes", {
           params: { search: searchTerm },
         });
-
         setResults(data);
         setSearchOpen(true);
       } catch (err) {
@@ -73,10 +95,23 @@ export default function AppTopbar({ drawerWidth }: { drawerWidth: number }) {
       }
     }, 300);
 
-    return () => clearTimeout(delayDebounce);
+    return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // =================================================
+  const handleLogout = () => {
+    signOut();
+    window.location.href = "/login";
+  };
+
+  // Inicial do avatar
+  const nomeUsuario = user?.nome || "Usuário";
+  const avatarLetter = nomeUsuario[0].toUpperCase();
+
+  // Cargo formatado
+  const cargoLabel =
+    CARGO_LABEL[(user?.tipo ?? "").toLowerCase()] ??
+    user?.tipo ??
+    "Usuário";
 
   return (
     <AppBar
@@ -85,178 +120,273 @@ export default function AppTopbar({ drawerWidth }: { drawerWidth: number }) {
       sx={{
         width: { xs: "100%", md: `calc(100% - ${drawerWidth}px)` },
         ml: { xs: 0, md: `${drawerWidth}px` },
-        bgcolor: "#0D1B2A", // Deep Blue DriveOn
-        borderBottom: "1px solid rgba(255,255,255,0.05)",
-        zIndex: (theme) => theme.zIndex.drawer + 1,
+        bgcolor: "background.paper",
+        borderBottom: (t) => `1px solid ${t.palette.divider}`,
+        color: "text.primary",
+        transition: "width 0.3s ease, margin 0.3s ease",
       }}
     >
-      <Toolbar sx={{ minHeight: 64, px: 3 }}>
-        <Box sx={{ flex: 1, display: "flex", justifyContent: "center", px: 2 }}>
-          
-          {/* Saudações */}
-          <Box sx={{ display: "flex", alignItems: "flex-start", flexDirection: "column" }}>
-            <Typography variant="h6" sx={{ fontWeight: 500 }}>
-              Olá {user?.nome || "usuário"}
-            </Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 300 }}>
-              Bem-vindo de volta!
-            </Typography>
-          </Box>
+      <Toolbar sx={{ minHeight: "64px !important", px: { xs: 2, sm: 3 }, position: "relative" }}>
 
-          <Box sx={{ flex: 1 }} />
-
-          {/* SEARCH - Next Fit Style */}
-          <Box sx={{ position: "relative", width: { xs: "100%", sm: 400, md: 500 } }}>
-            <Paper
-              elevation={0}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                height: 40,
-                borderRadius: "8px",
-                width: "100%",
-                bgcolor: "rgba(255, 255, 255, 0.1)", // Light transparent overlay
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                transition: "all 0.2s",
-                "&:hover": { bgcolor: "rgba(255, 255, 255, 0.15)" },
-                "&:focus-within": { bgcolor: "#fff", border: "1px solid #fff" }
-              }}
-            >
-              <SearchIcon sx={{ ml: 1.5, color: "rgba(255,255,255,0.6)", fontSize: 20 }} />
-              <InputBase
-                placeholder="Pesquisar placa, cliente ou número da OS"
-                sx={{ 
-                  ml: 1, 
-                  flex: 1, 
-                  color: "inherit",
-                  "& .MuiInputBase-input": { 
-                    color: "rgba(255,255,255,0.9)",
-                    "&:focus": { color: "#333" }
-                  }
-                }}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onFocus={() => results.length && setSearchOpen(true)}
-              />
-            </Paper>
-
-            {/* DROPDOWN RESULTADOS */}
-            {searchOpen && (
-              <Paper
-                elevation={3}
-                sx={{
-                  position: "absolute",
-                  top: 52,
-                  width: "100%",
-                  maxHeight: 260,
-                  overflowY: "auto",
-                  borderRadius: 2,
-                  zIndex: 10,
-                }}
-              >
-                {loadingSearch && (
-                  <Box sx={{ p: 2, textAlign: "center" }}>
-                    <CircularProgress size={22} />
-                  </Box>
-                )}
-
-                {!loadingSearch && results.length === 0 && (
-                  <Box sx={{ p: 2, textAlign: "center", color: "text.secondary" }}>
-                    Nenhum cliente encontrado
-                  </Box>
-                )}
-
-                {!loadingSearch &&
-                  results.map((c) => (
-                    <MenuItem
-                      key={c.id}
-                      onClick={() => {
-                        setSearchOpen(false);
-                        setSearchTerm("");
-                        navigate(`/clientes/${c.id}`);
-                      }}
-                    >
-                      <Typography sx={{ fontWeight: 500 }}>{c.nome}</Typography>
-                    </MenuItem>
-                  ))}
-              </Paper>
-            )}
-          </Box>
-        </Box>
-
-        {/* Menu da direita - Benchmarking Style */}
-        <Stack
-          direction="row"
-          alignItems="center"
-          spacing={1}
-          sx={{ minWidth: 300, justifyContent: "flex-end" }}
+        {/* ── Barra de pesquisa — centralizada absolutamente ── */}
+        <Box
+          ref={searchRef}
+          sx={{
+            position: "absolute",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: { xs: "50%", sm: "45%", md: "40%" },
+            maxWidth: 520,
+            zIndex: 1,
+          }}
         >
-          <Tooltip title="Loja">
-            <IconButton size="small" sx={{ color: "#fff", opacity: 0.8 }}>
-              <ShoppingBagRoundedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          
-          <Tooltip title="Ajuda">
-            <IconButton size="small" sx={{ color: "#fff", opacity: 0.8 }}>
-              <HelpOutlineRoundedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title="Chat">
-            <IconButton size="small" sx={{ color: "#fff", opacity: 0.8 }}>
-              <ChatBubbleOutlineRoundedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title="Notificações">
-            <IconButton size="small" sx={{ color: "#fff", opacity: 0.8 }}>
-              <Badge badgeContent={29} color="error" sx={{ "& .MuiBadge-badge": { fontSize: 10, height: 16, minWidth: 16 } }}>
-                <NotificationsRoundedIcon fontSize="small" />
-              </Badge>
-            </IconButton>
-          </Tooltip>
-
-          <Box sx={{ ml: 2, display: "flex", alignItems: "center", cursor: "pointer" }} onClick={handleMenuOpen}>
-            <Avatar
-              src="/avatar-gustavo.jpg"
-              sx={{ width: 34, height: 34, border: "2px solid rgba(255,255,255,0.2)" }}
-              alt={user?.nome || "Usuário"}
-            />
-            <Box sx={{ ml: 1.5, display: { xs: "none", sm: "block" } }}>
-              <Typography variant="caption" sx={{ color: "#fff", fontWeight: 700, display: "block", lineHeight: 1 }}>
-                {user?.nome || "Admin Test"}
-              </Typography>
-              <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.5)", fontSize: 10 }}>
-                {user?.tipo?.toUpperCase() || "ADMIN"} - DRIVEON
-              </Typography>
-            </Box>
-            <KeyboardArrowDownIcon sx={{ color: "#fff", opacity: 0.5, ml: 0.5 }} fontSize="small" />
-          </Box>
-
-          <Menu
-            anchorEl={anchorEl}
-            open={open}
-            onClose={handleMenuClose}
-            transformOrigin={{ horizontal: "right", vertical: "top" }}
-            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-            PaperProps={{
-              sx: {
-                mt: 1.5,
-                borderRadius: 2,
-                boxShadow: "0px 8px 24px rgba(0,0,0,0.12)",
-                minWidth: 200,
+          <Paper
+            elevation={0}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              px: 2,
+              py: 0.75,
+              borderRadius: 999,
+              border: (t) => `1.5px solid ${searchTerm ? t.palette.primary.main : t.palette.divider}`,
+              bgcolor: (t) => searchTerm
+                ? alpha(t.palette.primary.main, 0.04)
+                : alpha(t.palette.background.default, 0.8),
+              transition: "border-color 0.2s, background 0.2s",
+              "&:hover": {
+                borderColor: "primary.main",
               },
             }}
           >
-            <MenuItem onClick={handleLogout} sx={{ py: 1.5 }}>
-              <ListItemIcon>
-                <LogoutRoundedIcon fontSize="small" color="error" />
-              </ListItemIcon>
-              <Typography variant="body2" fontWeight={600} color="error">Sair do Sistema</Typography>
-            </MenuItem>
-          </Menu>
+            {loadingSearch ? (
+              <CircularProgress size={16} sx={{ mr: 1.5, flexShrink: 0 }} />
+            ) : (
+              <SearchRoundedIcon
+                sx={{
+                  fontSize: 18,
+                  mr: 1.5,
+                  flexShrink: 0,
+                  color: searchTerm ? "primary.main" : "text.disabled",
+                  transition: "color 0.2s",
+                }}
+              />
+            )}
+            <InputBase
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Pesquisar placa, cliente ou número da OS..."
+              sx={{
+                flex: 1,
+                fontSize: 13.5,
+                "& input": {
+                  padding: 0,
+                  "&::placeholder": { color: "text.disabled", opacity: 1 },
+                },
+              }}
+              onFocus={() => results.length > 0 && setSearchOpen(true)}
+            />
+            {searchTerm && (
+              <IconButton
+                size="small"
+                onClick={() => { setSearchTerm(""); setSearchOpen(false); }}
+                sx={{ ml: 0.5, p: 0.25 }}
+              >
+                <Box sx={{ fontSize: 16, lineHeight: 1, color: "text.disabled" }}>×</Box>
+              </IconButton>
+            )}
+          </Paper>
+
+          {/* Dropdown de resultados */}
+          {searchOpen && (
+            <Paper
+              elevation={4}
+              sx={{
+                position: "absolute",
+                top: "calc(100% + 8px)",
+                left: 0,
+                right: 0,
+                zIndex: 1300,
+                borderRadius: 2,
+                overflow: "hidden",
+                border: (t) => `1px solid ${t.palette.divider}`,
+                boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
+              }}
+            >
+              {results.length === 0 ? (
+                <Box sx={{ p: 2.5, textAlign: "center" }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Nenhum cliente encontrado para "{searchTerm}"
+                  </Typography>
+                </Box>
+              ) : (
+                results.map((c) => (
+                  <MenuItem
+                    key={c.id}
+                    onClick={() => {
+                      setSearchOpen(false);
+                      setSearchTerm("");
+                      navigate(`/clientes/${c.id}`);
+                    }}
+                    sx={{ py: 1.25, px: 2 }}
+                  >
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <Avatar
+                        sx={{
+                          width: 30,
+                          height: 30,
+                          fontSize: 13,
+                          fontWeight: 700,
+                          bgcolor: "primary.main",
+                        }}
+                      >
+                        {(c.nome ?? "?")[0].toUpperCase()}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="body2" fontWeight={600}>
+                          {c.nome}
+                        </Typography>
+                        {c.telefone && (
+                          <Typography variant="caption" color="text.secondary">
+                            {c.telefone}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Stack>
+                  </MenuItem>
+                ))
+              )}
+            </Paper>
+          )}
+        </Box>
+
+        {/* ── Ações da direita — empurradas pro canto ──────── */}
+        <Box sx={{ flex: 1 }} />
+        {/* ── Ações da direita ──────────────────────────────── */}
+        <Stack direction="row" alignItems="center" spacing={0.75}>
+
+          {/* Notificações */}
+          <IconButton
+            size="small"
+            sx={{
+              width: 36,
+              height: 36,
+              borderRadius: 2,
+              color: "text.secondary",
+              "&:hover": {
+                bgcolor: (t) => alpha(t.palette.primary.main, 0.08),
+                color: "primary.main",
+              },
+            }}
+          >
+            <Badge badgeContent={0} color="error" invisible>
+              <NotificationsRoundedIcon sx={{ fontSize: 20 }} />
+            </Badge>
+          </IconButton>
+
+          <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 24, alignSelf: "center" }} />
+
+          {/* Perfil */}
+          <Paper
+            variant="outlined"
+            onClick={(e) => setAnchorEl(e.currentTarget)}
+            sx={{
+              px: 1.5,
+              py: 0.75,
+              borderRadius: 999,
+              display: "flex",
+              alignItems: "center",
+              gap: 1.25,
+              cursor: "pointer",
+              border: (t) => `1.5px solid ${t.palette.divider}`,
+              bgcolor: "background.paper",
+              transition: "border-color 0.2s, box-shadow 0.2s",
+              "&:hover": {
+                borderColor: "primary.main",
+                boxShadow: (t) => `0 0 0 3px ${alpha(t.palette.primary.main, 0.08)}`,
+              },
+            }}
+          >
+            {/* Avatar */}
+            <Avatar
+              sx={{
+                width: 30,
+                height: 30,
+                fontSize: 13,
+                fontWeight: 800,
+                background: (t) =>
+                  `linear-gradient(135deg, ${t.palette.primary.main}, ${t.palette.primary.dark})`,
+              }}
+            >
+              {avatarLetter}
+            </Avatar>
+
+            {/* Nome + cargo */}
+            <Box sx={{ lineHeight: 1, display: { xs: "none", sm: "block" } }}>
+              <Typography variant="body2" fontWeight={700} lineHeight={1.3}>
+                {nomeUsuario.split(" ")[0]}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" lineHeight={1.2}>
+                {cargoLabel}
+              </Typography>
+            </Box>
+
+            <KeyboardArrowDownRoundedIcon
+              sx={{ fontSize: 16, color: "text.disabled", ml: 0.25 }}
+            />
+          </Paper>
         </Stack>
+
+        {/* ── Menu dropdown do perfil ───────────────────────── */}
+        <Menu
+          anchorEl={anchorEl}
+          open={menuOpen}
+          onClose={() => setAnchorEl(null)}
+          transformOrigin={{ horizontal: "right", vertical: "top" }}
+          anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+          PaperProps={{
+            sx: {
+              mt: 1,
+              borderRadius: 2,
+              border: (t) => `1px solid ${t.palette.divider}`,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
+              minWidth: 200,
+            },
+          }}
+        >
+          {/* Cabeçalho do menu */}
+          <Box sx={{ px: 2, py: 1.5, borderBottom: (t) => `1px solid ${t.palette.divider}` }}>
+            <Typography variant="body2" fontWeight={700}>
+              {nomeUsuario}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {cargoLabel}
+            </Typography>
+          </Box>
+
+          <MenuItem
+            onClick={() => { setAnchorEl(null); navigate("/configuracoes"); }}
+            sx={{ py: 1.25, mt: 0.5 }}
+          >
+            <ListItemIcon>
+              <PersonRoundedIcon fontSize="small" />
+            </ListItemIcon>
+            <Typography variant="body2">Meu perfil</Typography>
+          </MenuItem>
+
+          <Divider sx={{ my: 0.5 }} />
+
+          <MenuItem
+            onClick={handleLogout}
+            sx={{ py: 1.25, color: "error.main", mb: 0.5 }}
+          >
+            <ListItemIcon>
+              <LogoutRoundedIcon fontSize="small" color="error" />
+            </ListItemIcon>
+            <Typography variant="body2" color="error">
+              Sair
+            </Typography>
+          </MenuItem>
+        </Menu>
       </Toolbar>
     </AppBar>
   );

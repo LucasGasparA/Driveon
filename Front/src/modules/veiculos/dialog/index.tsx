@@ -17,8 +17,8 @@ import {
   Box,
   Collapse,
   Alert,
+  alpha,
 } from "@mui/material";
-import { alpha, styled } from "@mui/material/styles";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import DirectionsCarRoundedIcon from "@mui/icons-material/DirectionsCarRounded";
 import BadgeRoundedIcon from "@mui/icons-material/BadgeRounded";
@@ -32,6 +32,7 @@ import NotesRoundedIcon from "@mui/icons-material/NotesRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import { listarClientes } from "../../../api/client";
+import { HeaderIcon, SectionLabel, PlacaDisplay } from "../../../components/styled/DialogStyles";
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────
 
@@ -89,11 +90,6 @@ const CORES_SUGERIDAS = [
 
 // ─── Utilitários de máscara ────────────────────────────────────────────────
 
-/**
- * Aplica máscara de placa:
- *  - Padrão antigo: ABC-1234
- *  - Mercosul:      ABC1D23
- */
 function formatPlaca(raw: string): string {
   const cleaned = raw.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 7);
   if (cleaned.length <= 3) return cleaned;
@@ -101,12 +97,10 @@ function formatPlaca(raw: string): string {
   const letters = cleaned.slice(0, 3);
   const rest = cleaned.slice(3);
 
-  // Mercosul: 4ª posição é letra → ABC1D23
   if (rest.length >= 2 && /[A-Z]/.test(rest[1])) {
-    return `${letters}${rest}`; // sem hífen no Mercosul
+    return `${letters}${rest}`; 
   }
 
-  // Padrão antigo: ABC-1234
   return `${letters}-${rest}`;
 }
 
@@ -116,51 +110,6 @@ function isPlacaValida(placa: string): boolean {
   const mercosul = /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
   return antigo.test(c) || mercosul.test(c);
 }
-
-// ─── Styled components ─────────────────────────────────────────────────────
-
-const HeaderIcon = styled(Box)(({ theme }) => ({
-  width: 38,
-  height: 38,
-  borderRadius: 10,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-  color: "#fff",
-  flexShrink: 0,
-  boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.35)}`,
-  "& svg": { fontSize: 20 },
-}));
-
-const SectionLabel = styled(Typography)(({ theme }) => ({
-  fontSize: 11,
-  fontWeight: 700,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  color: theme.palette.text.disabled,
-  marginBottom: theme.spacing(1.5),
-}));
-
-const PlacaDisplay = styled(Box)(({ theme }) => ({
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)}, ${alpha(
-    theme.palette.primary.main,
-    0.04
-  )})`,
-  border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-  borderRadius: 8,
-  padding: "6px 14px",
-  fontFamily: "'Courier New', monospace",
-  fontWeight: 800,
-  fontSize: 18,
-  letterSpacing: "0.12em",
-  color: theme.palette.primary.main,
-  minWidth: 130,
-  minHeight: 42,
-}));
 
 // ─── Componente principal ──────────────────────────────────────────────────
 
@@ -175,7 +124,6 @@ export default function VehicleDialog({
   const currentYear = new Date().getFullYear();
   const isEdit = mode === "edit";
 
-  // Estado do formulário
   const [clientes, setClientes] = React.useState<{ id: number; nome: string }[]>([]);
   const [clienteId, setClienteId] = React.useState<number>(0);
   const [marca, setMarca] = React.useState("");
@@ -187,21 +135,16 @@ export default function VehicleDialog({
   const [quilometragem, setQuilometragem] = React.useState<number | "">("");
   const [observacao, setObservacao] = React.useState("");
 
-  // Erros de validação
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [submitAttempted, setSubmitAttempted] = React.useState(false);
-
-  // Confirmação de exclusão
   const [confirmDelete, setConfirmDelete] = React.useState(false);
 
-  // ── Carrega clientes ──
   React.useEffect(() => {
     listarClientes().then((data: any) => {
       setClientes(data.map((c: any) => ({ id: c.id, nome: c.nome })));
     });
   }, []);
 
-  // ── Reset ao abrir ──
   React.useEffect(() => {
     if (!open) return;
     setClienteId(0);
@@ -218,12 +161,10 @@ export default function VehicleDialog({
     setConfirmDelete(false);
   }, [open, initial]);
 
-  // ── Validação em tempo real (após primeira tentativa) ──
   React.useEffect(() => {
     if (!submitAttempted) return;
     validate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clienteId, marca, modelo, ano, placa]);
+  }, [clienteId, marca, modelo, ano, placa, submitAttempted]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -250,13 +191,11 @@ export default function VehicleDialog({
     return Object.keys(newErrors).length === 0;
   };
 
-  // ── Máscara de placa ──
   const handlePlacaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatPlaca(e.target.value);
     setPlaca(formatted);
   };
 
-  // ── Submit ──
   const handleSubmit = () => {
     setSubmitAttempted(true);
     if (!validate()) return;
@@ -265,7 +204,7 @@ export default function VehicleDialog({
       cliente_id: clienteId,
       marca: marca.trim(),
       modelo: modelo.trim(),
-      placa: placa.replace(/[^A-Za-z0-9]/g, "").toUpperCase(), // sem formatação para o backend
+      placa: placa.replace(/[^A-Za-z0-9]/g, "").toUpperCase(), 
       ano: ano === "" ? undefined : Number(ano),
       cor: cor.trim() || undefined,
       combustivel: combustivel || undefined,
@@ -275,7 +214,6 @@ export default function VehicleDialog({
     onClose();
   };
 
-  // ── Placa preview ──
   const placaDisplay = placa || "———";
 
   return (
@@ -292,7 +230,6 @@ export default function VehicleDialog({
         },
       }}
     >
-      {/* ── Cabeçalho ── */}
       <Paper
         elevation={0}
         square
@@ -327,7 +264,6 @@ export default function VehicleDialog({
         </Stack>
 
         <Stack direction="row" spacing={1} alignItems="center">
-          {/* Preview da placa */}
           {placa && (
             <PlacaDisplay>
               {placaDisplay}
@@ -339,7 +275,6 @@ export default function VehicleDialog({
         </Stack>
       </Paper>
 
-      {/* ── Conteúdo ── */}
       <DialogContent
         sx={{
           px: { xs: 3, sm: 4 },
@@ -349,16 +284,14 @@ export default function VehicleDialog({
         }}
       >
         <Grid container spacing={3}>
-
-          {/* ────── Seção 1: Proprietário ────── */}
           {!isEdit && (
-            <Grid item xs={12}>
+            <Grid size={12}>
               <SectionLabel>
                 <PersonRoundedIcon sx={{ fontSize: 12, mr: 0.5, verticalAlign: "middle" }} />
                 Proprietário
               </SectionLabel>
               <Grid container spacing={2}>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <TextField
                     select
                     label="Cliente proprietário *"
@@ -391,16 +324,13 @@ export default function VehicleDialog({
             </Grid>
           )}
 
-          {/* ────── Seção 2: Identificação ────── */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <SectionLabel>
               <BadgeRoundedIcon sx={{ fontSize: 12, mr: 0.5, verticalAlign: "middle" }} />
               Identificação do veículo
             </SectionLabel>
             <Grid container spacing={2}>
-
-              {/* Marca */}
-              <Grid item xs={12} sm={6} md={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <TextField
                   label="Marca *"
                   value={marca}
@@ -420,8 +350,7 @@ export default function VehicleDialog({
                 />
               </Grid>
 
-              {/* Modelo */}
-              <Grid item xs={12} sm={6} md={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <TextField
                   label="Modelo *"
                   value={modelo}
@@ -441,8 +370,7 @@ export default function VehicleDialog({
                 />
               </Grid>
 
-              {/* Ano */}
-              <Grid item xs={12} sm={6} md={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <TextField
                   label="Ano *"
                   type="number"
@@ -466,8 +394,7 @@ export default function VehicleDialog({
                 />
               </Grid>
 
-              {/* Placa */}
-              <Grid item xs={12} sm={6} md={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <TextField
                   label="Placa *"
                   value={placa}
@@ -476,13 +403,7 @@ export default function VehicleDialog({
                   size="small"
                   fullWidth
                   error={!!errors.placa}
-                  helperText={
-                    errors.placa || (
-                      <span style={{ fontSize: 11, opacity: 0.7 }}>
-                        Formato antigo (ABC-1234) ou Mercosul (ABC1D23)
-                      </span>
-                    )
-                  }
+                  helperText={errors.placa || " "}
                   inputProps={{
                     maxLength: 8,
                     style: {
@@ -500,18 +421,14 @@ export default function VehicleDialog({
                     ),
                     endAdornment: isPlacaValida(placa) ? (
                       <InputAdornment position="end">
-                        <CheckCircleOutlineRoundedIcon
-                          fontSize="small"
-                          color="success"
-                        />
+                        <CheckCircleOutlineRoundedIcon fontSize="small" color="success" />
                       </InputAdornment>
                     ) : undefined,
                   }}
                 />
               </Grid>
 
-              {/* Cor */}
-              <Grid item xs={12} sm={6} md={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <TextField
                   label="Cor"
                   value={cor}
@@ -528,7 +445,6 @@ export default function VehicleDialog({
                     ),
                   }}
                 />
-                {/* Cores sugeridas */}
                 <Stack direction="row" flexWrap="wrap" gap={0.5} mt={-1} mb={0.5}>
                   {CORES_SUGERIDAS.map((c) => (
                     <Chip
@@ -538,19 +454,13 @@ export default function VehicleDialog({
                       variant={cor === c ? "filled" : "outlined"}
                       color={cor === c ? "primary" : "default"}
                       onClick={() => setCor(cor === c ? "" : c)}
-                      sx={{
-                        fontSize: 10,
-                        height: 20,
-                        cursor: "pointer",
-                        transition: "all 0.15s",
-                      }}
+                      sx={{ fontSize: 10, height: 20, cursor: "pointer" }}
                     />
                   ))}
                 </Stack>
               </Grid>
 
-              {/* Combustível */}
-              <Grid item xs={12} sm={6} md={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <TextField
                   select
                   label="Combustível"
@@ -567,30 +477,23 @@ export default function VehicleDialog({
                     ),
                   }}
                 >
-                  <MenuItem value="">
-                    <em>Não informado</em>
-                  </MenuItem>
+                  <MenuItem value=""><em>Não informado</em></MenuItem>
                   {COMBUSTIVEIS.map((c) => (
-                    <MenuItem key={c.value} value={c.value}>
-                      {c.label}
-                    </MenuItem>
+                    <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>
                   ))}
                 </TextField>
               </Grid>
             </Grid>
           </Grid>
 
-          {/* ────── Seção 3: Informações adicionais ────── */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Divider sx={{ mb: 2 }} />
             <SectionLabel>
               <NotesRoundedIcon sx={{ fontSize: 12, mr: 0.5, verticalAlign: "middle" }} />
               Informações adicionais
             </SectionLabel>
             <Grid container spacing={2}>
-
-              {/* Quilometragem */}
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <TextField
                   label="Quilometragem atual"
                   type="number"
@@ -598,11 +501,9 @@ export default function VehicleDialog({
                   onChange={(e) =>
                     setQuilometragem(e.target.value === "" ? "" : parseInt(e.target.value, 10))
                   }
-                  placeholder="Ex.: 85000"
                   size="small"
                   fullWidth
                   helperText=" "
-                  inputProps={{ min: 0 }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -611,22 +512,18 @@ export default function VehicleDialog({
                     ),
                     endAdornment: (
                       <InputAdornment position="end">
-                        <Typography variant="caption" color="text.disabled">
-                          km
-                        </Typography>
+                        <Typography variant="caption" color="text.disabled">km</Typography>
                       </InputAdornment>
                     ),
                   }}
                 />
               </Grid>
 
-              {/* Observação */}
-              <Grid item xs={12} sm={8}>
+              <Grid size={{ xs: 12, sm: 8 }}>
                 <TextField
                   label="Observações"
                   value={observacao}
                   onChange={(e) => setObservacao(e.target.value)}
-                  placeholder="Modificações, histórico, detalhes relevantes..."
                   size="small"
                   fullWidth
                   multiline
@@ -645,7 +542,6 @@ export default function VehicleDialog({
           </Grid>
         </Grid>
 
-        {/* ── Alerta de campos obrigatórios ── */}
         <Collapse in={submitAttempted && Object.keys(errors).length > 0}>
           <Alert severity="error" sx={{ mt: 1, borderRadius: 2 }}>
             Preencha todos os campos obrigatórios antes de salvar.
@@ -653,7 +549,6 @@ export default function VehicleDialog({
         </Collapse>
       </DialogContent>
 
-      {/* ── Rodapé / Ações ── */}
       <DialogActions
         sx={{
           px: 4,
@@ -663,7 +558,6 @@ export default function VehicleDialog({
           bgcolor: "background.paper",
         }}
       >
-        {/* Botão excluir (apenas no modo edição) */}
         <Box>
           {isEdit && onDelete && initial && (
             <>
@@ -678,43 +572,25 @@ export default function VehicleDialog({
                 </Button>
               ) : (
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <Typography variant="body2" color="error" fontWeight={600}>
-                    Confirmar exclusão?
-                  </Typography>
+                  <Typography variant="body2" color="error" fontWeight={600}>Confirmar exclusão?</Typography>
                   <Button
                     color="error"
                     variant="contained"
                     size="small"
                     onClick={() => onDelete(initial)}
-                    sx={{ textTransform: "none", borderRadius: 999, boxShadow: "none" }}
+                    sx={{ textTransform: "none", borderRadius: 999 }}
                   >
                     Sim, excluir
                   </Button>
-                  <Button
-                    size="small"
-                    onClick={() => setConfirmDelete(false)}
-                    sx={{ textTransform: "none", borderRadius: 999 }}
-                  >
-                    Cancelar
-                  </Button>
+                  <Button size="small" onClick={() => setConfirmDelete(false)} sx={{ textTransform: "none", borderRadius: 999 }}>Cancelar</Button>
                 </Stack>
               )}
             </>
           )}
         </Box>
 
-        {/* Botões principais */}
         <Stack direction="row" spacing={1.5}>
-          <Button
-            onClick={onClose}
-            sx={{
-              textTransform: "none",
-              borderRadius: 999,
-              color: "text.secondary",
-            }}
-          >
-            Cancelar
-          </Button>
+          <Button onClick={onClose} sx={{ textTransform: "none", borderRadius: 999, color: "text.secondary" }}>Cancelar</Button>
           <Button
             variant="contained"
             onClick={handleSubmit}
@@ -724,8 +600,7 @@ export default function VehicleDialog({
               borderRadius: 999,
               px: 3.5,
               fontWeight: 700,
-              background: (t) =>
-                `linear-gradient(135deg, ${t.palette.primary.main}, ${t.palette.primary.dark})`,
+              background: (t) => `linear-gradient(135deg, ${t.palette.primary.main}, ${t.palette.primary.dark})`,
             }}
           >
             {isEdit ? "Salvar alterações" : "Cadastrar veículo"}

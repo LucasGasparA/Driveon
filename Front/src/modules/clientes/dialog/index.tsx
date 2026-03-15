@@ -18,8 +18,8 @@ import {
   Box,
   Avatar,
   Chip,
+  alpha,
 } from "@mui/material";
-import { alpha, styled } from "@mui/material/styles";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import EmailRoundedIcon from "@mui/icons-material/EmailRounded";
@@ -32,6 +32,7 @@ import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import BlockRoundedIcon from "@mui/icons-material/BlockRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import PauseCircleRoundedIcon from "@mui/icons-material/PauseCircleRounded";
+import { HeaderIcon, SectionLabel } from "../../../components/styled/DialogStyles";
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────
 
@@ -124,31 +125,6 @@ function formatPhone(raw: string): string {
 function isEmailValido(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
-
-// ─── Styled components ─────────────────────────────────────────────────────
-
-const HeaderIcon = styled(Box)(({ theme }) => ({
-  width: 38,
-  height: 38,
-  borderRadius: 10,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-  color: "#fff",
-  flexShrink: 0,
-  boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.35)}`,
-  "& svg": { fontSize: 20 },
-}));
-
-const SectionLabel = styled(Typography)(({ theme }) => ({
-  fontSize: 11,
-  fontWeight: 700,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  color: theme.palette.text.disabled,
-  marginBottom: theme.spacing(1.5),
-}));
 
 // ─── Componente principal ──────────────────────────────────────────────────
 
@@ -314,7 +290,7 @@ export default function ClientDialog({
         <Grid container spacing={3}>
 
           {/* ────── Seção 1: Dados pessoais ────── */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <SectionLabel>
               <PersonRoundedIcon sx={{ fontSize: 12, mr: 0.5, verticalAlign: "middle" }} />
               Dados pessoais
@@ -322,7 +298,7 @@ export default function ClientDialog({
             <Grid container spacing={2}>
 
               {/* Nome */}
-              <Grid item xs={12} md={8}>
+              <Grid size={{ xs: 12, md: 8 }}>
                 <TextField
                   label="Nome completo *"
                   value={nome}
@@ -344,7 +320,7 @@ export default function ClientDialog({
               </Grid>
 
               {/* Status */}
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   select
                   label="Status"
@@ -366,7 +342,7 @@ export default function ClientDialog({
               </Grid>
 
               {/* CPF */}
-              <Grid item xs={12} sm={6} md={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <TextField
                   label="CPF"
                   value={cpf}
@@ -394,7 +370,7 @@ export default function ClientDialog({
               </Grid>
 
               {/* Data de nascimento */}
-              <Grid item xs={12} sm={6} md={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <TextField
                   label="Data de nascimento"
                   type="date"
@@ -417,7 +393,7 @@ export default function ClientDialog({
           </Grid>
 
           {/* ────── Seção 2: Contato ────── */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Divider sx={{ mb: 2 }} />
             <SectionLabel>
               <PhoneRoundedIcon sx={{ fontSize: 12, mr: 0.5, verticalAlign: "middle" }} />
@@ -426,7 +402,7 @@ export default function ClientDialog({
             <Grid container spacing={2}>
 
               {/* Telefone */}
-              <Grid item xs={12} sm={6} md={5}>
+              <Grid size={{ xs: 12, sm: 6, md: 5 }}>
                 <TextField
                   label="Telefone / WhatsApp"
                   value={telefone}
@@ -447,7 +423,7 @@ export default function ClientDialog({
               </Grid>
 
               {/* E-mail */}
-              <Grid item xs={12} sm={6} md={7}>
+              <Grid size={{ xs: 12, sm: 6, md: 7 }}>
                 <TextField
                   label="E-mail"
                   value={email}
@@ -476,7 +452,7 @@ export default function ClientDialog({
           </Grid>
 
           {/* ────── Seção 3: Observações ────── */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Divider sx={{ mb: 2 }} />
             <SectionLabel>
               <NotesRoundedIcon sx={{ fontSize: 12, mr: 0.5, verticalAlign: "middle" }} />
