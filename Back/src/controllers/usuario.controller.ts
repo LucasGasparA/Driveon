@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { UsuarioService } from "../services/usuario.service";
+import { UsuarioService } from "../services/usuario.service.js";
 
 export const UsuarioController = {
   async create(req: Request, res: Response) {

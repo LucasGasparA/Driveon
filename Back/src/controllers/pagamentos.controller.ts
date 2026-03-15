@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { PagamentosService } from "../services/pagamentos.service";
+import { PagamentosService } from "../services/pagamentos.service.js";
 
 export const pagamentosController = {
   async listar(req: Request, res: Response) {

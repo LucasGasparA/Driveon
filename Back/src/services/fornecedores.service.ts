@@ -1,4 +1,4 @@
-import { prisma } from "../prisma/client";
+import { prisma } from "../prisma/client.js";
 
 export const FornecedoresService = {
   list: () => prisma.fornecedor.findMany({ include: { cidade: true, oficina: true } }),

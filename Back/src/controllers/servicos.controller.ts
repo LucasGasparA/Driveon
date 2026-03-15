@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { ServicosService } from "../services/servicos.service";
+import { ServicosService } from "../services/servicos.service.js";
 
 export const ServicosController = {
   async list(req: Request, res: Response) {

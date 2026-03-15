@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { OficinaService } from "../services/oficinas.service";
+import { OficinaService } from "../services/oficinas.service.js";
 
 export const OficinaController = {
   async create(req: Request, res: Response) {

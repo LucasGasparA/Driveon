@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { AgendamentoController } from "../controllers/agendamento.controller";
-import { authMiddleware } from "../middlewares/ensureAuth";
+import { AgendamentoController } from "../controllers/agendamento.controller.js";
+import { authMiddleware } from "../middlewares/ensureAuth.js";
 
 const router = Router();
 

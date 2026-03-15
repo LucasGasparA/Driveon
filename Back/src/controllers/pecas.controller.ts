@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { PecasService } from "../services/pecas.service";
+import { PecasService } from "../services/pecas.service.js";
 
 export const PecasController = {
   async list(req: Request, res: Response) {

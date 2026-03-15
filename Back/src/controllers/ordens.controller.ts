@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { OrdensService } from "../services/ordens.service";
+import { OrdensService } from "../services/ordens.service.js";
 
 export const OrdensController = {
   async list(req: Request, res: Response) {
