@@ -32,7 +32,7 @@ export default function AppLayout() {
           flexDirection: 'column',
         }}
       >
-        <Toolbar sx={{ minHeight: 72, flexShrink: 0 }} />
+        <Toolbar sx={{ minHeight: 64, flexShrink: 0 }} />
         <Box sx={{ flexGrow: 1, px: { xs: 2, sm: 3, md: 4 }, pb: 4 }}>
           <Outlet />
         </Box>
