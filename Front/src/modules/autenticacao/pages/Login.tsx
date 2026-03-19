@@ -17,43 +17,36 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import BuildRoundedIcon from "@mui/icons-material/BuildRounded";
-import DirectionsCarRoundedIcon from "@mui/icons-material/DirectionsCarRounded";
-import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
-import BarChartRoundedIcon from "@mui/icons-material/BarChartRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
-import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { paths } from "../../../routes/paths";
 import logo from "../../../assets/logo.png";
 
-// ─── Features exibidas no painel esquerdo ─────────────────────────────────
+// ── Cores da marca (definidas uma única vez no topo) ─────────────────────
+const BLUE_MAIN = "#1976D2";
+const BLUE_LIGHT = "#42A5F5";
+const BLUE_DARK = "#0D47A1";
 
-const FEATURES = [
-  {
-    icon: <AssignmentRoundedIcon sx={{ fontSize: 20 }} />,
-    title: "Ordens de Serviço",
-    desc: "Abertura, acompanhamento e fechamento completo",
+// ── Estilo compartilhado dos campos ──────────────────────────────────────
+const fieldSx = {
+  "& .MuiInputLabel-root": {
+    color: alpha("#fff", 0.35),
+    fontSize: 14,
   },
-  {
-    icon: <DirectionsCarRoundedIcon sx={{ fontSize: 20 }} />,
-    title: "Gestão de Veículos",
-    desc: "Histórico completo por veículo e cliente",
+  "& .MuiInputLabel-root.Mui-focused": { color: BLUE_LIGHT },
+  "& .MuiOutlinedInput-root": {
+    color: "#fff",
+    fontSize: 14,
+    borderRadius: 2.5,
+    bgcolor: alpha("#fff", 0.05),
+    "& fieldset": { borderColor: alpha("#fff", 0.1) },
+    "&:hover fieldset": { borderColor: alpha(BLUE_LIGHT, 0.4) },
+    "&.Mui-focused fieldset": { borderColor: BLUE_LIGHT },
   },
-  {
-    icon: <BarChartRoundedIcon sx={{ fontSize: 20 }} />,
-    title: "Financeiro Integrado",
-    desc: "Contas a pagar, receber e fluxo de caixa",
-  },
-  {
-    icon: <BuildRoundedIcon sx={{ fontSize: 20 }} />,
-    title: "Estoque e Peças",
-    desc: "Controle de estoque com alertas automáticos",
-  },
-];
+} as const;
 
-// ─── Componente principal ──────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────
 
 export default function Login() {
   const nav = useNavigate();
@@ -65,9 +58,10 @@ export default function Login() {
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-  // Redireciona se já autenticado
   useEffect(() => {
+    setMounted(true);
     const token =
       localStorage.getItem("driveon:token") ??
       sessionStorage.getItem("driveon:token");
@@ -77,10 +71,7 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!email || !password) {
-      setError("Preencha o e-mail e a senha.");
-      return;
-    }
+    if (!email || !password) { setError("Preencha o e-mail e a senha."); return; }
     try {
       setLoading(true);
       await signIn(email, password, remember);
@@ -95,54 +86,109 @@ export default function Login() {
   return (
     <Box
       sx={{
-        display: "grid",
-        gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" },
-        height: "100vh",
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
         overflow: "hidden",
+        bgcolor: "#0d1f3c",
       }}
     >
-      {/* ══════════════════════════════════════════
-          PAINEL ESQUERDO — Formulário de login
-      ══════════════════════════════════════════ */}
+
+
+      {/* Gradientes de atmosfera */}
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          bgcolor: "background.default",
-          px: { xs: 3, sm: 6, md: 10 },
-          py: 3,
-          borderRight: (t) => ({ lg: `1px solid ${t.palette.divider}` }),
-          overflow: "hidden",
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `
+            radial-gradient(ellipse 90% 55% at 50% -5%,  ${alpha(BLUE_MAIN, 0.40)} 0%, transparent 70%),
+            radial-gradient(ellipse 55% 45% at 90% 105%, ${alpha(BLUE_LIGHT, 0.18)} 0%, transparent 60%),
+            radial-gradient(ellipse 40% 35% at 5%  95%,  ${alpha(BLUE_DARK, 0.22)} 0%, transparent 60%)
+          `,
+          zIndex: 0,
+        }}
+      />
+
+      {/* Grid de pontos */}
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `radial-gradient(circle, ${alpha(BLUE_LIGHT, 0.12)} 1px, transparent 1px)`,
+          backgroundSize: "28px 28px",
+          zIndex: 0,
+          maskImage: "radial-gradient(ellipse 75% 75% at 50% 50%, black 20%, transparent 100%)",
+        }}
+      />
+
+      {/* Card central */}
+      <Box
+        sx={{
+          position: "relative",
+          zIndex: 1,
+          width: "100%",
+          maxWidth: 440,
+          mx: 3,
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? "translateY(0)" : "translateY(18px)",
+          transition: "opacity 0.55s ease, transform 0.55s ease",
         }}
       >
-        <Box sx={{ width: "100%", maxWidth: 420 }}>
+        {/* Logo */}
+        <Stack alignItems="center" mb={5}>
+          <Box
+            component="img"
+            src={logo}
+            alt="DriveOn"
+            sx={{
+              height: 58,
+              width: "auto",
+              objectFit: "contain",
+              filter: "brightness(0) invert(1)",
+            }}
+          />
+        </Stack>
 
-          {/* Logo */}
-          <Box mb={3.5}>
-            <Box
-              component="img"
-              src={logo}
-              alt="Driveon"
-              sx={{ height: 40, width: "auto", objectFit: "contain" }}
-            />
-          </Box>
-
+        {/* Vidro */}
+        <Box
+          sx={{
+            bgcolor: alpha("#ffffff", 0.04),
+            border: `1px solid ${alpha(BLUE_LIGHT, 0.18)}`,
+            borderRadius: 4,
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            px: { xs: 3.5, sm: 5 },
+            pt: 4.5,
+            pb: 5,
+            boxShadow: `
+              inset 0 1px 0 ${alpha(BLUE_LIGHT, 0.15)},
+              0 24px 48px ${alpha("#000", 0.35)}
+            `,
+          }}
+        >
           {/* Título */}
-          <Box mb={3}>
-            <Typography variant="h5" fontWeight={800} color="text.primary" lineHeight={1.2} mb={0.75}>
-              Bem-vindo de volta
+          <Stack spacing={0.75} mb={4}>
+            <Typography
+              sx={{
+                fontSize: 22,
+                fontWeight: 800,
+                color: "#fff",
+                letterSpacing: "-0.02em",
+                lineHeight: 1.2,
+              }}
+            >
+              Entrar no sistema
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Entre com suas credenciais para acessar o sistema
+            <Typography sx={{ fontSize: 14, color: alpha("#fff", 0.4) }}>
+              Acesse sua conta para continuar
             </Typography>
-          </Box>
+          </Stack>
 
-          {/* Formulário */}
           <form onSubmit={handleSubmit} noValidate>
-            <Stack spacing={2}>
+            <Stack spacing={2.5}>
 
-              {/* E-mail */}
               <TextField
                 label="E-mail"
                 type="email"
@@ -154,20 +200,13 @@ export default function Login() {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <EmailOutlinedIcon sx={{ fontSize: 18, color: "text.disabled" }} />
+                      <EmailOutlinedIcon sx={{ fontSize: 17, color: alpha("#fff", 0.) }} />
                     </InputAdornment>
                   ),
                 }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 2,
-                    bgcolor: "background.paper",
-                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "primary.main" },
-                  },
-                }}
+                sx={fieldSx}
               />
 
-              {/* Senha */}
               <TextField
                 label="Senha"
                 type={show ? "text" : "password"}
@@ -178,196 +217,121 @@ export default function Login() {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LockOutlinedIcon sx={{ fontSize: 18, color: "text.disabled" }} />
+                      <LockOutlinedIcon sx={{ fontSize: 17, color: alpha("#fff", 0.3) }} />
                     </InputAdornment>
                   ),
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton onClick={() => setShow((s) => !s)} edge="end" size="small" tabIndex={-1}>
-                        {show ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
+                      <IconButton
+                        onClick={() => setShow((s) => !s)}
+                        edge="end" size="small" tabIndex={-1}
+                        sx={{ color: alpha("#fff", 0.3) }}
+                      >
+                        {show
+                          ? <VisibilityOff sx={{ fontSize: 17 }} />
+                          : <Visibility sx={{ fontSize: 17 }} />}
                       </IconButton>
                     </InputAdornment>
                   ),
                 }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 2,
-                    bgcolor: "background.paper",
-                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "primary.main" },
-                  },
-                }}
+                sx={fieldSx}
               />
 
-              {/* Lembrar-me e esqueci */}
               <Stack direction="row" alignItems="center" justifyContent="space-between">
                 <FormControlLabel
-                  control={<Checkbox checked={remember} onChange={(e) => setRemember(e.target.checked)} size="small" />}
-                  label={<Typography variant="body2" color="text.secondary">Lembrar-me</Typography>}
+                  control={
+                    <Checkbox
+                      checked={remember}
+                      onChange={(e) => setRemember(e.target.checked)}
+                      size="small"
+                      sx={{
+                        color: alpha("#fff", 0.22),
+                        "&.Mui-checked": { color: BLUE_LIGHT },
+                        p: 0.5,
+                      }}
+                    />
+                  }
+                  label={
+                    <Typography sx={{ fontSize: 13, color: alpha("#fff", 0.4) }}>
+                      Lembrar-me
+                    </Typography>
+                  }
                 />
-                <Button variant="text" size="small" sx={{ textTransform: "none", fontWeight: 600, fontSize: 13, color: "primary.main", p: 0, minWidth: 0 }}>
+                <Button
+                  variant="text" size="small"
+                  sx={{
+                    textTransform: "none", fontWeight: 500, fontSize: 13,
+                    color: alpha("#fff", 0.4), p: 0, minWidth: 0,
+                    "&:hover": { color: BLUE_LIGHT, bgcolor: "transparent" },
+                  }}
+                >
                   Esqueceu a senha?
                 </Button>
               </Stack>
 
-              {/* Erro */}
               <Collapse in={!!error}>
-                <Alert severity="error" sx={{ borderRadius: 2, py: 0.5 }} onClose={() => setError(null)}>
+                <Alert
+                  severity="error"
+                  onClose={() => setError(null)}
+                  sx={{
+                    borderRadius: 2,
+                    bgcolor: alpha("#ef4444", 0.12),
+                    color: "#fca5a5",
+                    border: `1px solid ${alpha("#ef4444", 0.2)}`,
+                    "& .MuiAlert-icon": { color: "#fca5a5" },
+                    py: 0.5, fontSize: 13,
+                  }}
+                >
                   {error}
                 </Alert>
               </Collapse>
 
-              {/* Botão entrar */}
               <Button
                 type="submit"
                 variant="contained"
                 fullWidth
                 disabled={loading}
-                disableElevation
                 endIcon={!loading && <ArrowForwardRoundedIcon />}
+                disableElevation
                 sx={{
-                  height: 52,
-                  borderRadius: 2,
-                  fontWeight: 800,
-                  fontSize: 15,
+                  height: 50,
+                  borderRadius: 2.5,
+                  fontWeight: 700,
+                  fontSize: 14,
                   textTransform: "none",
-                  background: (t) => `linear-gradient(135deg, ${t.palette.primary.main} 0%, ${t.palette.primary.dark} 100%)`,
-                  boxShadow: (t) => `0 4px 16px ${alpha(t.palette.primary.main, 0.4)}`,
-                  transition: "opacity 0.2s, transform 0.15s",
+                  mt: 0.5,
+                  background: `linear-gradient(135deg, ${BLUE_MAIN} 0%, ${BLUE_DARK} 100%)`,
+                  color: "#fff",
+                  boxShadow: `0 4px 20px ${alpha(BLUE_MAIN, 0.45)}`,
+                  transition: "opacity 0.2s, transform 0.15s, box-shadow 0.2s",
                   "&:hover": {
-                    opacity: 0.93,
+                    background: `linear-gradient(135deg, ${BLUE_LIGHT} 0%, ${BLUE_MAIN} 100%)`,
                     transform: "translateY(-1px)",
-                    boxShadow: (t) => `0 6px 20px ${alpha(t.palette.primary.main, 0.5)}`,
+                    boxShadow: `0 6px 28px ${alpha(BLUE_LIGHT, 0.45)}`,
                   },
-                  "&:active": { transform: "translateY(0)" },
-                  "&.Mui-disabled": { opacity: 0.6 },
+                  "&:active": { transform: "translateY(0)", boxShadow: "none" },
+                  "&.Mui-disabled": {
+                    background: alpha(BLUE_MAIN, 0.22),
+                    color: alpha("#fff", 0.35),
+                  },
                 }}
               >
-                {loading ? "Entrando..." : "Entrar no sistema"}
+                {loading ? "Entrando..." : "Entrar"}
               </Button>
             </Stack>
           </form>
-
-          {/* Rodapé */}
-          <Typography variant="caption" color="text.disabled" display="block" textAlign="center" mt={3}>
-            © {new Date().getFullYear()} Driveon · Sistema de Gestão de Oficina
-          </Typography>
-        </Box>
-      </Box>
-
-      {/* ══════════════════════════════════════════
-          PAINEL DIREITO — Identidade + mecânica
-      ══════════════════════════════════════════ */}
-      <Box
-        sx={{
-          display: { xs: "none", lg: "flex" },
-          flexDirection: "column",
-          justifyContent: "space-between",
-          position: "relative",
-          overflow: "hidden",
-          background: `linear-gradient(160deg, #0a1628 0%, #0d2142 55%, #0d3060 100%)`,
-          px: 6,
-          py: 4,
-        }}
-      >
-        {/* Grade de fundo */}
-        <Box sx={{
-          position: "absolute", inset: 0,
-          backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)
-          `,
-          backgroundSize: "44px 44px",
-          zIndex: 0,
-        }} />
-
-        {/* Brilho inferior esquerdo */}
-        <Box sx={{
-          position: "absolute", bottom: -140, left: -100,
-          width: 500, height: 500, borderRadius: "50%",
-          background: (t) => `radial-gradient(circle, ${alpha(t.palette.primary.main, 0.22)} 0%, transparent 65%)`,
-          zIndex: 0,
-        }} />
-
-        {/* Brilho superior direito */}
-        <Box sx={{
-          position: "absolute", top: -60, right: -60,
-          width: 280, height: 280, borderRadius: "50%",
-          background: `radial-gradient(circle, ${alpha("#60c8ff", 0.12)} 0%, transparent 65%)`,
-          zIndex: 0,
-        }} />
-
-        {/* Centro — conteúdo principal */}
-        <Box sx={{ position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", py: 4 }}>
-
-          {/* Ícone central decorativo */}
-          <Box sx={{
-            width: 60, height: 60, borderRadius: 3, mb: 3,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            background: (t) => `linear-gradient(135deg, ${t.palette.primary.main}, ${t.palette.primary.dark})`,
-            boxShadow: (t) => `0 10px 32px ${alpha(t.palette.primary.main, 0.5)}`,
-          }}>
-            <BuildRoundedIcon sx={{ fontSize: 28, color: "#fff" }} />
-          </Box>
-
-          <Typography sx={{
-            fontSize: { lg: 30, xl: 36 },
-            fontWeight: 800, color: "#fff",
-            lineHeight: 1.15, mb: 1.5,
-            letterSpacing: "-0.02em",
-          }}>
-            Gestão completa
-            <br />
-            <Box component="span" sx={{
-              background: `linear-gradient(90deg, #60c8ff, #90d9ff)`,
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}>
-              para sua oficina
-            </Box>
-          </Typography>
-
-          <Typography sx={{ color: alpha("#fff", 0.5), fontSize: 14, maxWidth: 360, lineHeight: 1.6, mb: 3.5 }}>
-            Do diagnóstico à entrega — controle cada etapa do serviço, gerencie sua equipe e acompanhe o financeiro em tempo real.
-          </Typography>
-
-          {/* Features */}
-          <Stack spacing={2}>
-            {FEATURES.map((f) => (
-              <Stack key={f.title} direction="row" spacing={2} alignItems="center">
-                <Box sx={{
-                  width: 38, height: 38, borderRadius: 2, flexShrink: 0,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  bgcolor: alpha("#fff", 0.07),
-                  border: `1px solid ${alpha("#fff", 0.1)}`,
-                  color: "#60c8ff",
-                }}>
-                  {f.icon}
-                </Box>
-                <Box>
-                  <Typography sx={{ color: "#fff", fontWeight: 700, fontSize: 13.5, lineHeight: 1.3 }}>
-                    {f.title}
-                  </Typography>
-                  <Typography sx={{ color: alpha("#fff", 0.4), fontSize: 12, mt: 0.2 }}>
-                    {f.desc}
-                  </Typography>
-                </Box>
-              </Stack>
-            ))}
-          </Stack>
         </Box>
 
-        {/* Rodapé */}
-        <Box sx={{
-          position: "relative", zIndex: 1,
-          pt: 2.5, borderTop: `1px solid ${alpha("#fff", 0.08)}`,
-        }}>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <CheckCircleRoundedIcon sx={{ fontSize: 13, color: "#60c8ff" }} />
-            <Typography sx={{ color: alpha("#fff", 0.35), fontSize: 12 }}>
-              Dados protegidos com criptografia de ponta a ponta
-            </Typography>
-          </Stack>
-        </Box>
+        <Typography
+          sx={{
+            textAlign: "center",
+            mt: 3.5,
+            fontSize: 12,
+            color: alpha("#fff", 0.2),
+          }}
+        >
+          © {new Date().getFullYear()} DriveOn · Sistema de Gestão de Oficina
+        </Typography>
       </Box>
     </Box>
   );
