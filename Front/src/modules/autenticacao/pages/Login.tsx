@@ -197,13 +197,6 @@ export default function Login() {
                 onChange={(e) => { setEmail(e.target.value); setError(null); }}
                 autoComplete="email"
                 autoFocus
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <EmailOutlinedIcon sx={{ fontSize: 17, color: alpha("#fff", 0.) }} />
-                    </InputAdornment>
-                  ),
-                }}
                 sx={fieldSx}
               />
 
