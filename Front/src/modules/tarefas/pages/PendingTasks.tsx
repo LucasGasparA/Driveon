@@ -10,9 +10,8 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
 import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
-import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom"; // ← useSearchParams adicionado
 import { useToast } from "../../../context/ToastContext";
 import { useConfirm } from "../../../context/ConfirmContext";
 import { listarOrdens, excluirOrdem, criarOrdem, atualizarOrdem } from "../api/api";
@@ -29,17 +28,19 @@ const STATUS_CONFIG: Record<string, { label: string; color: "default" | "warning
   cancelada: { label: "Cancelada", color: "error" },
 };
 
+const STATUS_VALIDOS = Object.keys(STATUS_CONFIG);
+
 // ─── Componente ─────────────────────────────────────────────────────────────
 
 export default function OrdensPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { success, error } = useToast();
   const confirm = useConfirm();
 
   const [rows, setRows] = React.useState<any[]>([]);
   const [funcionarios, setFuncionarios] = React.useState<{ id: number; nome: string }[]>([]);
   const [query, setQuery] = React.useState("");
-  const [filtroStatus, setFiltroStatus] = React.useState("todos");
   const [filtroFuncionario, setFiltroFuncionario] = React.useState("todos");
   const [filtroData, setFiltroData] = React.useState("");
   const [showFilters, setShowFilters] = React.useState(false);
@@ -51,6 +52,18 @@ export default function OrdensPage() {
   const [menuId, setMenuId] = React.useState<number | null>(null);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+
+  // ── Lê o filtro de status da URL (?status=em_andamento) ──
+  const statusParam = searchParams.get("status") ?? "todos";
+  const initialStatus = STATUS_VALIDOS.includes(statusParam) ? statusParam : "todos";
+  const [filtroStatus, setFiltroStatus] = React.useState(initialStatus);
+
+  // Sincroniza se o usuário navegar para a mesma página com param diferente
+  React.useEffect(() => {
+    const s = searchParams.get("status") ?? "todos";
+    setFiltroStatus(STATUS_VALIDOS.includes(s) ? s : "todos");
+    setPage(0);
+  }, [searchParams]);
 
   // ── Carrega ──
   React.useEffect(() => {
@@ -196,7 +209,8 @@ export default function OrdensPage() {
         <TextField
           value={query} onChange={(e) => { setQuery(e.target.value); setPage(0); }}
           placeholder="Pesquisar por cliente, placa ou modelo"
-          size="small" sx={{ flex: 1, "& .MuiOutlinedInput-root": { borderRadius: 999, bgcolor: "background.paper", px: 1 } }}
+          size="small"
+          sx={{ flex: 1, "& .MuiOutlinedInput-root": { borderRadius: 999, bgcolor: "background.paper", px: 1 } }}
           InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> }}
         />
       </Stack>
@@ -206,7 +220,6 @@ export default function OrdensPage() {
         <Fade in timeout={250}>
           <Paper elevation={0} sx={{ p: 2.5, mb: 2.5, borderRadius: 2, border: (t) => `1px solid ${t.palette.divider}`, bgcolor: (t) => alpha(t.palette.primary.main, 0.02) }}>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-              {/* Status */}
               <FormControl size="small" sx={{ minWidth: 160 }}>
                 <InputLabel>Status</InputLabel>
                 <Select value={filtroStatus} label="Status" onChange={(e: SelectChangeEvent) => { setFiltroStatus(e.target.value); setPage(0); }}>
@@ -217,7 +230,6 @@ export default function OrdensPage() {
                 </Select>
               </FormControl>
 
-              {/* Mecânico */}
               <FormControl size="small" sx={{ minWidth: 200 }}>
                 <InputLabel>Mecânico responsável</InputLabel>
                 <Select value={filtroFuncionario} label="Mecânico responsável" onChange={(e: SelectChangeEvent) => { setFiltroFuncionario(e.target.value); setPage(0); }}>
@@ -226,11 +238,8 @@ export default function OrdensPage() {
                 </Select>
               </FormControl>
 
-              {/* Data */}
               <TextField
-                label="Data de abertura"
-                type="date"
-                size="small"
+                label="Data de abertura" type="date" size="small"
                 value={filtroData}
                 onChange={(e) => { setFiltroData(e.target.value); setPage(0); }}
                 InputLabelProps={{ shrink: true }}
@@ -247,42 +256,43 @@ export default function OrdensPage() {
 
       {/* ── Tabela ── */}
       {loading ? (
-        <TableSkeleton columns={6} rows={8} hasAvatar={false} />
+        <TableSkeleton rows={6} cols={6} />
       ) : (
         <Fade in timeout={400}>
-          <TableContainer component={Paper} sx={{ borderRadius: 2, border: (t) => `1px solid ${t.palette.divider}`, minHeight: 400, maxHeight: 640, overflowY: "auto" }}>
-            <Table stickyHeader>
+          <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3, border: (t) => `1px solid ${t.palette.divider}` }}>
+            <Table>
               <TableHead>
-                <TableRow>
-                  <TableCell>Cliente</TableCell>
-                  <TableCell>Veículo</TableCell>
-                  <TableCell>Mecânico</TableCell>
-                  <TableCell>Total</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Ações</TableCell>
+                <TableRow sx={{ bgcolor: (t) => alpha(t.palette.primary.main, 0.03) }}>
+                  <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>OS</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Cliente</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Veículo</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Mecânico</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Valor</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>Status</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, fontSize: 12 }}></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {paginated.length > 0 ? paginated.map((r) => {
                   const st = STATUS_CONFIG[r.status] ?? STATUS_CONFIG.aberta;
                   return (
-                    <TableRow key={r.id} hover sx={{ height: 56, cursor: "pointer" }}
-                      onClick={() => navigate(`/ordens/${r.id}`)}>
+                    <TableRow
+                      key={r.id}
+                      hover
+                      onClick={() => r.id && navigate(`/ordens/${r.id}`)}
+                      sx={{ cursor: "pointer" }}
+                    >
+                      <TableCell sx={{ fontSize: 12, color: "text.disabled" }}>#{r.id}</TableCell>
                       <TableCell>
                         <Typography variant="body2" fontWeight={600}>{r.cliente?.nome ?? "—"}</Typography>
                       </TableCell>
                       <TableCell>
-                        <Stack spacing={0.1}>
-                          <Typography variant="body2">{r.veiculo ? `${r.veiculo.marca} ${r.veiculo.modelo}` : "—"}</Typography>
-                          {r.veiculo?.placa && (
-                            <Typography variant="caption" fontFamily="monospace" fontWeight={700}
-                              sx={{ px: 0.75, py: 0.1, borderRadius: 0.75, bgcolor: (t) => alpha(t.palette.text.primary, 0.07), display: "inline-block", width: "fit-content" }}>
-                              {r.veiculo.placa}
-                            </Typography>
-                          )}
-                        </Stack>
+                        <Typography variant="body2">{r.veiculo?.modelo ?? "—"}</Typography>
+                        <Typography variant="caption" color="text.disabled">{r.veiculo?.placa ?? "—"}</Typography>
                       </TableCell>
-                      <TableCell>{r.funcionario?.nome ?? "—"}</TableCell>
+                      <TableCell>
+                        <Typography variant="body2">{r.funcionario?.nome ?? "—"}</Typography>
+                      </TableCell>
                       <TableCell>
                         <Typography variant="body2" fontWeight={600}>
                           R$ {Number(r.valor_total ?? 0).toFixed(2)}
@@ -300,7 +310,7 @@ export default function OrdensPage() {
                   );
                 }) : (
                   <TableRow>
-                    <TableCell colSpan={6} sx={{ border: 0 }}>
+                    <TableCell colSpan={7} sx={{ border: 0 }}>
                       <EmptyState
                         icon={<AssignmentRoundedIcon />}
                         title="Nenhuma ordem de serviço"
