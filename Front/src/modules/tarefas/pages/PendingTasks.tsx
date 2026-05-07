@@ -145,7 +145,7 @@ export default function OrdensPage() {
   }), [rows]);
 
   return (
-    <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
+    <Box sx={{ maxWidth: 1500, mx: "auto" }}>
 
       {/* ── Header ── */}
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3} flexWrap="wrap" gap={2}>
@@ -161,7 +161,7 @@ export default function OrdensPage() {
             startIcon={<TuneRoundedIcon />}
             onClick={() => setShowFilters((p) => !p)}
             sx={{
-              borderRadius: 999, textTransform: "none", fontWeight: 600,
+              borderRadius: 3, textTransform: "none", fontWeight: 650,
               borderColor: (hasActiveFilters && !showFilters) ? "primary.main" : "divider",
               color: (hasActiveFilters && !showFilters) ? "primary.main" : "text.secondary",
             }}
@@ -172,8 +172,7 @@ export default function OrdensPage() {
             variant="contained" disableElevation
             startIcon={<AddRoundedIcon />} onClick={handleCreate}
             sx={{
-              borderRadius: 999, textTransform: "none", fontWeight: 700, px: 2.5,
-              background: (t) => `linear-gradient(135deg, ${t.palette.primary.main}, ${t.palette.primary.dark})`,
+              borderRadius: 3, textTransform: "none", fontWeight: 700, px: 2.5,
             }}
           >
             Nova Ordem
@@ -210,7 +209,7 @@ export default function OrdensPage() {
           value={query} onChange={(e) => { setQuery(e.target.value); setPage(0); }}
           placeholder="Pesquisar por cliente, placa ou modelo"
           size="small"
-          sx={{ flex: 1, "& .MuiOutlinedInput-root": { borderRadius: 999, bgcolor: "background.paper", px: 1 } }}
+          sx={{ flex: 1, "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.paper", px: 1 } }}
           InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> }}
         />
       </Stack>
@@ -337,7 +336,7 @@ export default function OrdensPage() {
           onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
           rowsPerPageOptions={[5, 10, 20]} labelRowsPerPage="Linhas por página:"
           labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`}
-          sx={{ mt: 1.5, borderRadius: 2, bgcolor: "background.paper" }}
+          sx={{ mt: 1.5, borderRadius: 3, bgcolor: "background.paper", border: (t) => `1px solid ${t.palette.divider}` }}
         />
       )}
 

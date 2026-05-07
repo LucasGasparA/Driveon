@@ -1,19 +1,18 @@
 import * as React from "react";
 import {
-  Box, Stack, Typography, TextField, InputAdornment, Button, IconButton,
+  Box, Stack, Typography, IconButton,
   Paper, Avatar, Chip, Menu, MenuItem, Divider, Fade, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, TablePagination, CircularProgress,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
+import GroupsRoundedIcon from "@mui/icons-material/GroupsRounded";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { useToast } from "../../../context/ToastContext";
 import { useConfirm } from "../../../context/ConfirmContext";
 import ClientDialog, { type Client, type ClientForm } from "../dialog";
 import api from "../../../api/api";
+import ModuleHeader from "../../../components/layout/ModuleHeader";
 
 // ── helpers de mapeamento ──────────────────────────────────────────────────
 
@@ -159,26 +158,25 @@ export default function ClientsPage() {
   if (loading) return <Box sx={{ textAlign: "center", mt: 8 }}><CircularProgress /></Box>;
 
   return (
-    <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3} flexWrap="wrap" gap={2}>
-        <Stack spacing={0.3}>
-          <Typography variant="h5" fontWeight={700}>Clientes</Typography>
-          <Typography variant="body2" color="text.secondary">Gerencie os clientes cadastrados na sua oficina</Typography>
-        </Stack>
-        <Stack direction="row" spacing={1.5}>
-          <TextField value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Pesquisar cliente" size="small"
-            sx={{ minWidth: 300, "& .MuiOutlinedInput-root": { borderRadius: 999, bgcolor: "background.paper", px: 1 } }}
-            InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> }}
-          />
-          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}
-            sx={{ borderRadius: 999, textTransform: "none", px: 2.5 }}>
-            Novo Cliente
-          </Button>
-        </Stack>
-      </Stack>
+    <Box sx={{ maxWidth: 1500, mx: "auto" }}>
+      <ModuleHeader
+        title="Clientes"
+        subtitle="Cadastro, contato e histórico de relacionamento da oficina."
+        icon={<GroupsRoundedIcon />}
+        metrics={[
+          { label: "Cadastrados", value: rows.length, tone: "primary" },
+          { label: "Ativos", value: rows.filter((r) => r.plan === "Permanent").length, tone: "success" },
+          { label: "Filtrados", value: filtered.length, tone: "neutral" },
+        ]}
+        searchValue={query}
+        searchPlaceholder="Pesquisar por nome, email ou telefone"
+        onSearchChange={setQuery}
+        actionLabel="Novo Cliente"
+        onAction={openCreate}
+      />
 
       <Fade in timeout={400}>
-        <TableContainer component={Paper} sx={{ borderRadius: 2, border: (t) => `1px solid ${t.palette.divider}`, minHeight: 400, maxHeight: 680, overflowY: "auto" }}>
+        <TableContainer component={Paper} sx={{ borderRadius: 3, border: (t) => `1px solid ${t.palette.divider}`, minHeight: 400, maxHeight: 680, overflowY: "auto" }}>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
@@ -224,7 +222,7 @@ export default function ClientsPage() {
         onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
         rowsPerPageOptions={[5, 10, 20]} labelRowsPerPage="Linhas por página:"
         labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`}
-        sx={{ mt: 1.5, borderRadius: 2, bgcolor: "background.paper" }}
+        sx={{ mt: 1.5, borderRadius: 3, bgcolor: "background.paper", border: (t) => `1px solid ${t.palette.divider}` }}
       />
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}

@@ -21,6 +21,7 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
+import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../api/api";
@@ -43,6 +44,7 @@ const CARGO_LABEL: Record<string, string> = {
 
 export default function AppTopbar({
   drawerWidth,
+  onMenuClick,
 }: {
   drawerWidth: number;
   onMenuClick?: () => void;
@@ -118,25 +120,42 @@ export default function AppTopbar({
       position="fixed"
       elevation={0}
       sx={{
+        top: 0,
+        right: 0,
+        left: { xs: 0, md: `${drawerWidth}px` },
         width: { xs: "100%", md: `calc(100% - ${drawerWidth}px)` },
-        ml: { xs: 0, md: `${drawerWidth}px` },
-        bgcolor: "background.paper",
-        borderBottom: (t) => `1px solid ${t.palette.divider}`,
+        ml: 0,
+        bgcolor: "rgba(245, 247, 250, 0.86)",
+        backdropFilter: "blur(18px)",
+        borderBottom: 'none',
+        boxShadow: 'none',
         color: "text.primary",
         transition: "width 0.3s ease, margin 0.3s ease",
       }}
     >
-      <Toolbar sx={{ minHeight: "64px !important", px: { xs: 2, sm: 3 }, position: "relative" }}>
+      <Toolbar sx={{ minHeight: { xs: "64px !important", md: "88px !important" }, px: { xs: 1.5, sm: 2.5, md: 4 }, position: "relative", gap: 1.5 }}>
+        <IconButton
+          onClick={onMenuClick}
+          sx={{
+            display: { xs: "inline-flex", md: "none" },
+            mr: 1,
+            width: 38,
+            height: 38,
+            borderRadius: 1.5,
+            border: (t) => `1px solid ${t.palette.divider}`,
+            color: "text.secondary",
+          }}
+        >
+          <MenuRoundedIcon />
+        </IconButton>
 
         {/* ── Barra de pesquisa — centralizada absolutamente ── */}
         <Box
           ref={searchRef}
           sx={{
-            position: "absolute",
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: { xs: "50%", sm: "45%", md: "40%" },
-            maxWidth: 520,
+            position: "static",
+            width: { xs: "min(50vw, 340px)", sm: 360, md: 420 },
+            maxWidth: { xs: 340, md: 420 },
             zIndex: 1,
           }}
         >
@@ -145,16 +164,20 @@ export default function AppTopbar({
             sx={{
               display: "flex",
               alignItems: "center",
-              px: 2,
-              py: 0.75,
+              px: 1.5,
+              py: 0.65,
               borderRadius: 999,
-              border: (t) => `1.5px solid ${searchTerm ? t.palette.primary.main : t.palette.divider}`,
+              border: '1px solid transparent',
               bgcolor: (t) => searchTerm
                 ? alpha(t.palette.primary.main, 0.04)
-                : alpha(t.palette.background.default, 0.8),
-              transition: "border-color 0.2s, background 0.2s",
+                : "rgba(255,255,255,0.56)",
+              transition: "background 0.2s, border-color 0.2s, box-shadow 0.2s",
               "&:hover": {
-                borderColor: "primary.main",
+                bgcolor: "rgba(255,255,255,0.82)",
+              },
+              "&:focus-within": {
+                borderColor: (t) => alpha(t.palette.primary.main, 0.42),
+                boxShadow: (t) => `0 0 0 3px ${alpha(t.palette.primary.main, 0.1)}`,
               },
             }}
           >
@@ -174,10 +197,10 @@ export default function AppTopbar({
             <InputBase
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Pesquisar placa, cliente ou número da OS..."
+              placeholder="Pesquisar placa, cliente ou OS..."
               sx={{
                 flex: 1,
-                fontSize: 13.5,
+                fontSize: 13,
                 "& input": {
                   padding: 0,
                   "&::placeholder": { color: "text.disabled", opacity: 1 },
@@ -191,7 +214,7 @@ export default function AppTopbar({
                 onClick={() => { setSearchTerm(""); setSearchOpen(false); }}
                 sx={{ ml: 0.5, p: 0.25 }}
               >
-                <Box sx={{ fontSize: 16, lineHeight: 1, color: "text.disabled" }}>×</Box>
+                <Box sx={{ fontSize: 16, lineHeight: 1, color: "text.disabled" }}>x</Box>
               </IconButton>
             )}
           </Paper>
@@ -270,8 +293,10 @@ export default function AppTopbar({
             sx={{
               width: 36,
               height: 36,
-              borderRadius: 2,
+              borderRadius: 1.5,
+              border: (t) => `1px solid ${t.palette.divider}`,
               color: "text.secondary",
+              bgcolor: "#FFFFFF",
               "&:hover": {
                 bgcolor: (t) => alpha(t.palette.primary.main, 0.08),
                 color: "primary.main",
@@ -292,13 +317,13 @@ export default function AppTopbar({
             sx={{
               px: 1.5,
               py: 0.75,
-              borderRadius: 999,
+              borderRadius: 1.5,
               display: "flex",
               alignItems: "center",
               gap: 1.25,
               cursor: "pointer",
-              border: (t) => `1.5px solid ${t.palette.divider}`,
-              bgcolor: "background.paper",
+              border: (t) => `1px solid ${t.palette.divider}`,
+              bgcolor: "#FFFFFF",
               transition: "border-color 0.2s, box-shadow 0.2s",
               "&:hover": {
                 borderColor: "primary.main",
@@ -313,8 +338,7 @@ export default function AppTopbar({
                 height: 30,
                 fontSize: 13,
                 fontWeight: 800,
-                background: (t) =>
-                  `linear-gradient(135deg, ${t.palette.primary.main}, ${t.palette.primary.dark})`,
+                bgcolor: "primary.main",
               }}
             >
               {avatarLetter}
@@ -391,3 +415,4 @@ export default function AppTopbar({
     </AppBar>
   );
 }
+

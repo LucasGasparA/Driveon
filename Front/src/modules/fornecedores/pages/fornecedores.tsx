@@ -1,11 +1,9 @@
 import * as React from "react";
 import {
-  Box, Stack, Typography, TextField, InputAdornment, Button, IconButton,
+  Box, Stack, Typography, IconButton,
   Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   TablePagination, Fade, Menu, MenuItem, Divider, CircularProgress,
 } from "@mui/material";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
 import BusinessRoundedIcon from "@mui/icons-material/BusinessRounded";
 import PhoneRoundedIcon from "@mui/icons-material/PhoneRounded";
@@ -15,6 +13,7 @@ import { useToast } from "../../../context/ToastContext";
 import { useConfirm } from "../../../context/ConfirmContext";
 import SupplierDialog, { type Supplier, type SupplierForm } from "../dialog";
 import api from "../../../api/api";
+import ModuleHeader from "../../../components/layout/ModuleHeader";
 
 export default function SuppliersPage() {
   const { user } = useAuth();
@@ -51,7 +50,7 @@ export default function SuppliersPage() {
     if (!menuId) return;
     const ok = await confirm({
       title: "Excluir fornecedor?",
-      message: "Esta ação não pode ser desfeita.",
+      message: "Esta aÃ§Ã£o nÃ£o pode ser desfeita.",
       confirmLabel: "Sim, excluir",
       variant: "danger",
     });
@@ -59,9 +58,9 @@ export default function SuppliersPage() {
     try {
       await api.delete(`/fornecedores/${menuId}`);
       setRows((prev) => prev.filter((x) => x.id !== menuId));
-      success("Fornecedor excluído com sucesso.");
+      success("Fornecedor excluÃ­do com sucesso.");
     } catch {
-      error("Não foi possível excluir o fornecedor.");
+      error("NÃ£o foi possÃ­vel excluir o fornecedor.");
     } finally {
       handleMenuClose();
     }
@@ -81,7 +80,7 @@ export default function SuppliersPage() {
       setOpenDialog(false);
     } catch (err) {
       console.error("Erro ao salvar fornecedor:", err);
-      error("Não foi possível salvar o fornecedor.");
+      error("NÃ£o foi possÃ­vel salvar o fornecedor.");
     }
   };
 
@@ -89,9 +88,9 @@ export default function SuppliersPage() {
     try {
       await api.delete(`/fornecedores/${id}`);
       setRows((prev) => prev.filter((x) => x.id !== id));
-      success("Fornecedor excluído com sucesso.");
+      success("Fornecedor excluÃ­do com sucesso.");
     } catch {
-      error("Não foi possível excluir o fornecedor.");
+      error("NÃ£o foi possÃ­vel excluir o fornecedor.");
     }
   };
 
@@ -108,22 +107,21 @@ export default function SuppliersPage() {
 
   return (
     <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3} flexWrap="wrap" gap={2}>
-        <Stack spacing={0.3}>
-          <Typography variant="h5" fontWeight={700}>Fornecedores</Typography>
-          <Typography variant="body2" color="text.secondary">Gerencie os fornecedores de peças e serviços da oficina</Typography>
-        </Stack>
-        <Stack direction="row" spacing={1.5}>
-          <TextField value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Pesquisar fornecedor" size="small"
-            sx={{ minWidth: 300, "& .MuiOutlinedInput-root": { borderRadius: 999, bgcolor: "background.paper", px: 1 } }}
-            InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> }}
-          />
-          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}
-            sx={{ borderRadius: 999, textTransform: "none", px: 2.5 }}>
-            Novo Fornecedor
-          </Button>
-        </Stack>
-      </Stack>
+      <ModuleHeader
+        title="Fornecedores"
+        subtitle="Parceiros, contatos e base de compras da oficina."
+        icon={<BusinessRoundedIcon />}
+        metrics={[
+          { label: "Cadastrados", value: rows.length, tone: "primary" },
+          { label: "Com email", value: rows.filter((r) => !!r.email).length, tone: "success" },
+          { label: "Filtrados", value: filtered.length, tone: "neutral" },
+        ]}
+        searchValue={query}
+        searchPlaceholder="Pesquisar fornecedor, contato ou telefone"
+        onSearchChange={setQuery}
+        actionLabel="Novo Fornecedor"
+        onAction={openCreate}
+      />
 
       <Fade in timeout={400}>
         <TableContainer component={Paper} sx={{ borderRadius: 2, border: (t) => `1px solid ${t.palette.divider}`, minHeight: 400, maxHeight: 640, overflowY: "auto" }}>
@@ -134,7 +132,7 @@ export default function SuppliersPage() {
                 <TableCell>Contato</TableCell>
                 <TableCell>Email</TableCell>
                 <TableCell>Telefone</TableCell>
-                <TableCell align="right">Ações</TableCell>
+                <TableCell align="right">AÃ§Ãµes</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -146,9 +144,9 @@ export default function SuppliersPage() {
                       <Typography fontWeight={600}>{s.nome}</Typography>
                     </Stack>
                   </TableCell>
-                  <TableCell>{s.contato ?? "—"}</TableCell>
-                  <TableCell>{s.email ? <Stack direction="row" spacing={1} alignItems="center"><EmailRoundedIcon sx={{ fontSize: 16, opacity: 0.7 }} />{s.email}</Stack> : "—"}</TableCell>
-                  <TableCell>{s.telefone ? <Stack direction="row" spacing={1} alignItems="center"><PhoneRoundedIcon sx={{ fontSize: 16, opacity: 0.7 }} />{s.telefone}</Stack> : "—"}</TableCell>
+                  <TableCell>{s.contato ?? "â€”"}</TableCell>
+                  <TableCell>{s.email ? <Stack direction="row" spacing={1} alignItems="center"><EmailRoundedIcon sx={{ fontSize: 16, opacity: 0.7 }} />{s.email}</Stack> : "â€”"}</TableCell>
+                  <TableCell>{s.telefone ? <Stack direction="row" spacing={1} alignItems="center"><PhoneRoundedIcon sx={{ fontSize: 16, opacity: 0.7 }} />{s.telefone}</Stack> : "â€”"}</TableCell>
                   <TableCell align="right">
                     <IconButton onClick={(e) => handleMenuOpen(e, s.id)}><MoreVertRoundedIcon /></IconButton>
                   </TableCell>
@@ -164,8 +162,8 @@ export default function SuppliersPage() {
       <TablePagination component="div" count={filtered.length} page={page}
         onPageChange={(_, p) => setPage(p)} rowsPerPage={rowsPerPage}
         onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-        rowsPerPageOptions={[5, 10, 20]} labelRowsPerPage="Linhas por página:"
-        labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`}
+        rowsPerPageOptions={[5, 10, 20]} labelRowsPerPage="Linhas por pÃ¡gina:"
+        labelDisplayedRows={({ from, to, count }) => `${from}â€“${to} de ${count !== -1 ? count : `mais de ${to}`}`}
         sx={{ mt: 1.5, borderRadius: 2, bgcolor: "background.paper" }}
       />
 

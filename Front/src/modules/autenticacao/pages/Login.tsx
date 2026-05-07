@@ -23,30 +23,31 @@ import { useAuth } from "../../../context/AuthContext";
 import { paths } from "../../../routes/paths";
 import logo from "../../../assets/logo.png";
 
-// ── Cores da marca (definidas uma única vez no topo) ─────────────────────
-const BLUE_MAIN = "#1976D2";
-const BLUE_LIGHT = "#42A5F5";
-const BLUE_DARK = "#0D47A1";
+// Cores da marca.
+const BLUE_MAIN = "#2563EB";
+const BLUE_LIGHT = "#60A5FA";
+const BLUE_DARK = "#1E3A8A";
+const TEAL = "#0F766E";
+const INK = "#111827";
 
-// ── Estilo compartilhado dos campos ──────────────────────────────────────
+// Estilo compartilhado dos campos.
 const fieldSx = {
   "& .MuiInputLabel-root": {
-    color: alpha("#fff", 0.35),
+    color: alpha(INK, 0.56),
     fontSize: 14,
   },
-  "& .MuiInputLabel-root.Mui-focused": { color: BLUE_LIGHT },
+  "& .MuiInputLabel-root.Mui-focused": { color: BLUE_MAIN },
   "& .MuiOutlinedInput-root": {
-    color: "#fff",
+    color: INK,
     fontSize: 14,
-    borderRadius: 2.5,
-    bgcolor: alpha("#fff", 0.05),
-    "& fieldset": { borderColor: alpha("#fff", 0.1) },
-    "&:hover fieldset": { borderColor: alpha(BLUE_LIGHT, 0.4) },
-    "&.Mui-focused fieldset": { borderColor: BLUE_LIGHT },
+    borderRadius: 2,
+    bgcolor: "#fff",
+    "& fieldset": { borderColor: "#D9E2EC" },
+    "&:hover fieldset": { borderColor: alpha(BLUE_MAIN, 0.5) },
+    "&.Mui-focused fieldset": { borderColor: BLUE_MAIN },
   },
 } as const;
 
-// ─────────────────────────────────────────────────────────────────────────
 
 export default function Login() {
   const nav = useNavigate();
@@ -86,7 +87,7 @@ export default function Login() {
       }
       nav(paths.root, { replace: true });
     } catch (err: any) {
-      setError(err.message || "E-mail ou senha inválidos.");
+      setError(err.message || "E-mail ou senha invalidos.");
     } finally {
       setLoading(false);
     }
@@ -116,7 +117,11 @@ export default function Login() {
         justifyContent: "center",
         position: "relative",
         overflow: "hidden",
-        bgcolor: "#0d1f3c",
+        bgcolor: "#F6F8FB",
+        backgroundImage: `
+          linear-gradient(135deg, ${alpha(BLUE_DARK, 0.08)} 0%, transparent 34%),
+          linear-gradient(315deg, ${alpha(TEAL, 0.10)} 0%, transparent 38%)
+        `,
       }}
     >
 
@@ -125,12 +130,11 @@ export default function Login() {
       <Box
         sx={{
           position: "absolute",
-          inset: 0,
-          backgroundImage: `
-            radial-gradient(ellipse 90% 55% at 50% -5%,  ${alpha(BLUE_MAIN, 0.40)} 0%, transparent 70%),
-            radial-gradient(ellipse 55% 45% at 90% 105%, ${alpha(BLUE_LIGHT, 0.18)} 0%, transparent 60%),
-            radial-gradient(ellipse 40% 35% at 5%  95%,  ${alpha(BLUE_DARK, 0.22)} 0%, transparent 60%)
-          `,
+          inset: { xs: 16, md: 28 },
+          border: "1px solid #D9E2EC",
+          borderRadius: 3,
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.84) 0%, rgba(255,255,255,0.38) 100%)",
           zIndex: 0,
         }}
       />
@@ -140,10 +144,8 @@ export default function Login() {
         sx={{
           position: "absolute",
           inset: 0,
-          backgroundImage: `radial-gradient(circle, ${alpha(BLUE_LIGHT, 0.12)} 1px, transparent 1px)`,
-          backgroundSize: "28px 28px",
+          backgroundImage: `radial-gradient(circle at 50% 0%, ${alpha(BLUE_MAIN, 0.12)} 0%, transparent 34%)`,
           zIndex: 0,
-          maskImage: "radial-gradient(ellipse 75% 75% at 50% 50%, black 20%, transparent 100%)",
         }}
       />
 
@@ -167,10 +169,9 @@ export default function Login() {
             src={logo}
             alt="DriveOn"
             sx={{
-              height: 58,
+              height: 62,
               width: "auto",
               objectFit: "contain",
-              filter: "brightness(0) invert(1)",
             }}
           />
         </Stack>
@@ -178,34 +179,29 @@ export default function Login() {
         {/* Vidro */}
         <Box
           sx={{
-            bgcolor: alpha("#ffffff", 0.04),
-            border: `1px solid ${alpha(BLUE_LIGHT, 0.18)}`,
-            borderRadius: 4,
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
+            bgcolor: "#FFFFFF",
+            border: "1px solid #D9E2EC",
+            borderRadius: 2,
             px: { xs: 3.5, sm: 5 },
             pt: 4.5,
             pb: 5,
-            boxShadow: `
-              inset 0 1px 0 ${alpha(BLUE_LIGHT, 0.15)},
-              0 24px 48px ${alpha("#000", 0.35)}
-            `,
+            boxShadow: "0 24px 70px rgba(15, 23, 42, 0.12)",
           }}
         >
-          {/* Título */}
+          {/* Titulo */}
           <Stack spacing={0.75} mb={4}>
             <Typography
               sx={{
                 fontSize: 22,
                 fontWeight: 800,
-                color: "#fff",
-                letterSpacing: "-0.02em",
+                color: INK,
+                letterSpacing: 0,
                 lineHeight: 1.2,
               }}
             >
               Entrar no sistema
             </Typography>
-            <Typography sx={{ fontSize: 14, color: alpha("#fff", 0.4) }}>
+            <Typography sx={{ fontSize: 14, color: alpha(INK, 0.6) }}>
               Acesse sua conta para continuar
             </Typography>
           </Stack>
@@ -250,7 +246,7 @@ export default function Login() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <LockOutlinedIcon sx={{ fontSize: 17, color: alpha("#fff", 0.3) }} />
+                          <LockOutlinedIcon sx={{ fontSize: 17, color: alpha(INK, 0.38) }} />
                         </InputAdornment>
                       ),
                       endAdornment: (
@@ -258,7 +254,7 @@ export default function Login() {
                           <IconButton
                             onClick={() => setShow((s) => !s)}
                             edge="end" size="small" tabIndex={-1}
-                            sx={{ color: alpha("#fff", 0.3) }}
+                            sx={{ color: alpha(INK, 0.48) }}
                           >
                             {show
                               ? <VisibilityOff sx={{ fontSize: 17 }} />
@@ -278,14 +274,14 @@ export default function Login() {
                           onChange={(e) => setRemember(e.target.checked)}
                           size="small"
                           sx={{
-                            color: alpha("#fff", 0.22),
-                            "&.Mui-checked": { color: BLUE_LIGHT },
+                            color: alpha(INK, 0.38),
+                            "&.Mui-checked": { color: BLUE_MAIN },
                             p: 0.5,
                           }}
                         />
                       }
                       label={
-                        <Typography sx={{ fontSize: 13, color: alpha("#fff", 0.4) }}>
+                        <Typography sx={{ fontSize: 13, color: alpha(INK, 0.62) }}>
                           Lembrar-me
                         </Typography>
                       }
@@ -294,8 +290,8 @@ export default function Login() {
                       variant="text" size="small"
                       sx={{
                         textTransform: "none", fontWeight: 500, fontSize: 13,
-                        color: alpha("#fff", 0.4), p: 0, minWidth: 0,
-                        "&:hover": { color: BLUE_LIGHT, bgcolor: "transparent" },
+                        color: BLUE_MAIN, p: 0, minWidth: 0,
+                        "&:hover": { color: BLUE_DARK, bgcolor: "transparent" },
                       }}
                     >
                       Esqueceu a senha?
@@ -330,17 +326,17 @@ export default function Login() {
                 disableElevation
                 sx={{
                   height: 50,
-                  borderRadius: 2.5,
+                  borderRadius: 2,
                   fontWeight: 700,
                   fontSize: 14,
                   textTransform: "none",
                   mt: 0.5,
-                  background: `linear-gradient(135deg, ${BLUE_MAIN} 0%, ${BLUE_DARK} 100%)`,
+                  background: `linear-gradient(135deg, ${BLUE_MAIN} 0%, ${BLUE_DARK} 72%, ${TEAL} 100%)`,
                   color: "#fff",
                   boxShadow: `0 4px 20px ${alpha(BLUE_MAIN, 0.45)}`,
                   transition: "opacity 0.2s, transform 0.15s, box-shadow 0.2s",
                   "&:hover": {
-                    background: `linear-gradient(135deg, ${BLUE_LIGHT} 0%, ${BLUE_MAIN} 100%)`,
+                    background: `linear-gradient(135deg, ${BLUE_LIGHT} 0%, ${BLUE_MAIN} 68%, ${TEAL} 100%)`,
                     transform: "translateY(-1px)",
                     boxShadow: `0 6px 28px ${alpha(BLUE_LIGHT, 0.45)}`,
                   },
@@ -362,10 +358,10 @@ export default function Login() {
             textAlign: "center",
             mt: 3.5,
             fontSize: 12,
-            color: alpha("#fff", 0.2),
+            color: alpha(INK, 0.42),
           }}
         >
-          © {new Date().getFullYear()} DriveOn · Sistema de Gestão de Oficina
+          © {new Date().getFullYear()} DriveOn · Sistema de Gestao de Oficina
         </Typography>
       </Box>
     </Box>

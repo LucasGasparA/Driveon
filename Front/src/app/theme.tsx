@@ -1,24 +1,122 @@
 import { createTheme } from '@mui/material/styles';
+
+const brand = {
+  ink: '#18202F',
+  muted: '#667085',
+  primary: '#1D4ED8',
+  primaryDark: '#173EA5',
+  teal: '#047481',
+  amber: '#D97706',
+  surface: '#FFFFFF',
+  page: '#F5F7FA',
+  line: '#DDE3EA',
+};
+
 export const theme = createTheme({
   palette: {
     mode: 'light',
-    primary: { main: '#1976D2', light: '#42A5F5', dark: '#0D47A1', contrastText: '#ffffff' },
-    secondary: { main: '#546E7A', light: '#78909C', dark: '#37474F', contrastText: '#ffffff' },
-    background: { default: '#F0F6FF', paper: '#ffffff' },
-    text: { primary: '#0D1B2A', secondary: '#546E7A' },
-    divider: '#BBDEFB',
+    primary: { main: brand.primary, light: '#60A5FA', dark: brand.primaryDark, contrastText: '#ffffff' },
+    secondary: { main: brand.teal, light: '#2DD4BF', dark: '#115E59', contrastText: '#ffffff' },
+    warning: { main: brand.amber, light: '#FBBF24', dark: '#B45309', contrastText: '#111827' },
+    background: { default: brand.page, paper: brand.surface },
+    text: { primary: brand.ink, secondary: brand.muted },
+    divider: brand.line,
   },
-  shape: { borderRadius: 12 },
+  shape: { borderRadius: 16 },
   typography: {
     fontFamily: '"Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
-    h5: { fontWeight: 600 },
-    button: { textTransform: 'none', fontWeight: 600 },
+    h4: { fontWeight: 760, letterSpacing: 0 },
+    h5: { fontWeight: 740, letterSpacing: 0 },
+    h6: { fontWeight: 720, letterSpacing: 0 },
+    subtitle1: { fontWeight: 650, letterSpacing: 0 },
+    button: { textTransform: 'none', fontWeight: 700, letterSpacing: 0 },
   },
   components: {
-    MuiButton: { styleOverrides: { root: { borderRadius: 12 } } },
+    MuiButton: {
+      defaultProps: { disableElevation: true },
+      styleOverrides: {
+        root: { borderRadius: 14, minHeight: 42 },
+        containedPrimary: {
+          background: brand.primary,
+          '&:hover': {
+            background: brand.primaryDark,
+          },
+        },
+      },
+    },
     MuiTextField: { defaultProps: { size: 'small' } },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          borderRadius: 14,
+          backgroundColor: '#FFFFFF',
+        },
+      },
+    },
     MuiIconButton: { defaultProps: { size: 'small' } },
-    MuiPaper: { styleOverrides: { root: { backgroundImage: 'none' } } },
-    MuiAppBar: { styleOverrides: { colorPrimary: { backgroundColor: '#1976D2' } } },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none',
+          borderColor: brand.line,
+          boxShadow: 'none',
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 18,
+          border: `1px solid rgba(255,255,255,0.78)`,
+          boxShadow: '0 18px 46px rgba(16, 24, 40, 0.08)',
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: { borderRadius: 6, fontWeight: 650 },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        head: {
+          color: brand.muted,
+          fontSize: 12,
+          fontWeight: 800,
+          textTransform: 'uppercase',
+          backgroundColor: '#F7F9FC',
+          letterSpacing: 0,
+        },
+        root: {
+          borderBottomColor: brand.line,
+        },
+      },
+    },
+    MuiTableRow: {
+      styleOverrides: {
+        root: {
+          '&.MuiTableRow-hover:hover': {
+            backgroundColor: '#F8FAFC',
+          },
+        },
+      },
+    },
+    MuiTableContainer: {
+      styleOverrides: {
+        root: {
+          boxShadow: 'none',
+        },
+      },
+    },
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+          borderRadius: 8,
+          border: `1px solid ${brand.line}`,
+          boxShadow: '0 18px 40px rgba(16, 24, 40, 0.12)',
+        },
+      },
+    },
+    MuiAppBar: { styleOverrides: { colorPrimary: { backgroundColor: brand.surface } } },
   },
 });

@@ -1,12 +1,10 @@
 import * as React from "react";
 import {
-  Box, Stack, Typography, TextField, InputAdornment, Button, IconButton,
+  Box, Stack, Typography, IconButton,
   Paper, Chip, Avatar, Menu, MenuItem, Divider, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, TablePagination, Fade, CircularProgress,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
 import DirectionsCarRoundedIcon from "@mui/icons-material/DirectionsCarRounded";
 import ColorLensRoundedIcon from "@mui/icons-material/ColorLensRounded";
@@ -16,6 +14,7 @@ import { useToast } from "../../../context/ToastContext";
 import { useConfirm } from "../../../context/ConfirmContext";
 import VehicleDialog, { type Vehicle, type VehicleForm } from "../dialog";
 import { listarVeiculos, criarVeiculo, atualizarVeiculo, excluirVeiculo } from "../api/api";
+import ModuleHeader from "../../../components/layout/ModuleHeader";
 
 export default function VehiclesPage() {
   const { user } = useAuth();
@@ -36,7 +35,7 @@ export default function VehiclesPage() {
   React.useEffect(() => {
     listarVeiculos(user?.oficina_id)
       .then(setRows)
-      .catch((err) => console.error("Erro ao carregar veículos:", err))
+      .catch((err) => console.error("Erro ao carregar veÃ­culos:", err))
       .finally(() => setLoading(false));
   }, [user?.oficina_id]);
 
@@ -49,8 +48,8 @@ export default function VehiclesPage() {
   const handleDelete = async () => {
     if (!menuId) return;
     const ok = await confirm({
-      title: "Excluir veículo?",
-      message: "O histórico de ordens vinculado será mantido, mas o veículo será removido.",
+      title: "Excluir veÃ­culo?",
+      message: "O histÃ³rico de ordens vinculado serÃ¡ mantido, mas o veÃ­culo serÃ¡ removido.",
       confirmLabel: "Sim, excluir",
       variant: "danger",
     });
@@ -58,9 +57,9 @@ export default function VehiclesPage() {
     try {
       await excluirVeiculo(menuId);
       setRows((prev) => prev.filter((x) => x.id !== menuId));
-      success("Veículo excluído com sucesso.");
+      success("VeÃ­culo excluÃ­do com sucesso.");
     } catch {
-      error("Não foi possível excluir o veículo.");
+      error("NÃ£o foi possÃ­vel excluir o veÃ­culo.");
     } finally {
       handleMenuClose();
     }
@@ -72,16 +71,16 @@ export default function VehiclesPage() {
         if (!user?.oficina_id) { error("Usuario sem oficina vinculada."); return; }
         const novo = await criarVeiculo(data, user.oficina_id);
         setRows((prev) => [novo, ...prev]);
-        success("Veículo cadastrado com sucesso!");
+        success("VeÃ­culo cadastrado com sucesso!");
       } else if (current) {
         const atualizado = await atualizarVeiculo(current.id, data);
         setRows((prev) => prev.map((r) => (r.id === current.id ? atualizado : r)));
-        success("Veículo atualizado com sucesso!");
+        success("VeÃ­culo atualizado com sucesso!");
       }
       setOpenDialog(false);
     } catch (err) {
-      console.error("Erro ao salvar veículo:", err);
-      error("Não foi possível salvar o veículo.");
+      console.error("Erro ao salvar veÃ­culo:", err);
+      error("NÃ£o foi possÃ­vel salvar o veÃ­culo.");
     }
   };
 
@@ -89,9 +88,9 @@ export default function VehiclesPage() {
     try {
       await excluirVeiculo(id);
       setRows((prev) => prev.filter((x) => x.id !== id));
-      success("Veículo excluído com sucesso.");
+      success("VeÃ­culo excluÃ­do com sucesso.");
     } catch {
-      error("Não foi possível excluir o veículo.");
+      error("NÃ£o foi possÃ­vel excluir o veÃ­culo.");
     }
   };
 
@@ -113,22 +112,21 @@ export default function VehiclesPage() {
 
   return (
     <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3} flexWrap="wrap" gap={2}>
-        <Stack spacing={0.3}>
-          <Typography variant="h5" fontWeight={700}>Veículos</Typography>
-          <Typography variant="body2" color="text.secondary">Gerencie os veículos cadastrados na sua oficina</Typography>
-        </Stack>
-        <Stack direction="row" spacing={1.5}>
-          <TextField value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Pesquisar veículo" size="small"
-            sx={{ minWidth: 300, "& .MuiOutlinedInput-root": { borderRadius: 999, bgcolor: "background.paper", px: 1 } }}
-            InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> }}
-          />
-          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}
-            sx={{ borderRadius: 999, textTransform: "none", px: 2.5, background: (t) => t.palette.primary.main }}>
-            Novo Veículo
-          </Button>
-        </Stack>
-      </Stack>
+      <ModuleHeader
+        title="Veiculos"
+        subtitle="Controle placas, proprietarios e dados dos veiculos atendidos."
+        icon={<DirectionsCarRoundedIcon />}
+        metrics={[
+          { label: "Cadastrados", value: rows.length, tone: "primary" },
+          { label: "Com cliente", value: rows.filter((r) => !!r.cliente).length, tone: "success" },
+          { label: "Filtrados", value: filtered.length, tone: "neutral" },
+        ]}
+        searchValue={query}
+        searchPlaceholder="Pesquisar por placa, modelo, marca ou cliente"
+        onSearchChange={setQuery}
+        actionLabel="Novo Veiculo"
+        onAction={openCreate}
+      />
 
       <Fade in timeout={400}>
         <TableContainer component={Paper} sx={{ borderRadius: 2, minHeight: 400, maxHeight: 680, border: (t) => `1px solid ${t.palette.divider}`, overflowY: "auto" }}>
@@ -141,7 +139,7 @@ export default function VehiclesPage() {
                 <TableCell>Cor</TableCell>
                 <TableCell>Cliente</TableCell>
                 <TableCell>Ano</TableCell>
-                <TableCell align="right">Ações</TableCell>
+                <TableCell align="right">AÃ§Ãµes</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -153,29 +151,29 @@ export default function VehiclesPage() {
                       <Typography fontWeight={400}>{v.modelo}</Typography>
                     </Stack>
                   </TableCell>
-                  <TableCell>{v.marca || "—"}</TableCell>
+                  <TableCell>{v.marca || "â€”"}</TableCell>
                   <TableCell>
                     <Stack direction="row" alignItems="center" spacing={1}>
                       <CreditCardRoundedIcon sx={{ fontSize: 16, opacity: 0.7 }} />
-                      <Typography variant="body2" fontFamily="monospace" fontWeight={700}>{v.placa || "—"}</Typography>
+                      <Typography variant="body2" fontFamily="monospace" fontWeight={700}>{v.placa || "â€”"}</Typography>
                     </Stack>
                   </TableCell>
                   <TableCell>
                     <Stack direction="row" alignItems="center" spacing={1}>
                       <ColorLensRoundedIcon sx={{ fontSize: 16, opacity: 0.7 }} />
-                      {v.cor || "—"}
+                      {v.cor || "â€”"}
                     </Stack>
                   </TableCell>
-                  <TableCell>{v.cliente || "—"}</TableCell>
+                  <TableCell>{v.cliente || "â€”"}</TableCell>
                   <TableCell>
-                    <Chip label={v.ano ?? "—"} size="small" sx={{ fontWeight: 600, bgcolor: (t) => alpha(t.palette.text.primary, 0.06), color: "text.primary" }} />
+                    <Chip label={v.ano ?? "â€”"} size="small" sx={{ fontWeight: 600, bgcolor: (t) => alpha(t.palette.text.primary, 0.06), color: "text.primary" }} />
                   </TableCell>
                   <TableCell align="right">
                     <IconButton onClick={(e) => handleMenuOpen(e, v.id)}><MoreVertRoundedIcon /></IconButton>
                   </TableCell>
                 </TableRow>
               )) : (
-                <TableRow><TableCell colSpan={7} align="center" sx={{ py: 8, color: "text.secondary" }}>Nenhum veículo encontrado</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} align="center" sx={{ py: 8, color: "text.secondary" }}>Nenhum veÃ­culo encontrado</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -185,8 +183,8 @@ export default function VehiclesPage() {
       <TablePagination component="div" count={filtered.length} page={page}
         onPageChange={(_, p) => setPage(p)} rowsPerPage={rowsPerPage}
         onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-        rowsPerPageOptions={[5, 10, 20]} labelRowsPerPage="Linhas por página:"
-        labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`}
+        rowsPerPageOptions={[5, 10, 20]} labelRowsPerPage="Linhas por pÃ¡gina:"
+        labelDisplayedRows={({ from, to, count }) => `${from}â€“${to} de ${count !== -1 ? count : `mais de ${to}`}`}
         sx={{ mt: 1.5, borderRadius: 2, bgcolor: "background.paper" }}
       />
 

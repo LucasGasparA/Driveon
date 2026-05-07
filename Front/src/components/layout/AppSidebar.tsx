@@ -1,6 +1,6 @@
 import {
   Drawer, Box, List, ListItemButton, ListItemIcon, ListItemText,
-  Typography, useTheme, IconButton, Tooltip, Divider, Collapse, Stack
+  useTheme, IconButton, Tooltip, Divider, Collapse, Stack
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import HomeOutlineIcon from '@mui/icons-material/HomeOutlined';
@@ -60,6 +60,24 @@ const navItems = [
   { label: 'Configurações', icon: <SettingsOutlineIcon />, to: paths.settings },
 ];
 
+const navLabels: Record<string, string> = {
+  [paths.root]: 'Inicio',
+  [paths.agenda]: 'Agenda',
+  [paths.clients]: 'Clientes',
+  [paths.veiculos]: 'Veiculos',
+  [paths.estoque]: 'Estoque',
+  [paths.servicos]: 'Servicos',
+  [paths.tasks]: 'Ordens de servico',
+  [paths.payments]: 'Financeiro',
+  [paths.fornecedores]: 'Fornecedores',
+  [paths.quotes]: 'Orcamentos',
+  [paths.users]: 'Funcionarios',
+  [paths.reports]: 'Relatorios',
+  [paths.settings]: 'Configuracoes',
+  [paths.contasReceber]: 'Recebimentos',
+  [paths.contasPagar]: 'Pagamentos',
+};
+
 function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collapsed?: boolean }) {
   const { pathname } = useLocation();
   const nav = useNavigate();
@@ -73,6 +91,7 @@ function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collaps
   return (
     <List sx={{ px: collapsed ? 1 : 1.5, py: 0.5, flex: 1, overflow: 'auto' }}>
       {navItems.map(({ label, icon, to, subItems }) => {
+        const displayLabel = navLabels[to] ?? label;
         const selected =
           (to === paths.root && pathname === '/') ||
           pathname === to ||
@@ -92,23 +111,32 @@ function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collaps
             }}
             sx={{
               my: 0.25,
-              minHeight: 44,
-              borderRadius: collapsed ? 1.5 : 2,
-              px: collapsed ? 0 : 1.5,
+              minHeight: 52,
+              borderRadius: 2,
+              px: collapsed ? 0 : 2,
               justifyContent: collapsed ? 'center' : 'flex-start',
-              bgcolor: selected ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-              color: selected ? theme.palette.primary.main : theme.palette.text.secondary,
-              transition: 'all 0.2s ease',
+              bgcolor: selected ? theme.palette.primary.main : 'transparent',
+              color: selected ? '#FFFFFF' : '#667085',
+              transition: 'background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease',
+              border: '1px solid transparent',
+              boxShadow: selected ? `0 14px 28px ${alpha(theme.palette.primary.main, 0.28)}` : 'none',
               '&:hover': {
                 bgcolor: selected
-                  ? alpha(theme.palette.primary.main, 0.15)
-                  : alpha(theme.palette.action.hover, 0.1),
+                  ? theme.palette.primary.dark
+                  : alpha(theme.palette.primary.main, 0.08),
+                color: selected ? '#FFFFFF' : theme.palette.primary.main,
+              },
+              '&.Mui-selected': {
+                bgcolor: theme.palette.primary.main,
+              },
+              '&.Mui-selected:hover': {
+                bgcolor: theme.palette.primary.dark,
               },
             }}
           >
             <ListItemIcon
               sx={{
-                minWidth: collapsed ? 0 : 40,
+                minWidth: collapsed ? 0 : 38,
                 justifyContent: 'center',
                 color: 'inherit',
               }}
@@ -118,10 +146,10 @@ function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collaps
 
             {!collapsed && (
               <ListItemText
-                primary={label}
+                primary={displayLabel}
                 primaryTypographyProps={{
                   fontSize: 14,
-                  fontWeight: selected ? 600 : 500,
+                  fontWeight: selected ? 750 : 650,
                 }}
               />
             )}
@@ -132,7 +160,7 @@ function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collaps
         return (
           <Box key={label}>
             {collapsed ? (
-              <Tooltip title={label} placement="right" arrow>
+              <Tooltip title={displayLabel} placement="right" arrow>
                 {button}
               </Tooltip>
             ) : (
@@ -154,13 +182,17 @@ function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collaps
                         pl: 6,
                         py: 0.75,
                         minHeight: 36,
-                        borderRadius: 2,
+                        borderRadius: 1.5,
                         color:
                           pathname === sub.to
                             ? theme.palette.primary.main
                             : theme.palette.text.secondary,
                         '&:hover': {
-                          bgcolor: alpha(theme.palette.primary.main, 0.05),
+                          bgcolor: alpha(theme.palette.text.primary, 0.045),
+                          color: theme.palette.text.primary,
+                        },
+                        '&.Mui-selected': {
+                          bgcolor: alpha(theme.palette.primary.main, 0.09),
                         },
                       }}
                     >
@@ -174,7 +206,7 @@ function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collaps
                         {sub.icon}
                       </ListItemIcon>
                       <ListItemText
-                        primary={sub.label}
+                        primary={navLabels[sub.to] ?? sub.label}
                         primaryTypographyProps={{ fontSize: 13, fontWeight: 500 }}
                       />
                     </ListItemButton>
@@ -196,25 +228,28 @@ export default function AppSidebar({
 }: Props) {
   const theme = useTheme();
   const { collapsed, toggleCollapsed } = useSidebar();
-  const collapsedWidth = 64;
+  const collapsedWidth = 68;
   const currentWidth = collapsed ? collapsedWidth : drawerWidth;
 
   const content = (
     <Box
       sx={{
-        height: '100vh',
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
+        background: '#FFFFFF',
+        color: theme.palette.text.primary,
       }}
     >
       <Box
         sx={{
-          p: 2,
+          px: collapsed ? 1.5 : 4,
+          py: 3.5,
           display: 'flex',
           alignItems: 'center',
           justifyContent: collapsed ? 'center' : 'space-between',
-          minHeight: 64,
+          minHeight: 112,
           flexShrink: 0,
         }}
       >
@@ -224,10 +259,11 @@ export default function AppSidebar({
               width: 36,
               height: 36,
               borderRadius: 1.5,
-              bgcolor: theme.palette.primary.main,
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
               display: 'grid',
               placeItems: 'center',
-              color: 'white',
+              color: theme.palette.primary.main,
               fontWeight: 800,
               fontSize: 18,
             }}
@@ -242,8 +278,8 @@ export default function AppSidebar({
                 src={logo}
                 alt="Logo"
                 sx={{
-                  mt: 1,
-                  height: 60,
+                  height: 54,
+                  maxHeight: 48,
                   width: 'auto',
                   objectFit: 'contain',
                 }}
@@ -253,9 +289,10 @@ export default function AppSidebar({
               onClick={toggleCollapsed}
               size="small"
               sx={{
-                '&:hover': {
-                  bgcolor: alpha(theme.palette.action.hover, 0.1),
+              '&:hover': {
+                  bgcolor: alpha(theme.palette.primary.main, 0.08),
                 },
+                color: 'text.secondary',
               }}
             >
               <ChevronLeftIcon fontSize="small" />
@@ -270,8 +307,9 @@ export default function AppSidebar({
             size="small"
             sx={{
               '&:hover': {
-                bgcolor: alpha(theme.palette.action.hover, 0.1),
+                bgcolor: alpha(theme.palette.primary.main, 0.08),
               },
+              color: 'text.secondary',
             }}
           >
             <MenuIcon fontSize="small" />
@@ -297,7 +335,7 @@ export default function AppSidebar({
           '& .MuiDrawer-paper': {
             width: drawerWidth,
             boxSizing: 'border-box',
-            bgcolor: '#FFFFFF',
+            bgcolor: '#ffffff',
             borderRight: (t) => `1px solid ${t.palette.divider}`,
           },
         }}
@@ -313,7 +351,11 @@ export default function AppSidebar({
           '& .MuiDrawer-paper': {
             width: currentWidth,
             boxSizing: 'border-box',
+            top: 0,
+            left: 0,
+            height: '100dvh',
             borderRight: (t) => `1px solid ${t.palette.divider}`,
+            borderRadius: 0,
             bgcolor: '#FFFFFF',
             transition: theme.transitions.create('width', {
               easing: theme.transitions.easing.sharp,

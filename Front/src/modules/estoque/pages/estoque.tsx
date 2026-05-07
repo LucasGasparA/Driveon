@@ -1,13 +1,11 @@
 import * as React from "react";
 import {
-  Box, Stack, Typography, TextField, InputAdornment,
-  Button, Paper, IconButton, Menu, MenuItem, Divider,
+  Box, Stack, Typography,
+  Paper, IconButton, Menu, MenuItem, Divider,
   Avatar, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, TablePagination, Fade, Chip
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
 import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
 import { useAuth } from "../../../context/AuthContext";
@@ -20,6 +18,7 @@ import {
   atualizarEstoque,
   excluirEstoque,
 } from "../api/api";
+import ModuleHeader from "../../../components/layout/ModuleHeader";
 
 export default function EstoquePage() {
   const { user } = useAuth();
@@ -74,7 +73,7 @@ export default function EstoquePage() {
     if (!menuId) return;
     const ok = await confirm({
       title: "Excluir item do estoque?",
-      message: "Esta ação não pode ser desfeita.",
+      message: "Esta aÃ§Ã£o nÃ£o pode ser desfeita.",
       confirmLabel: "Sim, excluir",
       variant: "danger",
     });
@@ -82,9 +81,9 @@ export default function EstoquePage() {
     try {
       await excluirEstoque(menuId);
       setRows((p) => p.filter((x) => x.id !== menuId));
-      success("Item excluído com sucesso.");
+      success("Item excluÃ­do com sucesso.");
     } catch {
-      error("Não foi possível excluir o item.");
+      error("NÃ£o foi possÃ­vel excluir o item.");
     } finally {
       handleMenuClose();
     }
@@ -94,7 +93,7 @@ export default function EstoquePage() {
     try {
       const oficinaId = user?.oficinaId ?? user?.oficina_id ?? 0;
       if (!oficinaId) {
-        warning("Usuário sem oficina vinculada. Refaça o login.");
+        warning("UsuÃ¡rio sem oficina vinculada. RefaÃ§a o login.");
         return;
       }
       if (mode === "create") {
@@ -109,7 +108,7 @@ export default function EstoquePage() {
       setOpenDialog(false);
     } catch (err: any) {
       console.error("Erro ao salvar item:", err);
-      error(err.response?.data?.message || "Não foi possível salvar o item.");
+      error(err.response?.data?.message || "NÃ£o foi possÃ­vel salvar o item.");
     }
   };
 
@@ -117,9 +116,9 @@ export default function EstoquePage() {
     try {
       await excluirEstoque(id);
       setRows((p) => p.filter((x) => x.id !== id));
-      success("Item excluído com sucesso.");
+      success("Item excluÃ­do com sucesso.");
     } catch {
-      error("Não foi possível excluir o item.");
+      error("NÃ£o foi possÃ­vel excluir o item.");
     }
   };
 
@@ -137,47 +136,21 @@ export default function EstoquePage() {
   return (
     <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
       {/* Header */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3} flexWrap="wrap" gap={2}>
-        <Stack spacing={0.3}>
-          <Typography variant="h5" fontWeight={700}>Estoque</Typography>
-          <Typography variant="body2" color="text.secondary">
-            Gerencie as peças e produtos da oficina
-          </Typography>
-        </Stack>
-
-        <Stack direction="row" spacing={1.5}>
-          <TextField
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Pesquisar item"
-            size="small"
-            sx={{
-              minWidth: 300,
-              "& .MuiOutlinedInput-root": { borderRadius: 999, bgcolor: "background.paper", px: 1 },
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchRoundedIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-          />
-          <Button
-            variant="contained"
-            startIcon={<AddRoundedIcon />}
-            onClick={openCreate}
-            sx={{
-              borderRadius: 999,
-              textTransform: "none",
-              px: 2.5,
-              background: (t) => t.palette.primary.main,
-            }}
-          >
-            Novo Item
-          </Button>
-        </Stack>
-      </Stack>
+      <ModuleHeader
+        title="Estoque"
+        subtitle="Pecas, produtos, custos e disponibilidade para atendimento."
+        icon={<Inventory2RoundedIcon />}
+        metrics={[
+          { label: "Itens", value: rows.length, tone: "primary" },
+          { label: "Baixo estoque", value: rows.filter((r) => Number(r.estoque_qtd ?? 0) <= 3).length, tone: "warning" },
+          { label: "Filtrados", value: filtered.length, tone: "neutral" },
+        ]}
+        searchValue={query}
+        searchPlaceholder="Pesquisar item ou descricao"
+        onSearchChange={setQuery}
+        actionLabel="Novo Item"
+        onAction={openCreate}
+      />
 
       {/* Tabela */}
       <Fade in timeout={400}>
@@ -195,11 +168,11 @@ export default function EstoquePage() {
             <TableHead>
               <TableRow>
                 <TableCell>Produto</TableCell>
-                <TableCell>Descrição</TableCell>
+                <TableCell>DescriÃ§Ã£o</TableCell>
                 <TableCell>Custo</TableCell>
                 <TableCell>Venda</TableCell>
                 <TableCell>Estoque</TableCell>
-                <TableCell align="right">Ações</TableCell>
+                <TableCell align="right">AÃ§Ãµes</TableCell>
               </TableRow>
             </TableHead>
 
@@ -215,7 +188,7 @@ export default function EstoquePage() {
                         <Typography fontWeight={400}>{i.nome}</Typography>
                       </Stack>
                     </TableCell>
-                    <TableCell sx={{ fontSize: 14 }}>{i.descricao || "—"}</TableCell>
+                    <TableCell sx={{ fontSize: 14 }}>{i.descricao || "â€”"}</TableCell>
                     <TableCell sx={{ fontSize: 14 }}>R$ {Number(i.preco_custo).toFixed(2)}</TableCell>
                     <TableCell sx={{ fontSize: 14, color: "success.main" }}>
                       R$ {Number(i.preco_venda).toFixed(2)}
@@ -252,7 +225,7 @@ export default function EstoquePage() {
         </TableContainer>
       </Fade>
 
-      {/* Paginação */}
+      {/* PaginaÃ§Ã£o */}
       <TablePagination
         component="div"
         count={filtered.length}
@@ -264,9 +237,9 @@ export default function EstoquePage() {
           setPage(0);
         }}
         rowsPerPageOptions={[5, 10, 20]}
-        labelRowsPerPage="Linhas por página:"
+        labelRowsPerPage="Linhas por pÃ¡gina:"
         labelDisplayedRows={({ from, to, count }) =>
-          `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`
+          `${from}â€“${to} de ${count !== -1 ? count : `mais de ${to}`}`
         }
         sx={{ mt: 1.5, borderRadius: 2, bgcolor: "background.paper" }}
       />

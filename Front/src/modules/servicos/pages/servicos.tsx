@@ -1,11 +1,9 @@
 import * as React from "react";
 import {
-  Box, Stack, Typography, TextField, InputAdornment, Button, Paper, IconButton,
+  Box, Stack, Typography, Paper, IconButton,
   Menu, MenuItem, Avatar, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, TablePagination, Fade, Divider, CircularProgress,
 } from "@mui/material";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
 import BuildRoundedIcon from "@mui/icons-material/BuildRounded";
 import PaidRoundedIcon from "@mui/icons-material/PaidRounded";
@@ -14,6 +12,7 @@ import { useToast } from "../../../context/ToastContext";
 import { useConfirm } from "../../../context/ConfirmContext";
 import ServicoDialog, { type Servico, type ServicoForm } from "../dialog";
 import { listarServicos, criarServico, atualizarServico, excluirServico } from "../api/api";
+import ModuleHeader from "../../../components/layout/ModuleHeader";
 
 export default function ServicosPage() {
   const { user } = useAuth();
@@ -34,7 +33,7 @@ export default function ServicosPage() {
   React.useEffect(() => {
     listarServicos()
       .then(setRows)
-      .catch((err) => console.error("Erro ao carregar serviços:", err))
+      .catch((err) => console.error("Erro ao carregar serviÃ§os:", err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -47,8 +46,8 @@ export default function ServicosPage() {
   const handleDelete = async () => {
     if (!menuId) return;
     const ok = await confirm({
-      title: "Excluir serviço?",
-      message: "Ordens já criadas com este serviço não serão afetadas.",
+      title: "Excluir serviÃ§o?",
+      message: "Ordens jÃ¡ criadas com este serviÃ§o nÃ£o serÃ£o afetadas.",
       confirmLabel: "Sim, excluir",
       variant: "danger",
     });
@@ -56,9 +55,9 @@ export default function ServicosPage() {
     try {
       await excluirServico(menuId);
       setRows((p) => p.filter((x) => x.id !== menuId));
-      success("Serviço excluído com sucesso.");
+      success("ServiÃ§o excluÃ­do com sucesso.");
     } catch {
-      error("Não foi possível excluir o serviço.");
+      error("NÃ£o foi possÃ­vel excluir o serviÃ§o.");
     } finally {
       handleMenuClose();
     }
@@ -67,20 +66,20 @@ export default function ServicosPage() {
   const onSubmit = async (data: ServicoForm) => {
     try {
       const oficinaId = user?.oficinaId ?? user?.oficina_id;
-      if (!oficinaId) { warning("Usuário sem oficina vinculada."); return; }
+      if (!oficinaId) { warning("UsuÃ¡rio sem oficina vinculada."); return; }
       if (mode === "create") {
         const novo = await criarServico(data, oficinaId);
         setRows((p) => [novo, ...p]);
-        success("Serviço cadastrado com sucesso!");
+        success("ServiÃ§o cadastrado com sucesso!");
       } else if (current) {
         const atualizado = await atualizarServico(current.id, data);
         setRows((p) => p.map((r) => (r.id === current.id ? atualizado : r)));
-        success("Serviço atualizado com sucesso!");
+        success("ServiÃ§o atualizado com sucesso!");
       }
       setOpenDialog(false);
     } catch (err) {
-      console.error("Erro ao salvar serviço:", err);
-      error("Não foi possível salvar o serviço.");
+      console.error("Erro ao salvar serviÃ§o:", err);
+      error("NÃ£o foi possÃ­vel salvar o serviÃ§o.");
     }
   };
 
@@ -88,9 +87,9 @@ export default function ServicosPage() {
     try {
       await excluirServico(id);
       setRows((p) => p.filter((x) => x.id !== id));
-      success("Serviço excluído com sucesso.");
+      success("ServiÃ§o excluÃ­do com sucesso.");
     } catch {
-      error("Não foi possível excluir o serviço.");
+      error("NÃ£o foi possÃ­vel excluir o serviÃ§o.");
     }
   };
 
@@ -106,32 +105,31 @@ export default function ServicosPage() {
 
   return (
     <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3} flexWrap="wrap" gap={2}>
-        <Stack spacing={0.3}>
-          <Typography variant="h5" fontWeight={700}>Serviços</Typography>
-          <Typography variant="body2" color="text.secondary">Gerencie os serviços disponíveis na sua oficina</Typography>
-        </Stack>
-        <Stack direction="row" spacing={1.5}>
-          <TextField value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Pesquisar serviço" size="small"
-            sx={{ minWidth: 300, "& .MuiOutlinedInput-root": { borderRadius: 999, bgcolor: "background.paper", px: 1 } }}
-            InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> }}
-          />
-          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}
-            sx={{ borderRadius: 999, textTransform: "none", px: 2.5 }}>
-            Novo Serviço
-          </Button>
-        </Stack>
-      </Stack>
+      <ModuleHeader
+        title="Servicos"
+        subtitle="Catalogo de mao de obra, valores e servicos recorrentes."
+        icon={<BuildRoundedIcon />}
+        metrics={[
+          { label: "Cadastrados", value: rows.length, tone: "primary" },
+          { label: "Valor medio", value: rows.length ? `R$ ${(rows.reduce((s, r) => s + Number(r.preco ?? 0), 0) / rows.length).toFixed(2)}` : "R$ 0.00", tone: "success" },
+          { label: "Filtrados", value: filtered.length, tone: "neutral" },
+        ]}
+        searchValue={query}
+        searchPlaceholder="Pesquisar servico ou descricao"
+        onSearchChange={setQuery}
+        actionLabel="Novo Servico"
+        onAction={openCreate}
+      />
 
       <Fade in timeout={400}>
         <TableContainer component={Paper} sx={{ borderRadius: 2, border: (t) => `1px solid ${t.palette.divider}`, minHeight: 400, maxHeight: 640, overflowY: "auto" }}>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell>Serviço</TableCell>
-                <TableCell>Descrição</TableCell>
-                <TableCell>Preço</TableCell>
-                <TableCell align="right">Ações</TableCell>
+                <TableCell>ServiÃ§o</TableCell>
+                <TableCell>DescriÃ§Ã£o</TableCell>
+                <TableCell>PreÃ§o</TableCell>
+                <TableCell align="right">AÃ§Ãµes</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -143,7 +141,7 @@ export default function ServicosPage() {
                       <Typography fontWeight={500}>{s.nome}</Typography>
                     </Stack>
                   </TableCell>
-                  <TableCell sx={{ color: "text.secondary" }}>{s.descricao || "—"}</TableCell>
+                  <TableCell sx={{ color: "text.secondary" }}>{s.descricao || "â€”"}</TableCell>
                   <TableCell>
                     <Stack direction="row" alignItems="center" spacing={1}>
                       <PaidRoundedIcon sx={{ fontSize: 16, opacity: 0.7 }} />
@@ -155,7 +153,7 @@ export default function ServicosPage() {
                   </TableCell>
                 </TableRow>
               )) : (
-                <TableRow><TableCell colSpan={4} align="center" sx={{ py: 8, color: "text.secondary" }}>Nenhum serviço encontrado</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} align="center" sx={{ py: 8, color: "text.secondary" }}>Nenhum serviÃ§o encontrado</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -165,8 +163,8 @@ export default function ServicosPage() {
       <TablePagination component="div" count={filtered.length} page={page}
         onPageChange={(_, p) => setPage(p)} rowsPerPage={rowsPerPage}
         onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-        rowsPerPageOptions={[5, 10, 20]} labelRowsPerPage="Linhas por página:"
-        labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`}
+        rowsPerPageOptions={[5, 10, 20]} labelRowsPerPage="Linhas por pÃ¡gina:"
+        labelDisplayedRows={({ from, to, count }) => `${from}â€“${to} de ${count !== -1 ? count : `mais de ${to}`}`}
         sx={{ mt: 1.5, borderRadius: 2, bgcolor: "background.paper" }}
       />
 
