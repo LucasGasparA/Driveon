@@ -3,10 +3,10 @@ import { EstoqueService } from "../services/estoque.service.js";
 
 export const EstoqueController = {
   async list(req: Request, res: Response) {
-    res.json(await EstoqueService.list());
+    res.json(await EstoqueService.list(req.user?.oficinaId));
   },
   async getById(req: Request, res: Response) {
-    res.json(await EstoqueService.getById(Number(req.params.id)));
+    res.json(await EstoqueService.getById(Number(req.params.id), req.user?.oficinaId));
   },
   async create(req: Request, res: Response) {
     res.status(201).json(await EstoqueService.create(req.body));

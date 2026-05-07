@@ -3,11 +3,11 @@ import { ServicosService } from "../services/servicos.service.js";
 
 export const ServicosController = {
   async list(req: Request, res: Response) {
-    res.json(await ServicosService.list());
+    res.json(await ServicosService.list(req.user?.oficinaId));
   },
 
   async getById(req: Request, res: Response) {
-    res.json(await ServicosService.getById(Number(req.params.id)));
+    res.json(await ServicosService.getById(Number(req.params.id), req.user?.oficinaId));
   },
 
   async create(req: Request, res: Response) {

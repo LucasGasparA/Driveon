@@ -9,11 +9,22 @@ type User = {
   oficina_id: number;
 };
 
+type OfficeOption = {
+  id: number;
+  nome: string;
+  perfil: string;
+};
+
+type SignInResult =
+  | { requiresOfficeSelection: false }
+  | { requiresOfficeSelection: true; selectionToken: string; oficinas: OfficeOption[] };
+
 type AuthContextType = {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  signIn: (email: string, password: string, remember: boolean) => Promise<void>;
+  signIn: (email: string, password: string, remember: boolean) => Promise<SignInResult>;
+  selectOffice: (selectionToken: string, oficinaId: number, remember: boolean) => Promise<void>;
   signOut: () => void;
 };
 
@@ -49,16 +60,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // ✅ Login e persistência
-  const signIn = async (email: string, password: string, remember: boolean) => {
-    // Bypass auth: always log in with mock data
-    const mockUser: User = {
-      id: 1,
-      email: email || "admin@admin.com",
-      nome: "Admin Test",
-      tipo: "admin",
-      oficina_id: 1
-    };
-    persist("mock-test-token-123", mockUser, remember);
+  const signIn = async (email: string, password: string, remember: boolean): Promise<SignInResult> => {
+    const { data } = await api.post("/auth/login", { email, senha: password });
+    if (data.requiresOfficeSelection) {
+      return {
+        requiresOfficeSelection: true as const,
+        selectionToken: data.selectionToken,
+        oficinas: data.oficinas ?? [],
+      };
+    }
+    persist(data.token, normalizeUser(data.usuario), remember);
+    return { requiresOfficeSelection: false as const };
+  };
+
+  const selectOffice = async (selectionToken: string, oficinaId: number, remember: boolean) => {
+    const { data } = await api.post("/auth/select-oficina", {
+      selectionToken,
+      oficina_id: oficinaId,
+    });
+    persist(data.token, normalizeUser(data.usuario), remember);
   };
 
   // ✅ Logout
@@ -83,6 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       token,
       isAuthenticated: !!token,
       signIn,
+      selectOffice,
       signOut,
     }),
     [user, token]

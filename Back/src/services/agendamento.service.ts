@@ -2,15 +2,15 @@ import { prisma } from "../prisma/client.js";
 
 export const AgendamentoService = {
   async list() {
-    return prisma.agendamento.findMany();
+    return prisma.agendamento.findMany({ where: { deleted_at: null } });
   },
 
   async getById(id: number) {
-    return prisma.agendamento.findUnique({ where: { id } });
+    return prisma.agendamento.findFirst({ where: { id, deleted_at: null } });
   },
 
   async listByOficina(oficina_id: number) {
-    return prisma.agendamento.findMany({ where: { oficina_id } });
+    return prisma.agendamento.findMany({ where: { oficina_id, deleted_at: null } });
   },
 
   async create(data: any) {
@@ -25,6 +25,6 @@ export const AgendamentoService = {
   },
 
   async remove(id: number) {
-    return prisma.agendamento.delete({ where: { id } });
+    return prisma.agendamento.update({ where: { id }, data: { deleted_at: new Date(), status: "cancelado" } });
   }
 };

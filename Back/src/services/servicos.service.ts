@@ -1,11 +1,11 @@
 import { prisma } from "../prisma/client.js";
 
 export const ServicosService = {
-  list: () => prisma.servico.findMany(),
+  list: (oficinaId?: number) => prisma.servico.findMany({ where: { deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) } }),
   
-  getById: (id: number) =>
-    prisma.servico.findUnique({
-      where: { id },
+  getById: (id: number, oficinaId?: number) =>
+    prisma.servico.findFirst({
+      where: { id, deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
     }),
 
   create: (data: any) =>
@@ -29,7 +29,8 @@ export const ServicosService = {
     }),
 
   remove: (id: number) =>
-    prisma.servico.delete({
+    prisma.servico.update({
       where: { id },
+      data: { deleted_at: new Date() },
     }),
 };

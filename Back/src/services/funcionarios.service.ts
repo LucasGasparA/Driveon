@@ -1,17 +1,5 @@
 import { prisma } from "../prisma/client.js";
-// prisma/client exports enums under the Prisma namespace at runtime.  When
-// the module is loaded as an ES module the individual enum names are **not**
-// exported, only the `Prisma` object contains them.  Attempting to import
-// them directly causes the runtime error seen in the report:
-//
-//   SyntaxError: The requested module '@prisma/client' does not provide an
-//   export named 'cargo_funcionario'
-//
-// To keep type safety we import the enum types using a type-only import and
-// refer to the runtime values via `Prisma.<enum>`.  The `import type` form is
-// erased from the generated JS, avoiding the invalid import altogether.
-import type { cargo_funcionario, tipo_usuario, status_usuario } from "@prisma/client";
-import { Prisma } from "@prisma/client";
+import type { cargo_funcionario } from "@prisma/client";
 import bcrypt from "bcrypt";
 
 function normTelefone(t?: string) {
@@ -26,21 +14,22 @@ function toCargoEnum(cargo: any): cargo_funcionario {
 
   switch (k) {
     case "mecanico":
-      return Prisma.cargo_funcionario.mecanico;
+      return "mecanico";
     case "atendente":
-      return Prisma.cargo_funcionario.atendente;
+      return "atendente";
     case "gerente":
-      return Prisma.cargo_funcionario.gerente;
+      return "gerente";
     case "administrador":
-      return Prisma.cargo_funcionario.administrador;
+      return "administrador";
     default:
-      return Prisma.cargo_funcionario.mecanico;
+      return "mecanico";
   }
 }
 
 export const FuncionariosService = {
-  list: () =>
+  list: (oficinaId?: number) =>
     prisma.funcionario.findMany({
+      where: { deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
       orderBy: { id: "desc" },
       include: {
         usuario: { select: { id: true, email: true, nome: true, status: true } },
@@ -48,9 +37,9 @@ export const FuncionariosService = {
       },
     }),
 
-  getById: (id: number) =>
-    prisma.funcionario.findUnique({
-      where: { id },
+  getById: (id: number, oficinaId?: number) =>
+    prisma.funcionario.findFirst({
+      where: { id, deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
       include: {
         usuario: { select: { id: true, email: true, nome: true, status: true } },
         oficina: true,
@@ -78,35 +67,49 @@ export const FuncionariosService = {
       ? new Date(data.data_contratacao)
       : new Date();
 
-    const funcionario = await prisma.funcionario.create({
-      data: {
-        nome,
-        email,
-        telefone,
-        cargo,
-        data_contratacao: dataContratacao,
-        oficina: { connect: { id: oficinaId } },
-        usuario: {
-          connectOrCreate: {
-            where: { email },
-            create: {
-              nome,
-              email,
-              senha: senhaHash,
-              // `tipo_usuario`/`status_usuario` are only used for typing, the
-              // runtime value is taken from `Prisma` so we don't import them
-              // directly.
-              tipo: Prisma.tipo_usuario.funcionario,
-              status: Prisma.status_usuario.ativo,
-              oficina: { connect: { id: oficinaId } },
-            },
-          },
+    const funcionario = await prisma.$transaction(async (tx) => {
+      const usuario = await tx.usuario.upsert({
+        where: { email },
+        update: {
+          nome,
+          status: "ativo",
+          deleted_at: null,
         },
-      },
-      include: {
-        usuario: { select: { id: true, email: true, nome: true, status: true } },
-        oficina: true,
-      },
+        create: {
+          nome,
+          email,
+          senha: senhaHash,
+          tipo: "funcionario",
+          status: "ativo",
+        },
+      });
+
+      await tx.usuario_oficina.upsert({
+        where: { usuario_id_oficina_id: { usuario_id: usuario.id, oficina_id: oficinaId } },
+        update: { perfil: "funcionario", status: "ativo", deleted_at: null },
+        create: {
+          usuario_id: usuario.id,
+          oficina_id: oficinaId,
+          perfil: "funcionario",
+          status: "ativo",
+        },
+      });
+
+      return tx.funcionario.create({
+        data: {
+          nome,
+          email,
+          telefone,
+          cargo,
+          data_contratacao: dataContratacao,
+          oficina: { connect: { id: oficinaId } },
+          usuario: { connect: { id: usuario.id } },
+        },
+        include: {
+          usuario: { select: { id: true, email: true, nome: true, status: true } },
+          oficina: true,
+        },
+      });
     });
 
     return funcionario;
@@ -166,8 +169,23 @@ export const FuncionariosService = {
         });
       }
 
-      return await prisma.funcionario.delete({
+      return await prisma.funcionario.update({
         where: { id },
+        data: {
+          deleted_at: new Date(),
+          usuario: {
+            update: {
+              deleted_at: new Date(),
+              status: "inativo",
+              acessos: {
+                updateMany: {
+                  where: { deleted_at: null },
+                  data: { deleted_at: new Date(), status: "inativo" },
+                },
+              },
+            },
+          },
+        },
       });
     } catch (err: any) {
       console.error("Erro ao desativar/excluir funcionário:", err);

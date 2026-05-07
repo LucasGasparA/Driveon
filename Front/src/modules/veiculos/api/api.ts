@@ -1,8 +1,10 @@
 import api from "../../../api/api";
 import { type VehicleForm } from "../dialog";
 
-export async function listarVeiculos() {
-  const { data } = await api.get("/veiculos");
+export async function listarVeiculos(oficinaId?: number) {
+  const { data } = await api.get("/veiculos", {
+    params: oficinaId ? { oficina_id: oficinaId } : undefined,
+  });
   return data.map((v: any) => ({
     id: String(v.id),
     cliente: v.cliente?.nome || "",
@@ -15,8 +17,8 @@ export async function listarVeiculos() {
   }));
 }
 
-export async function criarVeiculo(data: VehicleForm) {
-  const { data: v } = await api.post("/veiculos", data);
+export async function criarVeiculo(data: VehicleForm, oficinaId: number) {
+  const { data: v } = await api.post("/veiculos", { ...data, oficina_id: oficinaId });
   return {
     id: String(v.id),
     cliente: v.cliente?.nome || "",

@@ -1,15 +1,16 @@
 import { prisma } from "../prisma/client.js";
 
 export const EstoqueService = {
-  list: () =>
+  list: (oficinaId?: number) =>
     prisma.estoque.findMany({
+      where: { deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
       orderBy: { id: "desc" },
       include: { oficina: true },
     }),
 
-  getById: (id: number) =>
-    prisma.estoque.findUnique({
-      where: { id },
+  getById: (id: number, oficinaId?: number) =>
+    prisma.estoque.findFirst({
+      where: { id, deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
       include: { oficina: true },
     }),
 
@@ -44,7 +45,7 @@ export const EstoqueService = {
     });
   },
 
-  delete: (id: number) => prisma.estoque.delete({ where: { id } }),
+  delete: (id: number) => prisma.estoque.update({ where: { id }, data: { deleted_at: new Date() } }),
 
-  remove: (id: number) => prisma.estoque.delete({ where: { id } }),
+  remove: (id: number) => prisma.estoque.update({ where: { id }, data: { deleted_at: new Date() } }),
 };

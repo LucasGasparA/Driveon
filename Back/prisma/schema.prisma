@@ -11,26 +11,20 @@ datasource db {
 model usuario {
   id     Int            @id @default(autoincrement())
   nome   String
-  email  String
+  email  String         @unique
   senha  String
   tipo   tipo_usuario   @default(funcionario)
   status status_usuario @default(ativo)
 
-  oficina_id Int
-  oficina    oficina @relation("OficinaUsuarios", fields: [oficina_id], references: [id])
-
-  funcionario_id Int?         @unique
-  funcionario    funcionario? @relation("FuncionarioUsuario")
-
+  funcionarios   funcionario[] @relation("FuncionarioUsuario")
   cliente        cliente? @relation("UsuarioCliente")
   gestor_oficina oficina? @relation("GestorOficina")
+  acessos        usuario_oficina[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   deleted_at DateTime?
 
-  @@unique([email, oficina_id])
-  @@index([oficina_id])
   @@index([status])
   @@index([deleted_at])
 }
@@ -81,7 +75,7 @@ model oficina {
 
   cidade   cidade    @relation(fields: [cidade_id], references: [id])
   gestor   usuario?  @relation("GestorOficina", fields: [gestor_usuario_id], references: [id])
-  usuarios usuario[] @relation("OficinaUsuarios")
+  acessos  usuario_oficina[]
 
   clientes       cliente[]
   funcionarios   funcionario[]
@@ -93,6 +87,7 @@ model oficina {
   compras        compra_peca[]
   pagamentos     pagamento[]
   agendamentos   agendamento[]
+  veiculos       veiculo[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -113,7 +108,7 @@ model funcionario {
   oficina_id Int
   oficina    oficina @relation(fields: [oficina_id], references: [id])
 
-  usuario_id Int?     @unique
+  usuario_id Int?
   usuario    usuario? @relation("FuncionarioUsuario", fields: [usuario_id], references: [id], onDelete: Cascade)
 
   ordens_servico ordem_servico[]
@@ -130,23 +125,27 @@ model funcionario {
 
 model veiculo {
   id         Int       @id @default(autoincrement())
+  oficina_id Int
   cliente_id Int
   marca      String
   modelo     String
   ano        Int?
-  placa      String    @unique
+  placa      String
   cor        String?
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
 
+  oficina      oficina        @relation(fields: [oficina_id], references: [id])
   cliente      cliente        @relation(fields: [cliente_id], references: [id])
   ordens       ordem_servico[]
   orcamentos   orcamento[]
   agendamentos agendamento[]
 
   @@index([cliente_id])
+  @@index([oficina_id])
   @@index([placa])
+  @@unique([placa, oficina_id])
   @@index([deleted_at])
 }
 
@@ -322,7 +321,7 @@ model compra_peca {
 
 model pagamento {
   id               Int              @id @default(autoincrement())
-  cliente_id       Int
+  cliente_id       Int?
   oficina_id       Int
   ordem_servico_id Int?
   fornecedor_id    Int?
@@ -332,9 +331,11 @@ model pagamento {
   status           status_pagamento
   data_vencimento  DateTime
   data_pagamento   DateTime?
+  categoria        String?
+  descricao        String?
   observacao       String?
 
-  cliente       cliente        @relation(fields: [cliente_id], references: [id])
+  cliente       cliente?       @relation(fields: [cliente_id], references: [id])
   oficina       oficina        @relation(fields: [oficina_id], references: [id])
   ordem_servico ordem_servico? @relation(fields: [ordem_servico_id], references: [id])
   fornecedor    fornecedor?    @relation(fields: [fornecedor_id], references: [id])
@@ -347,6 +348,25 @@ model pagamento {
   @@index([cliente_id])
   @@index([status])
   @@index([data_vencimento])
+  @@index([deleted_at])
+}
+
+model usuario_oficina {
+  id         Int            @id @default(autoincrement())
+  usuario_id Int
+  oficina_id Int
+  perfil     tipo_usuario   @default(funcionario)
+  status     status_usuario @default(ativo)
+  created_at DateTime       @default(now())
+  updated_at DateTime       @updatedAt
+  deleted_at DateTime?
+
+  usuario usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  oficina oficina @relation(fields: [oficina_id], references: [id])
+
+  @@unique([usuario_id, oficina_id])
+  @@index([oficina_id])
+  @@index([status])
   @@index([deleted_at])
 }
 

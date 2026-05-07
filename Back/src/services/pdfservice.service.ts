@@ -3,9 +3,9 @@ import { Response } from "express";
 import { prisma } from "../prisma/client.js";
 
 export const PdfHtmlService = {
-  async gerarOrdemServicoPDF(id: number, res: Response) {
-    const ordem = await prisma.ordem_servico.findUnique({
-      where: { id },
+  async gerarOrdemServicoPDF(id: number, res: Response, oficinaId?: number) {
+    const ordem = await prisma.ordem_servico.findFirst({
+      where: { id, deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
       include: {
         cliente: true,
         veiculo: true,
@@ -16,8 +16,10 @@ export const PdfHtmlService = {
 
     if (!ordem) throw new Error("Ordem de serviço não encontrada.");
 
-    const money = (v: number) =>
-      (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    const money = (v: { toNumber?: () => number } | number | null | undefined) => {
+      const value = typeof v === "number" ? v : v?.toNumber?.() ?? 0;
+      return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    };
 
     const html = `
       <html lang="pt-BR">

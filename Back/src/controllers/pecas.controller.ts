@@ -4,7 +4,7 @@ import { PecasService } from "../services/pecas.service.js";
 export const PecasController = {
   async list(req: Request, res: Response) {
     try {
-      const pecas = await PecasService.list();
+      const pecas = await PecasService.list(req.user?.oficinaId);
       return res.json(pecas);
     } catch (error) {
       console.error("Erro ao listar peças:", error);

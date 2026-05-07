@@ -11,7 +11,7 @@ type ClienteInput = {
 export const ClienteService = {
 
   async listar(oficinaId?: number, search: string = "") {
-    const where: any = {};
+    const where: any = { deleted_at: null };
 
     if (oficinaId) {
       where.oficina_id = oficinaId;
@@ -37,7 +37,7 @@ export const ClienteService = {
   },
 
   async getDetalhes(id: number, oficina_id?: number) {
-    const where: any = { id };
+    const where: any = { id, deleted_at: null };
     if (oficina_id) where.oficina_id = oficina_id;
 
     const cliente = await prisma.cliente.findFirst({
@@ -66,19 +66,23 @@ export const ClienteService = {
       throw new Error("Nome é obrigatório.");
     }
 
+    if (!data.oficina_id) {
+      throw new Error("oficina_id e obrigatorio.");
+    }
+
     return await prisma.cliente.create({
       data: {
         nome: data.nome,
         email: data.email,
         telefone: data.telefone,
         observacao: data.observacoes,
-        oficina_id: data.oficina_id ?? null,
+        oficina_id: data.oficina_id,
       },
     });
   },
 
-  async atualizar(id: number, data: ClienteInput) {
-    const cliente = await prisma.cliente.findUnique({ where: { id } });
+  async atualizar(id: number, data: ClienteInput, oficina_id?: number) {
+    const cliente = await prisma.cliente.findFirst({ where: { id, deleted_at: null, ...(oficina_id ? { oficina_id } : {}) } });
     if (!cliente) throw new Error("Cliente não encontrado.");
 
     return prisma.cliente.update({
@@ -93,18 +97,18 @@ export const ClienteService = {
   },
 
   async deletar(id: number, oficina_id?: number) {
-    const where: any = { id };
+    const where: any = { id, deleted_at: null };
     if (oficina_id) where.oficina_id = oficina_id;
 
     const cliente = await prisma.cliente.findFirst({ where });
     if (!cliente) throw new Error("Cliente não encontrado.");
 
-    await prisma.cliente.delete({ where: { id } });
+    await prisma.cliente.update({ where: { id }, data: { deleted_at: new Date(), status: "inativo" } });
   },
 
-  listarVeiculosDoCliente(clienteId: number) {
+  listarVeiculosDoCliente(clienteId: number, oficina_id?: number) {
     return prisma.veiculo.findMany({
-      where: { cliente_id: clienteId },
+      where: { cliente_id: clienteId, deleted_at: null, ...(oficina_id ? { oficina_id } : {}) },
       orderBy: { id: "desc" }
     });
   }

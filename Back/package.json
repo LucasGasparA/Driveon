@@ -5,7 +5,7 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "start": "tsx watch index.ts",
+    "start": "node dist/index.js",
     "dev": "tsx watch index.ts",
     "build": "tsc",
     "prisma": "npx prisma"

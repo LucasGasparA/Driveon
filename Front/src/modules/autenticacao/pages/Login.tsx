@@ -11,11 +11,11 @@ import {
   Stack,
   Alert,
   Collapse,
+  MenuItem,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import { useNavigate } from "react-router-dom";
@@ -50,7 +50,7 @@ const fieldSx = {
 
 export default function Login() {
   const nav = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, selectOffice } = useAuth();
 
   const [show, setShow] = useState(false);
   const [email, setEmail] = useState("");
@@ -59,6 +59,9 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [selectionToken, setSelectionToken] = useState("");
+  const [offices, setOffices] = useState<{ id: number; nome: string; perfil: string }[]>([]);
+  const [officeId, setOfficeId] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -74,10 +77,31 @@ export default function Login() {
     if (!email || !password) { setError("Preencha o e-mail e a senha."); return; }
     try {
       setLoading(true);
-      await signIn(email, password, remember);
+      const result = await signIn(email, password, remember);
+      if (result.requiresOfficeSelection) {
+        setSelectionToken(result.selectionToken);
+        setOffices(result.oficinas);
+        setOfficeId(String(result.oficinas[0]?.id ?? ""));
+        return;
+      }
       nav(paths.root, { replace: true });
     } catch (err: any) {
       setError(err.message || "E-mail ou senha inválidos.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOfficeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!officeId) { setError("Selecione uma unidade."); return; }
+    try {
+      setLoading(true);
+      await selectOffice(selectionToken, Number(officeId), remember);
+      nav(paths.root, { replace: true });
+    } catch (err: any) {
+      setError(err.message || "Nao foi possivel selecionar a unidade.");
     } finally {
       setLoading(false);
     }
@@ -186,81 +210,99 @@ export default function Login() {
             </Typography>
           </Stack>
 
-          <form onSubmit={handleSubmit} noValidate>
+          <form onSubmit={selectionToken ? handleOfficeSubmit : handleSubmit} noValidate>
             <Stack spacing={2.5}>
-
-              <TextField
-                label="E-mail"
-                type="email"
-                fullWidth
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); setError(null); }}
-                autoComplete="email"
-                autoFocus
-                sx={fieldSx}
-              />
-
-              <TextField
-                label="Senha"
-                type={show ? "text" : "password"}
-                fullWidth
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); setError(null); }}
-                autoComplete="current-password"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LockOutlinedIcon sx={{ fontSize: 17, color: alpha("#fff", 0.3) }} />
-                    </InputAdornment>
-                  ),
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setShow((s) => !s)}
-                        edge="end" size="small" tabIndex={-1}
-                        sx={{ color: alpha("#fff", 0.3) }}
-                      >
-                        {show
-                          ? <VisibilityOff sx={{ fontSize: 17 }} />
-                          : <Visibility sx={{ fontSize: 17 }} />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={fieldSx}
-              />
-
-              <Stack direction="row" alignItems="center" justifyContent="space-between">
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={remember}
-                      onChange={(e) => setRemember(e.target.checked)}
-                      size="small"
-                      sx={{
-                        color: alpha("#fff", 0.22),
-                        "&.Mui-checked": { color: BLUE_LIGHT },
-                        p: 0.5,
-                      }}
-                    />
-                  }
-                  label={
-                    <Typography sx={{ fontSize: 13, color: alpha("#fff", 0.4) }}>
-                      Lembrar-me
-                    </Typography>
-                  }
-                />
-                <Button
-                  variant="text" size="small"
-                  sx={{
-                    textTransform: "none", fontWeight: 500, fontSize: 13,
-                    color: alpha("#fff", 0.4), p: 0, minWidth: 0,
-                    "&:hover": { color: BLUE_LIGHT, bgcolor: "transparent" },
-                  }}
+              {selectionToken ? (
+                <TextField
+                  select
+                  label="Unidade"
+                  fullWidth
+                  value={officeId}
+                  onChange={(e) => { setOfficeId(e.target.value); setError(null); }}
+                  sx={fieldSx}
                 >
-                  Esqueceu a senha?
-                </Button>
-              </Stack>
+                  {offices.map((office) => (
+                    <MenuItem key={office.id} value={office.id}>
+                      {office.nome}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              ) : (
+                <>
+                  <TextField
+                    label="E-mail"
+                    type="email"
+                    fullWidth
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setError(null); }}
+                    autoComplete="email"
+                    autoFocus
+                    sx={fieldSx}
+                  />
+
+                  <TextField
+                    label="Senha"
+                    type={show ? "text" : "password"}
+                    fullWidth
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); setError(null); }}
+                    autoComplete="current-password"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LockOutlinedIcon sx={{ fontSize: 17, color: alpha("#fff", 0.3) }} />
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShow((s) => !s)}
+                            edge="end" size="small" tabIndex={-1}
+                            sx={{ color: alpha("#fff", 0.3) }}
+                          >
+                            {show
+                              ? <VisibilityOff sx={{ fontSize: 17 }} />
+                              : <Visibility sx={{ fontSize: 17 }} />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={fieldSx}
+                  />
+
+                  <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={remember}
+                          onChange={(e) => setRemember(e.target.checked)}
+                          size="small"
+                          sx={{
+                            color: alpha("#fff", 0.22),
+                            "&.Mui-checked": { color: BLUE_LIGHT },
+                            p: 0.5,
+                          }}
+                        />
+                      }
+                      label={
+                        <Typography sx={{ fontSize: 13, color: alpha("#fff", 0.4) }}>
+                          Lembrar-me
+                        </Typography>
+                      }
+                    />
+                    <Button
+                      variant="text" size="small"
+                      sx={{
+                        textTransform: "none", fontWeight: 500, fontSize: 13,
+                        color: alpha("#fff", 0.4), p: 0, minWidth: 0,
+                        "&:hover": { color: BLUE_LIGHT, bgcolor: "transparent" },
+                      }}
+                    >
+                      Esqueceu a senha?
+                    </Button>
+                  </Stack>
+                </>
+              )}
 
               <Collapse in={!!error}>
                 <Alert
@@ -309,7 +351,7 @@ export default function Login() {
                   },
                 }}
               >
-                {loading ? "Entrando..." : "Entrar"}
+                {loading ? "Entrando..." : selectionToken ? "Continuar" : "Entrar"}
               </Button>
             </Stack>
           </form>

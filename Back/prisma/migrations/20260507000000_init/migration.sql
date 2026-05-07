@@ -39,8 +39,6 @@ CREATE TABLE "usuario" (
     "senha" TEXT NOT NULL,
     "tipo" "tipo_usuario" NOT NULL DEFAULT 'funcionario',
     "status" "status_usuario" NOT NULL DEFAULT 'ativo',
-    "oficina_id" INTEGER NOT NULL,
-    "funcionario_id" INTEGER,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
@@ -107,6 +105,7 @@ CREATE TABLE "funcionario" (
 -- CreateTable
 CREATE TABLE "veiculo" (
     "id" SERIAL NOT NULL,
+    "oficina_id" INTEGER NOT NULL,
     "cliente_id" INTEGER NOT NULL,
     "marca" TEXT NOT NULL,
     "modelo" TEXT NOT NULL,
@@ -252,7 +251,7 @@ CREATE TABLE "compra_peca" (
 -- CreateTable
 CREATE TABLE "pagamento" (
     "id" SERIAL NOT NULL,
-    "cliente_id" INTEGER NOT NULL,
+    "cliente_id" INTEGER,
     "oficina_id" INTEGER NOT NULL,
     "ordem_servico_id" INTEGER,
     "fornecedor_id" INTEGER,
@@ -262,12 +261,28 @@ CREATE TABLE "pagamento" (
     "status" "status_pagamento" NOT NULL,
     "data_vencimento" TIMESTAMP(3) NOT NULL,
     "data_pagamento" TIMESTAMP(3),
+    "categoria" TEXT,
+    "descricao" TEXT,
     "observacao" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "pagamento_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "usuario_oficina" (
+    "id" SERIAL NOT NULL,
+    "usuario_id" INTEGER NOT NULL,
+    "oficina_id" INTEGER NOT NULL,
+    "perfil" "tipo_usuario" NOT NULL DEFAULT 'funcionario',
+    "status" "status_usuario" NOT NULL DEFAULT 'ativo',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "usuario_oficina_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -308,19 +323,13 @@ CREATE TABLE "agendamento" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "usuario_funcionario_id_key" ON "usuario"("funcionario_id");
-
--- CreateIndex
-CREATE INDEX "usuario_oficina_id_idx" ON "usuario"("oficina_id");
+CREATE UNIQUE INDEX "usuario_email_key" ON "usuario"("email");
 
 -- CreateIndex
 CREATE INDEX "usuario_status_idx" ON "usuario"("status");
 
 -- CreateIndex
 CREATE INDEX "usuario_deleted_at_idx" ON "usuario"("deleted_at");
-
--- CreateIndex
-CREATE UNIQUE INDEX "usuario_email_oficina_id_key" ON "usuario"("email", "oficina_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "cliente_usuario_id_key" ON "cliente"("usuario_id");
@@ -359,9 +368,6 @@ CREATE INDEX "oficina_cidade_id_idx" ON "oficina"("cidade_id");
 CREATE INDEX "oficina_deleted_at_idx" ON "oficina"("deleted_at");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "funcionario_usuario_id_key" ON "funcionario"("usuario_id");
-
--- CreateIndex
 CREATE INDEX "funcionario_oficina_id_idx" ON "funcionario"("oficina_id");
 
 -- CreateIndex
@@ -371,16 +377,19 @@ CREATE INDEX "funcionario_cargo_idx" ON "funcionario"("cargo");
 CREATE INDEX "funcionario_deleted_at_idx" ON "funcionario"("deleted_at");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "veiculo_placa_key" ON "veiculo"("placa");
+CREATE INDEX "veiculo_cliente_id_idx" ON "veiculo"("cliente_id");
 
 -- CreateIndex
-CREATE INDEX "veiculo_cliente_id_idx" ON "veiculo"("cliente_id");
+CREATE INDEX "veiculo_oficina_id_idx" ON "veiculo"("oficina_id");
 
 -- CreateIndex
 CREATE INDEX "veiculo_placa_idx" ON "veiculo"("placa");
 
 -- CreateIndex
 CREATE INDEX "veiculo_deleted_at_idx" ON "veiculo"("deleted_at");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "veiculo_placa_oficina_id_key" ON "veiculo"("placa", "oficina_id");
 
 -- CreateIndex
 CREATE INDEX "ordem_servico_oficina_id_idx" ON "ordem_servico"("oficina_id");
@@ -467,6 +476,18 @@ CREATE INDEX "pagamento_data_vencimento_idx" ON "pagamento"("data_vencimento");
 CREATE INDEX "pagamento_deleted_at_idx" ON "pagamento"("deleted_at");
 
 -- CreateIndex
+CREATE INDEX "usuario_oficina_oficina_id_idx" ON "usuario_oficina"("oficina_id");
+
+-- CreateIndex
+CREATE INDEX "usuario_oficina_status_idx" ON "usuario_oficina"("status");
+
+-- CreateIndex
+CREATE INDEX "usuario_oficina_deleted_at_idx" ON "usuario_oficina"("deleted_at");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "usuario_oficina_usuario_id_oficina_id_key" ON "usuario_oficina"("usuario_id", "oficina_id");
+
+-- CreateIndex
 CREATE INDEX "orcamento_cliente_id_idx" ON "orcamento"("cliente_id");
 
 -- CreateIndex
@@ -491,9 +512,6 @@ CREATE INDEX "agendamento_status_idx" ON "agendamento"("status");
 CREATE INDEX "agendamento_deleted_at_idx" ON "agendamento"("deleted_at");
 
 -- AddForeignKey
-ALTER TABLE "usuario" ADD CONSTRAINT "usuario_oficina_id_fkey" FOREIGN KEY ("oficina_id") REFERENCES "oficina"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "cliente" ADD CONSTRAINT "cliente_oficina_id_fkey" FOREIGN KEY ("oficina_id") REFERENCES "oficina"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -510,6 +528,9 @@ ALTER TABLE "funcionario" ADD CONSTRAINT "funcionario_oficina_id_fkey" FOREIGN K
 
 -- AddForeignKey
 ALTER TABLE "funcionario" ADD CONSTRAINT "funcionario_usuario_id_fkey" FOREIGN KEY ("usuario_id") REFERENCES "usuario"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "veiculo" ADD CONSTRAINT "veiculo_oficina_id_fkey" FOREIGN KEY ("oficina_id") REFERENCES "oficina"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "veiculo" ADD CONSTRAINT "veiculo_cliente_id_fkey" FOREIGN KEY ("cliente_id") REFERENCES "cliente"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -560,7 +581,7 @@ ALTER TABLE "compra_peca" ADD CONSTRAINT "compra_peca_fornecedor_id_fkey" FOREIG
 ALTER TABLE "compra_peca" ADD CONSTRAINT "compra_peca_peca_id_fkey" FOREIGN KEY ("peca_id") REFERENCES "peca"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "pagamento" ADD CONSTRAINT "pagamento_cliente_id_fkey" FOREIGN KEY ("cliente_id") REFERENCES "cliente"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "pagamento" ADD CONSTRAINT "pagamento_cliente_id_fkey" FOREIGN KEY ("cliente_id") REFERENCES "cliente"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "pagamento" ADD CONSTRAINT "pagamento_oficina_id_fkey" FOREIGN KEY ("oficina_id") REFERENCES "oficina"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -570,6 +591,12 @@ ALTER TABLE "pagamento" ADD CONSTRAINT "pagamento_ordem_servico_id_fkey" FOREIGN
 
 -- AddForeignKey
 ALTER TABLE "pagamento" ADD CONSTRAINT "pagamento_fornecedor_id_fkey" FOREIGN KEY ("fornecedor_id") REFERENCES "fornecedor"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "usuario_oficina" ADD CONSTRAINT "usuario_oficina_usuario_id_fkey" FOREIGN KEY ("usuario_id") REFERENCES "usuario"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "usuario_oficina" ADD CONSTRAINT "usuario_oficina_oficina_id_fkey" FOREIGN KEY ("oficina_id") REFERENCES "oficina"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "orcamento" ADD CONSTRAINT "orcamento_cliente_id_fkey" FOREIGN KEY ("cliente_id") REFERENCES "cliente"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -588,3 +615,4 @@ ALTER TABLE "agendamento" ADD CONSTRAINT "agendamento_veiculo_id_fkey" FOREIGN K
 
 -- AddForeignKey
 ALTER TABLE "agendamento" ADD CONSTRAINT "agendamento_funcionario_id_fkey" FOREIGN KEY ("funcionario_id") REFERENCES "funcionario"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+

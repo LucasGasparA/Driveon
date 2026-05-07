@@ -49,7 +49,7 @@ export const clienteController = {
   async atualizar(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
-      const cliente = await ClienteService.atualizar(id, req.body);
+      const cliente = await ClienteService.atualizar(id, req.body, req.user?.oficinaId);
       res.json(cliente);
     } catch (err: any) {
       console.error("Erro ao atualizar cliente:", err);
@@ -75,7 +75,7 @@ export const clienteController = {
   async listarVeiculosDoCliente(req: Request, res: Response) {
     try {
       const clienteId = Number(req.params.clienteId);
-      const veiculos = await ClienteService.listarVeiculosDoCliente(clienteId);
+      const veiculos = await ClienteService.listarVeiculosDoCliente(clienteId, req.user?.oficinaId);
       return res.json(veiculos);
     } catch (error) {
       console.error(error);

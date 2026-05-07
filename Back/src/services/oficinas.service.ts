@@ -28,7 +28,12 @@ export const OficinaService = {
 
   async list() {
     return prisma.oficina.findMany({
-      include: { usuarios: { select: { id: true, nome: true, email: true, tipo: true } } },
+      include: {
+        acessos: {
+          where: { deleted_at: null },
+          include: { usuario: { select: { id: true, nome: true, email: true, tipo: true } } },
+        },
+      },
     });
   },
 };

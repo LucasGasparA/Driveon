@@ -4,7 +4,7 @@ import { FuncionariosService } from "../services/funcionarios.service.js";
 export const FuncionariosController = {
   async list(req: Request, res: Response) {
     try {
-      const funcionarios = await FuncionariosService.list();
+      const funcionarios = await FuncionariosService.list(req.user?.oficinaId);
       res.json(funcionarios);
     } catch (error: any) {
       console.error("Erro ao listar funcionários:", error);
@@ -15,7 +15,7 @@ export const FuncionariosController = {
   async getById(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const funcionario = await FuncionariosService.getById(Number(id));
+      const funcionario = await FuncionariosService.getById(Number(id), req.user?.oficinaId);
 
       if (!funcionario) {
         return res.status(404).json({ error: "Funcionário não encontrado." });

@@ -1,7 +1,15 @@
 import axios from "axios";
 
+declare global {
+  interface Window {
+    __DRIVEON_CONFIG__?: {
+      API_URL?: string;
+    };
+  }
+}
+
 const api = axios.create({
-  baseURL: "http://localhost:4000/api",
+  baseURL: window.__DRIVEON_CONFIG__?.API_URL ?? import.meta.env.VITE_API_URL ?? "http://localhost:4000/api",
 });
 
 api.interceptors.request.use((config) => {

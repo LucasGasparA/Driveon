@@ -7,6 +7,7 @@ export type UserPayload = {
   nome: string;
   tipo: string;
   oficinaId: number;
+  oficina_id?: number;
 };
 
 export const authMiddleware = (
@@ -28,4 +29,25 @@ export const authMiddleware = (
   } catch {
     return res.status(401).json({ message: "Token inválido" });
   }
+};
+
+export const officeScopeMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const oficinaId = Number(req.user?.oficinaId ?? req.user?.oficina_id);
+  if (!oficinaId) {
+    return res.status(403).json({ message: "Token sem oficina ativa." });
+  }
+
+  req.query.oficina_id = String(oficinaId);
+  req.params.oficina_id = String(oficinaId);
+
+  if (req.body && typeof req.body === "object") {
+    req.body.oficina_id = oficinaId;
+    req.body.oficinaId = oficinaId;
+  }
+
+  next();
 };

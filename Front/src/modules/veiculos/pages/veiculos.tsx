@@ -34,11 +34,11 @@ export default function VehiclesPage() {
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
   React.useEffect(() => {
-    listarVeiculos()
+    listarVeiculos(user?.oficina_id)
       .then(setRows)
       .catch((err) => console.error("Erro ao carregar veículos:", err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [user?.oficina_id]);
 
   const openCreate = () => { setMode("create"); setCurrent(null); setOpenDialog(true); };
   const openEdit = (v: Vehicle) => { setMode("edit"); setCurrent(v); setOpenDialog(true); };
@@ -69,7 +69,8 @@ export default function VehiclesPage() {
   const onSubmit = async (data: VehicleForm) => {
     try {
       if (mode === "create") {
-        const novo = await criarVeiculo(data);
+        if (!user?.oficina_id) { error("Usuario sem oficina vinculada."); return; }
+        const novo = await criarVeiculo(data, user.oficina_id);
         setRows((prev) => [novo, ...prev]);
         success("Veículo cadastrado com sucesso!");
       } else if (current) {

@@ -14,18 +14,23 @@ import pecasRouter from "./pecas.routes.js";
 import pagamentosRouter from "./pagamentos.routes.js";
 import orcamentosRouter from "./orcamentos.routes.js";
 import agendamentosRouter from "./agendamento.routes.js";
+import { authMiddleware, officeScopeMiddleware } from "../middlewares/ensureAuth.js";
 
 export const router = Router();
 
+router.use("/auth", authRouter);
+
+router.use(authMiddleware);
+router.use(officeScopeMiddleware);
+
+router.use("/cidade", cidadeRouter);
+router.use("/oficinas", oficinasRouter);
 router.use("/clientes", clientesRouter);
 router.use("/funcionarios", funcionariosRouter);
-router.use("/oficinas", oficinasRouter);
 router.use("/veiculos", veiculosRouter);
 router.use("/fornecedores", fornecedoresRouter);
 router.use("/estoque", estoqueRouter);
-router.use("/auth", authRouter);
 router.use("/usuario", usuarioRouter);
-router.use("/cidade", cidadeRouter);
 router.use("/servicos", servicosRouter);
 router.use("/ordens", ordensRouter);
 router.use("/pecas", pecasRouter);

@@ -6,7 +6,9 @@ const JWT_SECRET = process.env.JWT_SECRET || "driveon_secret";
 
 export const AuthService = {
   async login(email: string, senha: string) {
-    const user = await prisma.usuario.findUnique({ where: { email } });
+    const user = await prisma.usuario.findFirst({
+      where: { email: email.trim().toLowerCase(), deleted_at: null, status: "ativo" },
+    });
 
     if (!user) throw new Error("E-mail ou senha inválidos");
 

@@ -1,8 +1,9 @@
 import { prisma } from "../prisma/client.js";
 
 export class OrcamentoService {
-  async listarTodos() {
+  async listarTodos(oficinaId?: number) {
     return prisma.orcamento.findMany({
+      where: { deleted_at: null, ...(oficinaId ? { cliente: { oficina_id: oficinaId } } : {}) },
       orderBy: { id: "desc" },
       include: {
         cliente: true,
@@ -11,9 +12,9 @@ export class OrcamentoService {
     });
   }
 
-  async buscarPorId(id: number) {
-    return prisma.orcamento.findUnique({
-      where: { id },
+  async buscarPorId(id: number, oficinaId?: number) {
+    return prisma.orcamento.findFirst({
+      where: { id, deleted_at: null, ...(oficinaId ? { cliente: { oficina_id: oficinaId } } : {}) },
       include: {
         cliente: true,
         veiculo: true
@@ -27,7 +28,15 @@ export class OrcamentoService {
     descricao: string;
     valor: number;
     data: string;
-  }) {
+	    oficinaId?: number;
+	  }) {
+    if (data.oficinaId) {
+      const cliente = await prisma.cliente.findFirst({
+        where: { id: data.clienteId, oficina_id: data.oficinaId, deleted_at: null },
+      });
+      if (!cliente) throw new Error("Cliente nao encontrado nesta oficina.");
+    }
+
     return prisma.orcamento.create({
       data: {
         descricao: data.descricao,
@@ -46,21 +55,33 @@ export class OrcamentoService {
   }
   
 
-  async atualizarStatus(id: number, status: "analise" | "aprovado" | "recusado") {
+  async atualizarStatus(id: number, status: "analise" | "aprovado" | "recusado", oficinaId?: number) {
+    if (oficinaId) {
+      const existing = await this.buscarPorId(id, oficinaId);
+      if (!existing) throw new Error("Orcamento nao encontrado nesta oficina.");
+    }
     return prisma.orcamento.update({
       where: { id },
       data: { status },
     });
   }
 
-  async atualizar(id: number, data: any) {
+  async atualizar(id: number, data: any, oficinaId?: number) {
+    if (oficinaId) {
+      const existing = await this.buscarPorId(id, oficinaId);
+      if (!existing) throw new Error("Orcamento nao encontrado nesta oficina.");
+    }
     return prisma.orcamento.update({
       where: { id },
       data,
     });
   }
 
-  async excluir(id: number) {
-    return prisma.orcamento.delete({ where: { id } });
+  async excluir(id: number, oficinaId?: number) {
+    if (oficinaId) {
+      const existing = await this.buscarPorId(id, oficinaId);
+      if (!existing) throw new Error("Orcamento nao encontrado nesta oficina.");
+    }
+    return prisma.orcamento.update({ where: { id }, data: { deleted_at: new Date(), status: "recusado" } });
   }
 }

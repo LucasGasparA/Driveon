@@ -5,7 +5,6 @@ import {
   Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions,
   Fade, Chip, TablePagination, CircularProgress,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
@@ -16,21 +15,21 @@ import { useAuth } from "../../../../context/AuthContext";
 import { useToast } from "../../../../context/ToastContext";
 
 type Conta = {
-  id: number; cliente: any; descricao: string; valor: number;
+  id: number; cliente?: any; fornecedor?: any; descricao: string; categoria?: string; valor: number;
   data_vencimento: string; status: "pendente" | "pago" | "cancelado"; metodo?: string;
 };
 
 type FormValues = {
   descricao: string; valor: number; data_vencimento: string;
-  metodo: string; observacao?: string; cliente_id: number;
+  metodo: string; observacao?: string; fornecedor_id?: number; categoria?: string;
 };
 
-function NovaContaDialog({ open, onClose, onCreate, clientes }: {
-  open: boolean; onClose: () => void; onCreate: (data: FormValues) => void; clientes: any[];
+function NovaContaDialog({ open, onClose, onCreate, fornecedores }: {
+  open: boolean; onClose: () => void; onCreate: (data: FormValues) => void; fornecedores: any[];
 }) {
   const { control, handleSubmit, reset, formState: { errors, isValid } } = useForm<FormValues>({
     mode: "onChange",
-    defaultValues: { descricao: "", valor: 0, data_vencimento: "", metodo: "pix", cliente_id: 0 },
+    defaultValues: { descricao: "", valor: 0, data_vencimento: "", metodo: "pix", fornecedor_id: 0, categoria: "" },
   });
   const onSubmit = (data: FormValues) => { onCreate(data); reset(); onClose(); };
 
@@ -39,14 +38,15 @@ function NovaContaDialog({ open, onClose, onCreate, clientes }: {
       <DialogTitle sx={{ fontWeight: 700 }}>Nova Conta a Pagar</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2.5} mt={0.5}>
-          <Controller name="cliente_id" control={control}
-            rules={{ required: "Selecione um cliente", min: { value: 1, message: "Selecione um cliente" } }}
+          <Controller name="fornecedor_id" control={control}
             render={({ field }) => (
-              <TextField {...field} select label="Cliente" error={!!errors.cliente_id} helperText={errors.cliente_id?.message} fullWidth>
-                <MenuItem value={0} disabled>Selecione...</MenuItem>
-                {clientes.map((c) => <MenuItem key={c.id} value={c.id}>{c.nome}</MenuItem>)}
+              <TextField {...field} select label="Fornecedor (opcional)" fullWidth>
+                <MenuItem value={0}>Sem fornecedor</MenuItem>
+                {fornecedores.map((f) => <MenuItem key={f.id} value={f.id}>{f.nome}</MenuItem>)}
               </TextField>
             )} />
+          <Controller name="categoria" control={control}
+            render={({ field }) => <TextField {...field} label="Categoria (opcional)" fullWidth />} />
           <Controller name="descricao" control={control} rules={{ required: "Informe a descrição" }}
             render={({ field }) => <TextField {...field} label="Descrição" error={!!errors.descricao} helperText={errors.descricao?.message} fullWidth />} />
           <Controller name="valor" control={control} rules={{ required: "Informe o valor", min: { value: 0.01, message: "Valor inválido" } }}
@@ -81,7 +81,7 @@ export default function ContasPagar() {
   const { success, error, warning } = useToast();
 
   const [contas, setContas] = React.useState<Conta[]>([]);
-  const [clientes, setClientes] = React.useState<any[]>([]);
+  const [fornecedores, setFornecedores] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [query, setQuery] = React.useState("");
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -94,12 +94,12 @@ export default function ContasPagar() {
     if (!user?.oficina_id) return;
     (async () => {
       try {
-        const [{ data: pag }, { data: cli }] = await Promise.all([
+        const [{ data: pag }, { data: forn }] = await Promise.all([
           api.get(`/pagamentos?oficina_id=${user.oficina_id}`),
-          api.get(`/clientes?oficina_id=${user.oficina_id}`),
+          api.get(`/fornecedores?oficina_id=${user.oficina_id}`),
         ]);
         setContas(pag.filter((p: any) => p.tipo === "pagar"));
-        setClientes(cli);
+        setFornecedores(forn);
       } catch (err) { console.error("Erro ao carregar dados:", err); }
       finally { setLoading(false); }
     })();
@@ -120,9 +120,15 @@ export default function ContasPagar() {
 
   const handleCreate = async (data: FormValues) => {
     if (!user?.oficina_id) { warning("Usuário sem oficina vinculada."); return; }
-    if (!data.cliente_id || data.cliente_id === 0) { warning("Selecione um cliente."); return; }
     try {
-      const payload = { ...data, valor: Number(data.valor), tipo: "pagar", status: "pendente", oficina_id: user.oficina_id, cliente_id: Number(data.cliente_id) };
+      const payload = {
+        ...data,
+        valor: Number(data.valor),
+        tipo: "pagar",
+        status: "pendente",
+        oficina_id: user.oficina_id,
+        fornecedor_id: data.fornecedor_id ? Number(data.fornecedor_id) : null,
+      };
       const { data: novo } = await api.post("/pagamentos", payload);
       setContas((prev) => [novo, ...prev]);
       success("Conta a pagar cadastrada!");
@@ -135,8 +141,8 @@ export default function ContasPagar() {
   const filtered = contas.filter((c) => {
     const q = query.toLowerCase();
     const desc = c.descricao?.toLowerCase() ?? "";
-    const cliente = typeof c.cliente === "string" ? c.cliente.toLowerCase() : c.cliente?.nome?.toLowerCase() ?? "";
-    return desc.includes(q) || cliente.includes(q);
+    const responsavel = c.fornecedor?.nome?.toLowerCase() ?? c.cliente?.nome?.toLowerCase() ?? "";
+    return desc.includes(q) || responsavel.includes(q) || (c.categoria ?? "").toLowerCase().includes(q);
   });
 
   const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -176,7 +182,7 @@ export default function ContasPagar() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Cliente</TableCell>
+	                  <TableCell>Responsavel</TableCell>
                   <TableCell>Descrição</TableCell>
                   <TableCell>Valor</TableCell>
                   <TableCell>Vencimento</TableCell>
@@ -188,7 +194,7 @@ export default function ContasPagar() {
               <TableBody>
                 {paginated.length > 0 ? paginated.map((conta) => (
                   <TableRow key={conta.id} hover>
-                    <TableCell>{typeof conta.cliente === "string" ? conta.cliente : conta.cliente?.nome ?? "—"}</TableCell>
+	                    <TableCell>{conta.fornecedor?.nome ?? conta.cliente?.nome ?? "-"}</TableCell>
                     <TableCell>{conta.descricao}</TableCell>
                     <TableCell>R$ {Number(conta.valor).toFixed(2)}</TableCell>
                     <TableCell>{new Date(conta.data_vencimento).toLocaleDateString("pt-BR")}</TableCell>
@@ -221,7 +227,7 @@ export default function ContasPagar() {
         <MenuItem onClick={handleMenuClose} sx={{ color: "error.main" }}>Excluir</MenuItem>
       </Menu>
 
-      <NovaContaDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onCreate={handleCreate} clientes={clientes} />
+	      <NovaContaDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onCreate={handleCreate} fornecedores={fornecedores} />
     </Box>
   );
 }

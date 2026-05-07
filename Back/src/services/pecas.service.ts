@@ -1,15 +1,16 @@
 import { prisma } from "../prisma/client.js";
 
 export const PecasService = {
-  list: async () => {
+  list: async (oficinaId?: number) => {
     return prisma.peca.findMany({
+      where: { deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
       orderBy: { id: "desc" },
     });
   },
 
-  getById: async (id: number) => {
-    return prisma.peca.findUnique({
-      where: { id },
+  getById: async (id: number, oficinaId?: number) => {
+    return prisma.peca.findFirst({
+      where: { id, deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
     });
   },
 
@@ -27,8 +28,9 @@ export const PecasService = {
   },
 
   delete: async (id: number) => {
-    return prisma.peca.delete({
+    return prisma.peca.update({
       where: { id },
+      data: { deleted_at: new Date() },
     });
   },
 };

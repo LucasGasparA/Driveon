@@ -32,7 +32,7 @@ export const OrdensController = {
 
   async remove(req: Request, res: Response) {
     try {
-      await OrdensService.remove(Number(req.params.id));
+      await OrdensService.delete(Number(req.params.id));
       res.status(204).send();
     } catch (err: any) {
       console.error("Erro ao excluir OS:", err);

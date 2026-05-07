@@ -3,10 +3,10 @@ import { FornecedoresService } from "../services/fornecedores.service.js";
 
 export const FornecedoresController = {
   async list(req: Request, res: Response) {
-    res.json(await FornecedoresService.list());
+    res.json(await FornecedoresService.list(req.user?.oficinaId));
   },
   async getById(req: Request, res: Response) {
-    res.json(await FornecedoresService.getById(Number(req.params.id)));
+    res.json(await FornecedoresService.getById(Number(req.params.id), req.user?.oficinaId));
   },
   async create(req: Request, res: Response) {
     res.status(201).json(await FornecedoresService.create(req.body));

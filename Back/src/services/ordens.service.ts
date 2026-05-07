@@ -1,8 +1,9 @@
 import { prisma } from "../prisma/client.js";
 
 export const OrdensService = {
-  list: async () => {
+  list: async (oficinaId?: number) => {
     return prisma.ordem_servico.findMany({
+      where: { deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
       orderBy: { created_at: "desc" },
       include: {
         cliente: true,
@@ -18,9 +19,9 @@ export const OrdensService = {
     });
   },
 
-  getById: async (id: number) => {
-    const os = await prisma.ordem_servico.findUnique({
-      where: { id },
+  getById: async (id: number, oficinaId?: number) => {
+    const os = await prisma.ordem_servico.findFirst({
+      where: { id, deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
       include: {
         cliente: true,
         veiculo: true,
@@ -49,13 +50,13 @@ export const OrdensService = {
       itens,
     } = data;
 
-    if (!cliente_id || !veiculo_id || !funcionario_id) {
+    if (!oficina_id || !cliente_id || !veiculo_id || !funcionario_id) {
       throw new Error("Campos obrigatórios não informados.");
     }
 
     return prisma.ordem_servico.create({
       data: {
-        oficina_id: oficina_id ?? 1,
+        oficina_id,
         cliente_id,
         veiculo_id,
         funcionario_id,
@@ -88,13 +89,14 @@ export const OrdensService = {
     });
   },
 
-  update: async (id: number, data: any) => {
+  update: async (id: number, data: any, oficinaId?: number) => {
     const { itens, ...rest } = data;
 
     const osAtualizada = await prisma.ordem_servico.update({
       where: { id },
       data: {
         ...rest,
+        ...(oficinaId ? { oficina_id: oficinaId } : {}),
         updated_at: new Date(),
       },
       include: {
@@ -136,14 +138,20 @@ export const OrdensService = {
     });
   },
 
-  delete: async (id: number) => {
+  delete: async (id: number, oficinaId?: number) => {
     try {
-      await prisma.item_ordem_servico.deleteMany({
-        where: { ordem_servico_id: id },
+      if (oficinaId) {
+        const existing = await prisma.ordem_servico.findFirst({ where: { id, oficina_id: oficinaId, deleted_at: null } });
+        if (!existing) throw new Error("Ordem de servico nao encontrada nesta oficina.");
+      }
+      await prisma.item_ordem_servico.updateMany({
+        where: { ordem_servico_id: id, deleted_at: null },
+        data: { deleted_at: new Date() },
       });
 
-      return await prisma.ordem_servico.delete({
+      return await prisma.ordem_servico.update({
         where: { id },
+        data: { deleted_at: new Date(), status: "cancelada" },
       });
     } catch (err: any) {
       console.error("Erro ao excluir OS:", err);
