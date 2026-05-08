@@ -5,7 +5,6 @@ import {
   Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions,
   Fade, Chip, TablePagination, CircularProgress,
 } from "@mui/material";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
@@ -83,7 +82,6 @@ export default function ContasPagar() {
   const [contas, setContas] = React.useState<Conta[]>([]);
   const [fornecedores, setFornecedores] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const [query, setQuery] = React.useState("");
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [selectedId, setSelectedId] = React.useState<number | null>(null);
@@ -138,16 +136,9 @@ export default function ContasPagar() {
     }
   };
 
-  const filtered = contas.filter((c) => {
-    const q = query.toLowerCase();
-    const desc = c.descricao?.toLowerCase() ?? "";
-    const responsavel = c.fornecedor?.nome?.toLowerCase() ?? c.cliente?.nome?.toLowerCase() ?? "";
-    return desc.includes(q) || responsavel.includes(q) || (c.categoria ?? "").toLowerCase().includes(q);
-  });
+  const filtered = contas;
 
   const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-  const totalPendente = contas.filter((c) => c.status === "pendente").reduce((s, c) => s + Number(c.valor), 0);
-  const totalPago = contas.filter((c) => c.status === "pago").reduce((s, c) => s + Number(c.valor), 0);
 
   if (loading) return <Box sx={{ textAlign: "center", mt: 6 }}><CircularProgress /></Box>;
 
@@ -158,18 +149,7 @@ export default function ContasPagar() {
         <Typography variant="body2" color="text.secondary">Gerencie os pagamentos aos fornecedores</Typography>
       </Stack>
 
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={3}>
-        {[{ label: "PENDENTE", value: totalPendente, color: "warning.main" }, { label: "PAGO", value: totalPago, color: "success.main" }].map((c) => (
-          <Paper key={c.label} sx={{ flex: 1, p: 2, borderRadius: 2, border: (t) => `1px solid ${t.palette.divider}` }}>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>{c.label}</Typography>
-            <Typography variant="h5" fontWeight={700} color={c.color}>R$ {c.value.toFixed(2)}</Typography>
-          </Paper>
-        ))}
-      </Stack>
-
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} mb={2.5}>
-        <TextField value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Pesquisar contas" size="small" sx={{ flex: 1 }}
-          InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> }} />
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} mb={2.5} justifyContent="flex-end">
         <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialogOpen(true)}
           sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}>
           Nova conta

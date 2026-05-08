@@ -1,12 +1,11 @@
 import * as React from "react";
 import {
-  Box, Stack, Typography, Paper, TextField, InputAdornment, Button,
+  Box, Stack, Typography, Paper, Button,
   IconButton, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Menu, MenuItem, Fade, Chip, TablePagination,
   CircularProgress, Divider, ToggleButton, ToggleButtonGroup, Tooltip,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
@@ -16,8 +15,6 @@ import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
 import RequestQuoteRoundedIcon from "@mui/icons-material/RequestQuoteRounded";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import BuildRoundedIcon from "@mui/icons-material/BuildRounded";
-import HourglassEmptyRoundedIcon from "@mui/icons-material/HourglassEmptyRounded";
-import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 
 import { useAuth } from "../../../context/AuthContext";
 import { useToast } from "../../../context/ToastContext";
@@ -205,17 +202,6 @@ export default function OrcamentosPage() {
     }
   };
 
-  // ── KPIs ──
-  const kpis = React.useMemo(() => ({
-    total: orcamentos.length,
-    analise: orcamentos.filter((o) => o.status === "analise").length,
-    aprovado: orcamentos.filter((o) => o.status === "aprovado").length,
-    recusado: orcamentos.filter((o) => o.status === "recusado").length,
-    valorAprovado: orcamentos
-      .filter((o) => o.status === "aprovado")
-      .reduce((s, o) => s + Number(o.valor ?? 0), 0),
-  }), [orcamentos]);
-
   // ── Filtros ──
   const filtered = React.useMemo(() => {
     return orcamentos.filter((o) => {
@@ -255,67 +241,8 @@ export default function OrcamentosPage() {
         </Button>
       </Stack>
 
-      {/* ── KPI Cards ── */}
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={3}>
-        {[
-          { label: "Total", value: kpis.total, icon: <RequestQuoteRoundedIcon />, color: "primary.main", bg: (t: any) => alpha(t.palette.primary.main, 0.08) },
-          { label: "Em análise", value: kpis.analise, icon: <HourglassEmptyRoundedIcon />, color: "#f59e0b", bg: () => alpha("#f59e0b", 0.08) },
-          { label: "Aprovados", value: kpis.aprovado, icon: <CheckCircleOutlineRoundedIcon />, color: "#10b981", bg: () => alpha("#10b981", 0.08) },
-          { label: "Recusados", value: kpis.recusado, icon: <CancelRoundedIcon />, color: "#ef4444", bg: () => alpha("#ef4444", 0.08) },
-        ].map((k) => (
-          <Paper key={k.label} elevation={0}
-            sx={{
-              flex: 1, p: 2.5, borderRadius: 3, border: (t) => `1px solid ${t.palette.divider}`, bgcolor: "background.paper",
-              cursor: k.label !== "Total" ? "pointer" : "default",
-              transition: "box-shadow 0.2s",
-              "&:hover": k.label !== "Total" ? { boxShadow: (t) => `0 4px 16px ${alpha(t.palette.common.black, 0.08)}` } : {},
-            }}
-            onClick={() => k.label !== "Total" && setFiltroStatus(
-              filtroStatus === k.label.toLowerCase().replace(" ", "") ? "todos" :
-                k.label === "Em análise" ? "analise" : k.label === "Aprovados" ? "aprovado" : "recusado"
-            )}
-          >
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <Stack spacing={1}>
-                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  {k.label}
-                </Typography>
-                <Typography variant="h4" fontWeight={800} sx={{ color: k.color, lineHeight: 1 }}>
-                  {k.value}
-                </Typography>
-              </Stack>
-              <Box sx={{ width: 44, height: 44, borderRadius: 2.5, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: k.bg, color: k.color, "& svg": { fontSize: 22 } }}>
-                {k.icon}
-              </Box>
-            </Stack>
-          </Paper>
-        ))}
-
-        {/* Card de valor aprovado */}
-        <Paper elevation={0}
-          sx={{ flex: 1, p: 2.5, borderRadius: 3, border: (t) => `1px solid ${alpha(t.palette.success.main, 0.2)}`, bgcolor: (t) => alpha(t.palette.success.main, 0.04) }}>
-          <Stack spacing={1}>
-            <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>
-              Valor aprovado
-            </Typography>
-            <Typography variant="h5" fontWeight={800} color="success.main">
-              R$ {kpis.valorAprovado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-            </Typography>
-          </Stack>
-        </Paper>
-      </Stack>
-
-      {/* ── Busca + Filtros ── */}
+      {/* ── Filtros ── */}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} mb={2.5} alignItems="center">
-        <TextField
-          value={query}
-          onChange={(e) => { setQuery(e.target.value); setPage(0); }}
-          placeholder="Pesquisar por cliente, veículo ou descrição"
-          size="small"
-          sx={{ flex: 1, "& .MuiOutlinedInput-root": { borderRadius: 999, bgcolor: "background.paper", px: 1 } }}
-          InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> }}
-        />
-
         <ToggleButtonGroup
           value={filtroStatus}
           exclusive

@@ -1,12 +1,10 @@
 import * as React from "react";
 import {
-  Box, Stack, Typography, Paper, TextField, InputAdornment, Chip,
-  IconButton, Table, TableBody, TableCell, TableContainer, TableHead,
+  Box, Stack, Typography, Paper, Chip,
+  Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Fade, Divider, TablePagination, CircularProgress
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
 import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
 import CalendarTodayRoundedIcon from "@mui/icons-material/CalendarTodayRounded";
@@ -27,7 +25,6 @@ export default function ExtratoFinanceiro() {
   const { user } = useAuth();
   const [transacoes, setTransacoes] = React.useState<Transacao[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const [query, setQuery] = React.useState("");
   const [filtroTipo, setFiltroTipo] = React.useState<"todos" | "entrada" | "saida">("todos");
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(8);
@@ -57,18 +54,11 @@ export default function ExtratoFinanceiro() {
   }, [user?.oficina_id]);
 
   const transacoesFiltradas = transacoes.filter((t) => {
-    const matchQuery =
-      t.descricao.toLowerCase().includes(query.toLowerCase()) ||
-      t.responsavel?.toLowerCase().includes(query.toLowerCase());
     const matchTipo = filtroTipo === "todos" || t.tipo === filtroTipo;
-    return matchQuery && matchTipo;
+    return matchTipo;
   });
 
   const paginated = transacoesFiltradas.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
-  const totalEntradas = transacoes.filter((t) => t.tipo === "entrada").reduce((sum, t) => sum + t.valor, 0);
-  const totalSaidas = transacoes.filter((t) => t.tipo === "saida").reduce((sum, t) => sum + t.valor, 0);
-  const saldo = totalEntradas - totalSaidas;
 
   const formatarData = (data: string) =>
     new Date(data).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
@@ -90,40 +80,6 @@ export default function ExtratoFinanceiro() {
         <Typography variant="body2" color="text.secondary">
           Visão completa de todas as movimentações financeiras
         </Typography>
-      </Stack>
-
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={3}>
-        {[
-          { label: "ENTRADAS", valor: totalEntradas, cor: "success.main" },
-          { label: "SAÍDAS", valor: totalSaidas, cor: "error.main" },
-          { label: "SALDO", valor: saldo, cor: saldo >= 0 ? "primary.main" : "warning.main" },
-        ].map((item) => (
-          <Paper
-            key={item.label}
-            sx={{
-              flex: 1,
-              p: 2.5,
-              borderRadius: 2.5,
-              border: (t) => `1px solid ${t.palette.divider}`,
-              position: "relative",
-              "&::before": {
-                content: '""',
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bgcolor: item.cor,
-              },
-            }}
-          >
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-              {item.label}
-            </Typography>
-            <Typography variant="h5" fontWeight={700} color={item.cor}>
-              R$ {item.valor.toFixed(2)}
-            </Typography>
-          </Paper>
-        ))}
       </Stack>
 
       {/* Filtros */}
@@ -161,27 +117,6 @@ export default function ExtratoFinanceiro() {
             border: (t) => `1px solid ${t.palette.divider}`,
           }}
         />
-      </Stack>
-
-      {/* Pesquisa */}
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} mb={2.5}>
-        <TextField
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Pesquisar transações"
-          size="small"
-          sx={{ flex: 1 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchRoundedIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        />
-        <IconButton sx={{ border: (t) => `1px solid ${t.palette.divider}` }}>
-          <FilterListRoundedIcon fontSize="small" />
-        </IconButton>
       </Stack>
 
       {/* Tabela */}

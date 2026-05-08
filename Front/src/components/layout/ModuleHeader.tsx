@@ -1,15 +1,10 @@
 import {
   Box,
   Button,
-  Chip,
-  InputAdornment,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
 import type React from "react";
-import { alpha } from "@mui/material/styles";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 
 type Metric = {
@@ -30,22 +25,10 @@ type Props = {
   onAction?: () => void;
 };
 
-const toneColor = {
-  primary: "#2563EB",
-  success: "#16A34A",
-  warning: "#D97706",
-  error: "#DC2626",
-  neutral: "#64748B",
-};
-
 export default function ModuleHeader({
   title,
   subtitle,
   icon,
-  metrics = [],
-  searchValue,
-  searchPlaceholder = "Pesquisar",
-  onSearchChange,
   actionLabel,
   onAction,
 }: Props) {
@@ -58,7 +41,7 @@ export default function ModuleHeader({
       <Stack
         direction={{ xs: "column", md: "row" }}
         spacing={1.5}
-        alignItems={{ xs: "stretch", md: "flex-start" }}
+        alignItems={{ xs: "stretch", md: "center" }}
         justifyContent="space-between"
       >
         <Stack spacing={1} minWidth={0}>
@@ -74,58 +57,13 @@ export default function ModuleHeader({
             </Box>
           </Stack>
 
-          {metrics.length > 0 && (
-            <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
-              {metrics.map((metric) => {
-                const color = toneColor[metric.tone ?? "neutral"];
-                return (
-                  <Chip
-                    key={metric.label}
-                    label={`${metric.label}: ${metric.value}`}
-                    size="small"
-                    sx={{
-                      height: 28,
-                      borderRadius: 999,
-                      fontWeight: 750,
-                      color,
-                      bgcolor: alpha(color, 0.08),
-                      border: `1px solid ${alpha(color, 0.14)}`,
-                    }}
-                  />
-                );
-              })}
-            </Stack>
-          )}
         </Stack>
 
-        {(onSearchChange || onAction) && (
+        {onAction && (
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems="stretch">
-            {onSearchChange && (
-              <TextField
-                value={searchValue}
-                onChange={(e) => onSearchChange(e.target.value)}
-                placeholder={searchPlaceholder}
-                sx={{
-                  minWidth: { xs: "100%", sm: 300 },
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "#FFFFFF",
-                    borderRadius: 999,
-                  },
-                }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchRoundedIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            )}
-            {onAction && (
-              <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={onAction} sx={{ borderRadius: 999, px: 2.5 }}>
-                {actionLabel}
-              </Button>
-            )}
+            <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={onAction} sx={{ borderRadius: 999, px: 2.5 }}>
+              {actionLabel}
+            </Button>
           </Stack>
         )}
       </Stack>

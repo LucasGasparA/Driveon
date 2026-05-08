@@ -154,8 +154,8 @@ export default function AppTopbar({
           ref={searchRef}
           sx={{
             position: "static",
-            width: { xs: "min(50vw, 340px)", sm: 360, md: 420 },
-            maxWidth: { xs: 340, md: 420 },
+            width: { xs: "min(58vw, 420px)", sm: 500, md: 620, lg: 700 },
+            maxWidth: { xs: 420, md: 700 },
             zIndex: 1,
           }}
         >
@@ -164,8 +164,8 @@ export default function AppTopbar({
             sx={{
               display: "flex",
               alignItems: "center",
-              px: 1.5,
-              py: 0.65,
+              px: { xs: 1.5, sm: 2 },
+              py: { xs: 0.85, sm: 1.05 },
               borderRadius: 999,
               border: '1px solid transparent',
               bgcolor: (t) => searchTerm
@@ -182,11 +182,11 @@ export default function AppTopbar({
             }}
           >
             {loadingSearch ? (
-              <CircularProgress size={16} sx={{ mr: 1.5, flexShrink: 0 }} />
+              <CircularProgress size={18} sx={{ mr: 1.5, flexShrink: 0 }} />
             ) : (
               <SearchRoundedIcon
                 sx={{
-                  fontSize: 18,
+                  fontSize: 21,
                   mr: 1.5,
                   flexShrink: 0,
                   color: searchTerm ? "primary.main" : "text.disabled",
@@ -200,7 +200,7 @@ export default function AppTopbar({
               placeholder="Pesquisar placa, cliente ou OS..."
               sx={{
                 flex: 1,
-                fontSize: 13,
+                fontSize: { xs: 14, sm: 15 },
                 "& input": {
                   padding: 0,
                   "&::placeholder": { color: "text.disabled", opacity: 1 },

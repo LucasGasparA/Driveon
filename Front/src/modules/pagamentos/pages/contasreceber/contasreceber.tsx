@@ -4,7 +4,6 @@ import {
   IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Fade, TablePagination, CircularProgress
 } from "@mui/material";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
@@ -208,7 +207,6 @@ export default function ContasReceber() {
   const { user } = useAuth();
   const [contas, setContas] = React.useState<Conta[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const [query, setQuery] = React.useState("");
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [selectedId, setSelectedId] = React.useState<number | null>(null);
@@ -292,18 +290,9 @@ export default function ContasReceber() {
     setAnchorEl(null);
   };
 
-  const filtered = contas.filter((c) => {
-    const desc = c.descricao?.toLowerCase() ?? "";
-    const cliente = typeof c.cliente === "string"
-      ? c.cliente.toLowerCase()
-      : c.cliente?.nome?.toLowerCase() ?? "";
-    return desc.includes(query.toLowerCase()) || cliente.includes(query.toLowerCase());
-  });
+  const filtered = contas;
 
   const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
-  const totalPendente = contas.filter((c) => c.status === "pendente").reduce((s, c) => s + Number(c.valor), 0);
-  const totalPago = contas.filter((c) => c.status === "pago").reduce((s, c) => s + Number(c.valor), 0);
 
   if (loading)
     return (
@@ -319,38 +308,7 @@ export default function ContasReceber() {
         <Typography variant="body2" color="text.secondary">Gerencie os valores a receber dos clientes</Typography>
       </Stack>
 
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={3}>
-        {[
-          { label: "PENDENTE", value: totalPendente, color: "warning.main" },
-          { label: "RECEBIDO", value: totalPago, color: "success.main" }
-        ].map((c) => (
-          <Paper key={c.label} sx={{ flex: 1, p: 2, borderRadius: 2, border: (t) => `1px solid ${t.palette.divider}` }}>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-              {c.label}
-            </Typography>
-            <Typography variant="h5" fontWeight={700} color={c.color}>
-              R$ {c.value.toFixed(2)}
-            </Typography>
-          </Paper>
-        ))}
-      </Stack>
-
-      {/* Pesquisa */}
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} mb={2.5}>
-        <TextField
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Pesquisar contas"
-          size="small"
-          sx={{ flex: 1 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchRoundedIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        />
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} mb={2.5} justifyContent="flex-end">
         <Stack direction="row" spacing={1}>
           <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialogOpen(true)}>
             Nova Conta

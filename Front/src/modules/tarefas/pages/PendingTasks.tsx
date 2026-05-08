@@ -1,12 +1,11 @@
 import * as React from "react";
 import {
-  Box, Stack, Typography, TextField, InputAdornment, Button, IconButton,
+  Box, Stack, Typography, TextField, Button, IconButton,
   Paper, Chip, Menu, MenuItem, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, TablePagination, Fade, Divider, Select, FormControl,
   InputLabel, type SelectChangeEvent,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
 import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
@@ -14,6 +13,7 @@ import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 import { useNavigate, useSearchParams } from "react-router-dom"; // ← useSearchParams adicionado
 import { useToast } from "../../../context/ToastContext";
 import { useConfirm } from "../../../context/ConfirmContext";
+import api from "../../../api/api";
 import { listarOrdens, excluirOrdem, criarOrdem, atualizarOrdem } from "../api/api";
 import OrdemDialog from "../dialog";
 import TableSkeleton from "../../../components/common/TableSkeleton";
@@ -40,7 +40,6 @@ export default function OrdensPage() {
 
   const [rows, setRows] = React.useState<any[]>([]);
   const [funcionarios, setFuncionarios] = React.useState<{ id: number; nome: string }[]>([]);
-  const [query, setQuery] = React.useState("");
   const [filtroFuncionario, setFiltroFuncionario] = React.useState("todos");
   const [filtroData, setFiltroData] = React.useState("");
   const [showFilters, setShowFilters] = React.useState(false);
@@ -69,7 +68,7 @@ export default function OrdensPage() {
   React.useEffect(() => {
     Promise.all([
       listarOrdens(),
-      fetch("/api/funcionarios").then(r => r.json()).catch(() => []),
+      api.get("/funcionarios").then((r) => r.data).catch(() => []),
     ]).then(([ordens, funcs]) => {
       setRows(ordens);
       if (Array.isArray(funcs)) setFuncionarios(funcs);
@@ -115,34 +114,22 @@ export default function OrdensPage() {
   };
 
   // ── Filtros ──
-  const hasActiveFilters = filtroStatus !== "todos" || filtroFuncionario !== "todos" || !!filtroData || !!query;
+  const hasActiveFilters = filtroStatus !== "todos" || filtroFuncionario !== "todos" || !!filtroData;
 
   const filtered = React.useMemo(() => {
     return rows.filter((r) => {
-      const q = query.trim().toLowerCase();
-      const matchQuery = !q ||
-        r.cliente?.nome?.toLowerCase().includes(q) ||
-        r.veiculo?.placa?.toLowerCase().includes(q) ||
-        r.veiculo?.modelo?.toLowerCase().includes(q);
       const matchStatus = filtroStatus === "todos" || r.status === filtroStatus;
       const matchFunc = filtroFuncionario === "todos" || String(r.funcionario?.id) === filtroFuncionario;
       const matchData = !filtroData || r.data_abertura?.startsWith(filtroData);
-      return matchQuery && matchStatus && matchFunc && matchData;
+      return matchStatus && matchFunc && matchData;
     });
-  }, [rows, query, filtroStatus, filtroFuncionario, filtroData]);
+  }, [rows, filtroStatus, filtroFuncionario, filtroData]);
 
   const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const clearFilters = () => {
-    setQuery(""); setFiltroStatus("todos"); setFiltroFuncionario("todos"); setFiltroData(""); setPage(0);
+    setFiltroStatus("todos"); setFiltroFuncionario("todos"); setFiltroData(""); setPage(0);
   };
-
-  // ── KPIs rápidos ──
-  const kpis = React.useMemo(() => ({
-    aberta: rows.filter((r) => r.status === "aberta").length,
-    em_andamento: rows.filter((r) => r.status === "em_andamento").length,
-    concluida: rows.filter((r) => r.status === "concluida").length,
-  }), [rows]);
 
   return (
     <Box sx={{ maxWidth: 1500, mx: "auto" }}>
@@ -180,39 +167,12 @@ export default function OrdensPage() {
         </Stack>
       </Stack>
 
-      {/* ── KPI chips ── */}
-      {!loading && (
-        <Stack direction="row" spacing={1} mb={2.5} flexWrap="wrap" gap={1}>
-          {[
-            { label: `${kpis.aberta} Abertas`, status: "aberta", color: "warning" as const },
-            { label: `${kpis.em_andamento} Em andamento`, status: "em_andamento", color: "info" as const },
-            { label: `${kpis.concluida} Concluídas`, status: "concluida", color: "success" as const },
-          ].map((k) => (
-            <Chip
-              key={k.status}
-              label={k.label}
-              color={filtroStatus === k.status ? k.color : "default"}
-              onClick={() => { setFiltroStatus(filtroStatus === k.status ? "todos" : k.status); setPage(0); }}
-              sx={{ fontWeight: 600, cursor: "pointer", fontSize: 12 }}
-            />
-          ))}
-          {hasActiveFilters && (
-            <Chip label="Limpar filtros" onClick={clearFilters} onDelete={clearFilters}
-              sx={{ fontWeight: 600, cursor: "pointer", fontSize: 12 }} />
-          )}
+      {hasActiveFilters && !showFilters && (
+        <Stack direction="row" spacing={1} mb={2.5}>
+          <Chip label="Limpar filtros" onClick={clearFilters} onDelete={clearFilters}
+            sx={{ fontWeight: 600, cursor: "pointer", fontSize: 12 }} />
         </Stack>
       )}
-
-      {/* ── Busca ── */}
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} mb={showFilters ? 1.5 : 2.5}>
-        <TextField
-          value={query} onChange={(e) => { setQuery(e.target.value); setPage(0); }}
-          placeholder="Pesquisar por cliente, placa ou modelo"
-          size="small"
-          sx={{ flex: 1, "& .MuiOutlinedInput-root": { borderRadius: 3, bgcolor: "background.paper", px: 1 } }}
-          InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> }}
-        />
-      </Stack>
 
       {/* ── Painel de filtros avançados ── */}
       {showFilters && (
