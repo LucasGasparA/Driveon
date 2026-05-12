@@ -26,15 +26,26 @@ import Fornecedores from '../modules/fornecedores/pages/fornecedores';
 import Servicos from '../modules/servicos/pages/servicos';
 import OrdemServicoDetalhes from '../modules/tarefas/pages/detalhesos/ordemservicodetalhes';
 import type { AccessModule } from '../permissions/accessProfiles';
+import RecursosAdicionais from '../modules/recursos-adicionais/pages/RecursosAdicionais';
+import { useAdditionalResources } from '../context/AdditionalResourcesContext';
+import type { AdditionalResourceKey } from '../modules/recursos-adicionais/api/api';
 
 function PrivateRoute({ children }: { children: JSX.Element }) {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? children : <Navigate to={paths.login} replace />;
 }
 
-function PermissionRoute({ module, children }: { module: AccessModule; children: JSX.Element }) {
+const moduleResourceMap: Partial<Record<AccessModule, AdditionalResourceKey>> = {
+  agenda: 'agenda',
+  estoque: 'estoque',
+  fornecedores: 'fornecedores',
+};
+
+function ModuleRoute({ module, children }: { module: AccessModule; children: JSX.Element }) {
   const { can } = useAuth();
-  return can(module) ? children : <Navigate to={paths.root} replace />;
+  const { isEnabled } = useAdditionalResources();
+  const resource = moduleResourceMap[module];
+  return can(module) && (!resource || isEnabled(resource)) ? children : <Navigate to={paths.root} replace />;
 }
 
 export default function Router() {
@@ -49,27 +60,28 @@ export default function Router() {
           </PrivateRoute>
         }
       >
-        <Route index element={<PermissionRoute module="painel"><Home /></PermissionRoute>} />
-        <Route path={paths.agenda} element={<PermissionRoute module="agenda"><Schedule /></PermissionRoute>} />
-        <Route path={paths.clients} element={<PermissionRoute module="clientes"><Clients /></PermissionRoute>} />
-        <Route path={paths.tasks} element={<PermissionRoute module="ordens"><PendingTasks /></PermissionRoute>} />
-        <Route path={paths.payments} element={<PermissionRoute module="financeiro"><Extrato /></PermissionRoute>} />
-        <Route path={paths.contasPagar} element={<PermissionRoute module="financeiro"><ContasPagar /></PermissionRoute>} />
-        <Route path={paths.contasReceber} element={<PermissionRoute module="financeiro"><ContasReceber /></PermissionRoute>} />
-        <Route path={paths.users} element={<PermissionRoute module="funcionarios"><UserPage /></PermissionRoute>} />
-        <Route path={paths.clientDetails} element={<PermissionRoute module="clientes"><ClientDetails /></PermissionRoute>} />
-        <Route path={paths.orcamentos} element={<PermissionRoute module="orcamentos"><Orcamentos /></PermissionRoute>} />
-        <Route path={paths.relatorios} element={<PermissionRoute module="relatorios"><Relatorios /></PermissionRoute>} />
-        <Route path={paths.clientesRelatorio} element={<PermissionRoute module="relatorios"><ClientesRelatorio /></PermissionRoute>} />
-        <Route path={paths.financeiroRelatorio} element={<PermissionRoute module="relatorios"><FinanceiroRelatorio /></PermissionRoute>} />
-        <Route path={paths.agendaRelatorio} element={<PermissionRoute module="relatorios"><AgendaRelatorio /></PermissionRoute>} />
-        <Route path={paths.geralRelatorio} element={<PermissionRoute module="relatorios"><GeralRelatorio /></PermissionRoute>} />
-        <Route path={paths.configuracoes} element={<PermissionRoute module="configuracoes"><Configuracoes /></PermissionRoute>} />
-        <Route path={paths.veiculos} element={<PermissionRoute module="veiculos"><Veiculos /></PermissionRoute>} />
-        <Route path={paths.estoque} element={<PermissionRoute module="estoque"><Estoque /></PermissionRoute>} />
-        <Route path={paths.fornecedores} element={<PermissionRoute module="fornecedores"><Fornecedores /></PermissionRoute>} />
-        <Route path={paths.servicos} element={<PermissionRoute module="servicos"><Servicos /></PermissionRoute>} />
-        <Route path={paths.ordemServicoDetalhes} element={<PermissionRoute module="ordens"><OrdemServicoDetalhes /></PermissionRoute>} />
+        <Route index element={<ModuleRoute module="painel"><Home /></ModuleRoute>} />
+        <Route path={paths.agenda} element={<ModuleRoute module="agenda"><Schedule /></ModuleRoute>} />
+        <Route path={paths.clients} element={<ModuleRoute module="clientes"><Clients /></ModuleRoute>} />
+        <Route path={paths.tasks} element={<ModuleRoute module="ordens"><PendingTasks /></ModuleRoute>} />
+        <Route path={paths.payments} element={<ModuleRoute module="financeiro"><Extrato /></ModuleRoute>} />
+        <Route path={paths.contasPagar} element={<ModuleRoute module="financeiro"><ContasPagar /></ModuleRoute>} />
+        <Route path={paths.contasReceber} element={<ModuleRoute module="financeiro"><ContasReceber /></ModuleRoute>} />
+        <Route path={paths.users} element={<ModuleRoute module="funcionarios"><UserPage /></ModuleRoute>} />
+        <Route path={paths.clientDetails} element={<ModuleRoute module="clientes"><ClientDetails /></ModuleRoute>} />
+        <Route path={paths.orcamentos} element={<ModuleRoute module="orcamentos"><Orcamentos /></ModuleRoute>} />
+        <Route path={paths.relatorios} element={<ModuleRoute module="relatorios"><Relatorios /></ModuleRoute>} />
+        <Route path={paths.clientesRelatorio} element={<ModuleRoute module="relatorios"><ClientesRelatorio /></ModuleRoute>} />
+        <Route path={paths.financeiroRelatorio} element={<ModuleRoute module="relatorios"><FinanceiroRelatorio /></ModuleRoute>} />
+        <Route path={paths.agendaRelatorio} element={<ModuleRoute module="relatorios"><AgendaRelatorio /></ModuleRoute>} />
+        <Route path={paths.geralRelatorio} element={<ModuleRoute module="relatorios"><GeralRelatorio /></ModuleRoute>} />
+        <Route path={paths.configuracoes} element={<ModuleRoute module="configuracoes"><Configuracoes /></ModuleRoute>} />
+        <Route path={paths.veiculos} element={<ModuleRoute module="veiculos"><Veiculos /></ModuleRoute>} />
+        <Route path={paths.estoque} element={<ModuleRoute module="estoque"><Estoque /></ModuleRoute>} />
+        <Route path={paths.fornecedores} element={<ModuleRoute module="fornecedores"><Fornecedores /></ModuleRoute>} />
+        <Route path={paths.servicos} element={<ModuleRoute module="servicos"><Servicos /></ModuleRoute>} />
+        <Route path={paths.ordemServicoDetalhes} element={<ModuleRoute module="ordens"><OrdemServicoDetalhes /></ModuleRoute>} />
+        <Route path={paths.recursosAdicionais} element={<ModuleRoute module="recursos_adicionais"><RecursosAdicionais /></ModuleRoute>} />
       </Route>
     </Routes>
   );

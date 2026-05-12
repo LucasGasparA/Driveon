@@ -45,6 +45,7 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutlined';
 import BarChartOutlineIcon from '@mui/icons-material/BarChartOutlined';
 import HomeOutlineIcon from '@mui/icons-material/HomeOutlined';
 import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
+import WidgetsOutlinedIcon from '@mui/icons-material/WidgetsOutlined';
 import {
   atualizarPerfilAcesso,
   criarPerfilAcesso,
@@ -312,6 +313,7 @@ const moduleIcons: Record<AccessModule, React.ReactNode> = {
   funcionarios: <PersonOutlineIcon />,
   relatorios: <BarChartOutlineIcon />,
   configuracoes: <SettingsRoundedIcon />,
+  recursos_adicionais: <WidgetsOutlinedIcon />,
 };
 
 const actionText = (module: AccessModule, action: AccessAction) => {

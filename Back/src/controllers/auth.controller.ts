@@ -26,11 +26,16 @@ type AuthPerfil = {
 
 async function resolvePerfil(oficinaId: number, perfilAcesso: any, legacyTipo: string): Promise<AuthPerfil> {
   if (perfilAcesso) {
+    await PerfisAcessoService.ensureDefaults(oficinaId);
+    const currentPerfil = await prisma.perfil_acesso.findFirst({
+      where: { id: perfilAcesso.id, oficina_id: oficinaId, deleted_at: null },
+    });
+    const perfil = currentPerfil ?? perfilAcesso;
     return {
-      id: perfilAcesso.id,
-      nome: perfilAcesso.nome,
+      id: perfil.id,
+      nome: perfil.nome,
       legacyTipo,
-      permissoes: normalizePermissions(perfilAcesso.permissoes),
+      permissoes: normalizePermissions(perfil.permissoes),
     };
   }
 

@@ -72,6 +72,7 @@ model oficina {
   cidade_id         Int
   telefone          String?
   email             String? @unique
+  recursos_adicionais Json @default("{\"agenda\":true,\"estoque\":true,\"fornecedores\":true}")
 
   cidade   cidade    @relation(fields: [cidade_id], references: [id])
   gestor   usuario?  @relation("GestorOficina", fields: [gestor_usuario_id], references: [id])

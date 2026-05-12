@@ -12,6 +12,7 @@ export const ACCESS_MODULES = [
   "funcionarios",
   "relatorios",
   "configuracoes",
+  "recursos_adicionais",
 ] as const;
 
 export const ACCESS_ACTIONS = ["read", "create", "update", "delete"] as const;
@@ -34,6 +35,7 @@ export const MODULE_LABELS: Record<AccessModule, string> = {
   funcionarios: "Funcionarios",
   relatorios: "Relatorios",
   configuracoes: "Configuracoes",
+  recursos_adicionais: "Recursos adicionais",
 };
 
 export const ACTION_LABELS: Record<AccessAction, string> = {

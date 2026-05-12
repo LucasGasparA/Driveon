@@ -40,6 +40,7 @@ export const PerfisAcessoService = {
           chave: perfil.chave,
           padrao: perfil.padrao,
           sistema: true,
+          permissoes: perfil.permissoes as Prisma.InputJsonValue,
           deleted_at: null,
         },
         create: {

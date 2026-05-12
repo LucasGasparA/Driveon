@@ -23,11 +23,13 @@ import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import StoreIcon from '@mui/icons-material/Store';
 import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
+import WidgetsOutlinedIcon from '@mui/icons-material/WidgetsOutlined';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState, type ReactNode } from 'react';
 import { paths } from '../../routes/paths';
 import { useSidebar } from '../../context/SidebarContext';
 import { useAuth } from '../../context/AuthContext';
+import { useAdditionalResources } from '../../context/AdditionalResourcesContext';
 import type { AccessModule } from '../../permissions/accessProfiles';
 import logo from '../../assets/logo.png';
 
@@ -69,6 +71,7 @@ const navItems: NavItem[] = [
   { label: 'Funcionarios', icon: <PersonOutlineIcon />, to: paths.users, module: 'funcionarios' },
   { label: 'Relatorios', icon: <BarChartOutlineIcon />, to: paths.reports, module: 'relatorios' },
   { label: 'Configuracoes', icon: <SettingsOutlineIcon />, to: paths.settings, module: 'configuracoes' },
+  { label: 'Recursos adicionais', icon: <WidgetsOutlinedIcon />, to: paths.recursosAdicionais, module: 'recursos_adicionais' },
 ];
 
 const navLabels: Record<string, string> = {
@@ -79,14 +82,21 @@ const navLabels: Record<string, string> = {
   [paths.estoque]: 'Estoque',
   [paths.servicos]: 'Servicos',
   [paths.tasks]: 'Ordens de servico',
-  [paths.payments]: 'Financeiro',
+  [paths.payments]: 'Extrato',
   [paths.fornecedores]: 'Fornecedores',
   [paths.quotes]: 'Orcamentos',
   [paths.users]: 'Funcionarios',
   [paths.reports]: 'Relatorios',
   [paths.settings]: 'Configuracoes',
+  [paths.recursosAdicionais]: 'Recursos adicionais',
   [paths.contasReceber]: 'Recebimentos',
   [paths.contasPagar]: 'Pagamentos',
+};
+
+const moduleResourceMap: Partial<Record<AccessModule, 'agenda' | 'estoque' | 'fornecedores'>> = {
+  agenda: 'agenda',
+  estoque: 'estoque',
+  fornecedores: 'fornecedores',
 };
 
 function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collapsed?: boolean }) {
@@ -94,6 +104,7 @@ function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collaps
   const nav = useNavigate();
   const theme = useTheme();
   const { can } = useAuth();
+  const { isEnabled } = useAdditionalResources();
   const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
 
   const toggleMenu = (label: string) => {
@@ -102,9 +113,15 @@ function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collaps
 
   return (
     <List sx={{ px: collapsed ? 1 : 1.5, py: 0.5, flex: 1, overflow: 'auto' }}>
-      {navItems.filter((item) => can(item.module)).map(({ label, icon, to, subItems }) => {
-        const allowedSubItems = subItems?.filter((item) => can(item.module));
-        const displayLabel = navLabels[to] ?? label;
+      {navItems.filter((item) => {
+        const resource = moduleResourceMap[item.module];
+        return can(item.module) && (!resource || isEnabled(resource));
+      }).map(({ label, icon, to, subItems }) => {
+        const allowedSubItems = subItems?.filter((item) => {
+          const resource = moduleResourceMap[item.module];
+          return can(item.module) && (!resource || isEnabled(resource));
+        });
+        const displayLabel = subItems?.length ? label : navLabels[to] ?? label;
         const selected =
           (to === paths.root && pathname === '/') ||
           pathname === to ||

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
 import api from "../api/api";
 import type { AccessAction, AccessModule, PermissionsMap } from "../permissions/accessProfiles";
 import { hasPermission } from "../permissions/accessProfiles";
@@ -108,8 +108,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     delete api.defaults.headers.common["Authorization"];
   };
 
-  const can = (module: AccessModule, action: AccessAction = "read") =>
-    hasPermission(user?.permissoes, module, action);
+  const can = useCallback(
+    (module: AccessModule, action: AccessAction = "read") => hasPermission(user?.permissoes, module, action),
+    [user?.permissoes]
+  );
 
   // ✅ Garante que o header Authorization sempre exista
   if (token && !api.defaults.headers.common["Authorization"]) {
@@ -126,7 +128,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       can,
       signOut,
     }),
-    [user, token]
+    [user, token, can]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

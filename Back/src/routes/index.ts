@@ -15,6 +15,7 @@ import pagamentosRouter from "./pagamentos.routes.js";
 import orcamentosRouter from "./orcamentos.routes.js";
 import agendamentosRouter from "./agendamento.routes.js";
 import perfisAcessoRouter from "./perfisAcesso.routes.js";
+import recursosAdicionaisRouter from "./recursosAdicionais.routes.js";
 import { authMiddleware, officeScopeMiddleware, requirePermission } from "../middlewares/ensureAuth.js";
 import type { AccessModule, AccessAction } from "../permissions/accessProfiles.js";
 
@@ -38,6 +39,7 @@ const modulePermission = (module: AccessModule) => (req: any, res: any, next: an
 
 router.use("/cidade", cidadeRouter);
 router.use("/perfis-acesso", perfisAcessoRouter);
+router.use("/recursos-adicionais", recursosAdicionaisRouter);
 router.use("/oficinas", modulePermission("configuracoes"), oficinasRouter);
 router.use("/clientes", modulePermission("clientes"), clientesRouter);
 router.use("/funcionarios", modulePermission("funcionarios"), funcionariosRouter);

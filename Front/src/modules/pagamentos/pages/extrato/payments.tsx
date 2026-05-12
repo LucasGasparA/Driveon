@@ -58,6 +58,16 @@ export default function ExtratoFinanceiro() {
     return matchTipo;
   });
 
+  const totalEntradas = transacoesFiltradas
+    .filter((t) => t.tipo === "entrada")
+    .reduce((total, t) => total + t.valor, 0);
+
+  const totalSaidas = transacoesFiltradas
+    .filter((t) => t.tipo === "saida")
+    .reduce((total, t) => total + t.valor, 0);
+
+  const saldo = totalEntradas - totalSaidas;
+
   const paginated = transacoesFiltradas.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const formatarData = (data: string) =>
