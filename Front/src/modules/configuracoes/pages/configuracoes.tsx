@@ -123,11 +123,11 @@ export default function Configuracoes() {
         sx={(t) => ({
           width: '100%',
           maxWidth: 900,
-          maxHeight: 700,
-          borderRadius: 3,
+          borderRadius: 1,
           p: { xs: 3, md: 4 },
           border: `1px solid ${t.palette.divider}`,
           bgcolor: 'background.paper',
+          alignSelf: 'flex-start',
         })}
       >
         <Stack direction="row" alignItems="center" spacing={1.5} mb={4}>
@@ -450,7 +450,7 @@ function AccessProfilesManager() {
             Defina quais módulos e ações cada colaborador poderá acessar.
           </Typography>
         </Stack>
-        <Button startIcon={<AddRoundedIcon />} variant="outlined" onClick={startNew} sx={{ borderRadius: 2, textTransform: 'none' }}>
+        <Button startIcon={<AddRoundedIcon />} variant="outlined" onClick={startNew} sx={{ borderRadius: 1, textTransform: 'none' }}>
           Novo perfil
         </Button>
       </Stack>
@@ -467,7 +467,7 @@ function AccessProfilesManager() {
               key={profile.id}
               variant="outlined"
               sx={{
-                borderRadius: 2,
+                borderRadius: 1,
                 px: 2,
                 py: 1.5,
                 display: 'flex',
@@ -507,7 +507,7 @@ function AccessProfilesManager() {
                 <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
                   {profile.usuarios_vinculados ?? 0} usuario(s)
                 </Typography>
-                <Button variant="outlined" startIcon={<EditRoundedIcon />} onClick={() => startEdit(profile)} sx={{ borderRadius: 2 }}>
+                <Button variant="outlined" startIcon={<EditRoundedIcon />} onClick={() => startEdit(profile)} sx={{ borderRadius: 1 }}>
                   Editar
                 </Button>
               </Stack>
@@ -521,7 +521,7 @@ function AccessProfilesManager() {
         onClose={() => setDialogOpen(false)}
         fullWidth
         maxWidth="md"
-        PaperProps={{ sx: { borderRadius: 2, overflow: 'hidden' } }}
+        PaperProps={{ sx: { borderRadius: 1, overflow: 'hidden' } }}
       >
         <Box sx={{ px: 3, pt: 2.5, pb: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Stack direction="row" spacing={1.5} alignItems="center">
@@ -583,7 +583,7 @@ function AccessProfilesManager() {
               {accessModules.map((module) => {
                 const isOpen = Boolean(openModules[module]);
                 return (
-                  <Paper key={module} elevation={0} sx={{ borderRadius: 1.5, overflow: 'hidden', bgcolor: '#F4F6F8' }}>
+                  <Paper key={module} elevation={0} sx={{ borderRadius: 1, overflow: 'hidden', bgcolor: '#F4F6F8' }}>
                     <Stack
                       direction="row"
                       alignItems="center"
@@ -642,7 +642,7 @@ function SectionCard({ title, icon, open, onToggle, onEdit, editing, onCancel, o
     <Paper
       elevation={0}
       sx={(t) => ({
-        borderRadius: 2,
+        borderRadius: 1,
         border: `1px solid ${t.palette.divider}`,
         mb: 2.5,
         overflow: 'hidden',
@@ -675,7 +675,7 @@ function SectionCard({ title, icon, open, onToggle, onEdit, editing, onCancel, o
                 e.stopPropagation();
                 onEdit();
               }}
-              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, px: 1.5 }}
+              sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600, px: 1.5 }}
             >
               Editar
             </Button>

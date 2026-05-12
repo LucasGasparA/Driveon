@@ -102,7 +102,7 @@ function StatusCard({ label, sublabel, value, icon, palette, onClick, btnLabel =
       sx={{
         flex: 1, minWidth: 0,
         cursor: onClick ? "pointer" : "default",
-        borderRadius: 3,
+        borderRadius: 1,
         border: `1px solid`,
         borderColor: value > 0 ? palette.border : "divider",
         bgcolor: "background.paper",
@@ -113,7 +113,7 @@ function StatusCard({ label, sublabel, value, icon, palette, onClick, btnLabel =
       <Box sx={{ pl: "calc(1rem + 4px)", pr: 2.5, pt: 2.5, pb: 2.5 }}>
         {/* Icone */}
         <Box sx={{
-          width: 36, height: 36, borderRadius: 3, mb: 2,
+          width: 36, height: 36, borderRadius: 1, mb: 2,
           display: "flex", alignItems: "center", justifyContent: "center",
           bgcolor: alpha(palette.main, 0.1),
           color: palette.main,
@@ -439,7 +439,7 @@ export default function Home() {
   if (loading) {
     return (
       <Box sx={{ maxWidth: 1500, mx: "auto", py: 3 }}>
-        <LinearProgress sx={{ borderRadius: 999 }} />
+        <LinearProgress sx={{ borderRadius: 1 }} />
         <Typography variant="body2" color="text.secondary" mt={2} textAlign="center">
           Carregando dados da oficina...
         </Typography>
@@ -453,7 +453,7 @@ export default function Home() {
         elevation={0}
         sx={{
           mb: 2.5,
-          borderRadius: 3,
+          borderRadius: 1,
           border: (t) => `1px solid ${t.palette.divider}`,
           overflow: "hidden",
         }}
@@ -493,7 +493,7 @@ export default function Home() {
                 startIcon={btn.icon}
                 onClick={btn.onClick}
                 sx={{
-                  borderRadius: 3,
+                  borderRadius: 1,
                   textTransform: "none",
                   fontWeight: 700,
                   fontSize: 13,
@@ -561,7 +561,7 @@ export default function Home() {
       <Paper
         elevation={0}
         sx={{
-          borderRadius: 3,
+          borderRadius: 1,
           border: (t) => `1px solid ${t.palette.divider}`,
           px: { xs: 2.5, md: 3.5 },
           py: 2.5,
@@ -583,7 +583,7 @@ export default function Home() {
           {/* Recebido este mes */}
           <Stack direction="row" alignItems="center" spacing={2} flex={1} minWidth={0}>
             <Box sx={{
-              width: 40, height: 40, borderRadius: 2, flexShrink: 0,
+              width: 40, height: 40, borderRadius: 1, flexShrink: 0,
               display: "flex", alignItems: "center", justifyContent: "center",
               bgcolor: alpha("#22c55e", 0.1), color: "#22c55e",
               "& svg": { fontSize: 19 },
@@ -603,7 +603,7 @@ export default function Home() {
           {/* A receber */}
           <Stack direction="row" alignItems="center" spacing={2} flex={1} minWidth={0}>
             <Box sx={{
-              width: 40, height: 40, borderRadius: 2, flexShrink: 0,
+              width: 40, height: 40, borderRadius: 1, flexShrink: 0,
               display: "flex", alignItems: "center", justifyContent: "center",
               bgcolor: alpha("#f59e0b", 0.1), color: "#f59e0b",
               "& svg": { fontSize: 19 },
@@ -623,7 +623,7 @@ export default function Home() {
           {/* A pagar */}
           <Stack direction="row" alignItems="center" spacing={2} flex={1} minWidth={0}>
             <Box sx={{
-              width: 40, height: 40, borderRadius: 2, flexShrink: 0,
+              width: 40, height: 40, borderRadius: 1, flexShrink: 0,
               display: "flex", alignItems: "center", justifyContent: "center",
               bgcolor: alpha("#ef4444", 0.1), color: "#ef4444",
               "& svg": { fontSize: 19 },
@@ -643,7 +643,7 @@ export default function Home() {
           {/* Saldo */}
           <Stack direction="row" alignItems="center" spacing={2} flex={1} minWidth={0}>
             <Box sx={{
-              width: 40, height: 40, borderRadius: 2, flexShrink: 0,
+              width: 40, height: 40, borderRadius: 1, flexShrink: 0,
               display: "flex", alignItems: "center", justifyContent: "center",
               bgcolor: (t) => alpha(t.palette.primary.main, 0.1),
               color: "primary.main",
@@ -665,10 +665,10 @@ export default function Home() {
                 variant="determinate"
                 value={saldoPct}
                 sx={{
-                  mt: 0.75, height: 5, borderRadius: 999,
+                  mt: 0.75, height: 5, borderRadius: 1,
                   bgcolor: (t) => alpha(t.palette.text.primary, 0.08),
                   "& .MuiLinearProgress-bar": {
-                    borderRadius: 999,
+                    borderRadius: 1,
                     background: saldoPct >= 40
                       ? `linear-gradient(90deg, #22c55e, #16a34a)`
                       : `linear-gradient(90deg, #f59e0b, #d97706)`,
@@ -692,7 +692,7 @@ export default function Home() {
         <Paper
           elevation={0}
           sx={{
-            flex: 1, borderRadius: 3,
+            flex: 1, borderRadius: 1,
             border: (t) => `1px solid ${t.palette.divider}`,
             overflow: "hidden", minWidth: 0,
           }}
@@ -710,7 +710,7 @@ export default function Home() {
           {ordensAtivas.length === 0 ? (
             <Stack alignItems="center" py={7} spacing={1.5}>
               <Box sx={{
-                width: 56, height: 56, borderRadius: 3,
+                width: 56, height: 56, borderRadius: 1,
                 bgcolor: (t) => alpha(t.palette.success.main, 0.08),
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
@@ -722,7 +722,7 @@ export default function Home() {
                 size="small" variant="outlined"
                 startIcon={<AddRoundedIcon />}
                 onClick={() => setOpenTask(true)}
-                sx={{ textTransform: "none", borderRadius: 999, mt: 0.5 }}
+                sx={{ textTransform: "none", borderRadius: 1, mt: 0.5 }}
               >
                 Nova O.S.
               </Button>
@@ -794,7 +794,7 @@ export default function Home() {
                   </Stack>
                   <Button
                     size="small" onClick={() => nav("/tarefas")}
-                    sx={{ textTransform: "none", fontWeight: 700, fontSize: 11, borderRadius: 999, color: "#22c55e", p: 0, minWidth: 0 }}
+                    sx={{ textTransform: "none", fontWeight: 700, fontSize: 11, borderRadius: 1, color: "#22c55e", p: 0, minWidth: 0 }}
                   >
                     Ver
                   </Button>
@@ -815,7 +815,7 @@ export default function Home() {
         <Paper
           elevation={0}
           sx={{
-            flex: 1, borderRadius: 3,
+            flex: 1, borderRadius: 1,
             border: (t) => `1px solid ${t.palette.divider}`,
             overflow: "hidden", minWidth: 0,
           }}
@@ -833,7 +833,7 @@ export default function Home() {
           {orcamentosAnalise.length === 0 ? (
             <Stack alignItems="center" py={7} spacing={1.5}>
               <Box sx={{
-                width: 56, height: 56, borderRadius: 3,
+                width: 56, height: 56, borderRadius: 1,
                 bgcolor: alpha("#3b82f6", 0.07),
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
@@ -848,7 +848,7 @@ export default function Home() {
                 startIcon={<AddRoundedIcon />}
                 onClick={() => setOpenOrcamento(true)}
                 sx={{
-                  textTransform: "none", borderRadius: 999, mt: 0.5,
+                  textTransform: "none", borderRadius: 1, mt: 0.5,
                   borderColor: alpha("#3b82f6", 0.35), color: "#3b82f6",
                 }}
               >
@@ -870,7 +870,7 @@ export default function Home() {
                     onClick={() => nav("/orcamentos")}
                     sx={{
                       textTransform: "none", fontWeight: 700, fontSize: 12,
-                      borderRadius: 2, color: "#6366f1",
+                      borderRadius: 1, color: "#6366f1",
                       bgcolor: alpha("#6366f1", 0.06),
                       "&:hover": { bgcolor: alpha("#6366f1", 0.1) },
                     }}

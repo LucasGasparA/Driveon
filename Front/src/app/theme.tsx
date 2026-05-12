@@ -22,7 +22,7 @@ export const theme = createTheme({
     text: { primary: brand.ink, secondary: brand.muted },
     divider: brand.line,
   },
-  shape: { borderRadius: 16 },
+  shape: { borderRadius: 8 },
   typography: {
     fontFamily: '"Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
     h4: { fontWeight: 760, letterSpacing: 0 },
@@ -35,7 +35,7 @@ export const theme = createTheme({
     MuiButton: {
       defaultProps: { disableElevation: true },
       styleOverrides: {
-        root: { borderRadius: 14, minHeight: 42 },
+        root: { borderRadius: 8, minHeight: 42 },
         containedPrimary: {
           background: brand.primary,
           '&:hover': {
@@ -48,7 +48,7 @@ export const theme = createTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          borderRadius: 14,
+          borderRadius: 8,
           backgroundColor: '#FFFFFF',
         },
       },
@@ -66,7 +66,7 @@ export const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 18,
+          borderRadius: 8,
           border: `1px solid rgba(255,255,255,0.78)`,
           boxShadow: '0 18px 46px rgba(16, 24, 40, 0.08)',
         },
@@ -111,7 +111,7 @@ export const theme = createTheme({
     MuiMenu: {
       styleOverrides: {
         paper: {
-          borderRadius: 8,
+          borderRadius: 6,
           border: `1px solid ${brand.line}`,
           boxShadow: '0 18px 40px rgba(16, 24, 40, 0.12)',
         },
