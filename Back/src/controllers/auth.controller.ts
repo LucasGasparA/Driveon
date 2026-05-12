@@ -2,6 +2,8 @@ import bcrypt from "bcrypt";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../prisma/client.js";
+import { normalizePermissions, type PermissionsMap } from "../permissions/accessProfiles.js";
+import { PerfisAcessoService } from "../services/perfisAcesso.service.js";
 
 type AuthUsuario = {
   id: number;
@@ -15,7 +17,34 @@ type AuthOficina = {
   nome?: string | null;
 };
 
-function signFinalToken(usuario: AuthUsuario, oficina: AuthOficina, perfil: string) {
+type AuthPerfil = {
+  id?: number | null;
+  nome?: string | null;
+  legacyTipo: string;
+  permissoes?: PermissionsMap;
+};
+
+async function resolvePerfil(oficinaId: number, perfilAcesso: any, legacyTipo: string): Promise<AuthPerfil> {
+  if (perfilAcesso) {
+    return {
+      id: perfilAcesso.id,
+      nome: perfilAcesso.nome,
+      legacyTipo,
+      permissoes: normalizePermissions(perfilAcesso.permissoes),
+    };
+  }
+
+  const fallbackKey = legacyTipo === "gestoroficina" || legacyTipo === "sistema" ? "proprietario" : "recepcao";
+  const fallback = await PerfisAcessoService.findDefault(oficinaId, fallbackKey);
+  return {
+    id: fallback?.id ?? null,
+    nome: fallback?.nome ?? legacyTipo,
+    legacyTipo,
+    permissoes: normalizePermissions(fallback?.permissoes),
+  };
+}
+
+function signFinalToken(usuario: AuthUsuario, oficina: AuthOficina, perfil: AuthPerfil) {
   if (!process.env.JWT_SECRET) {
     throw new Error("JWT_SECRET nao configurado.");
   }
@@ -24,9 +53,12 @@ function signFinalToken(usuario: AuthUsuario, oficina: AuthOficina, perfil: stri
     id: usuario.id,
     email: usuario.email,
     nome: usuario.nome,
-    tipo: perfil,
+    tipo: perfil.legacyTipo,
     oficinaId: oficina.id,
     oficina_id: oficina.id,
+    perfilAcessoId: perfil.id ?? null,
+    perfilAcessoNome: perfil.nome ?? null,
+    permissoes: perfil.permissoes ?? {},
   };
 
   const token = jwt.sign(usuarioPayload, process.env.JWT_SECRET, {
@@ -57,7 +89,7 @@ export async function login(req: Request, res: Response) {
       include: {
         acessos: {
           where: { deleted_at: null, status: "ativo" },
-          include: { oficina: true },
+          include: { oficina: true, perfil_acesso: true },
         },
       },
     });
@@ -83,6 +115,8 @@ export async function login(req: Request, res: Response) {
         id: acesso.oficina_id,
         nome: acesso.oficina?.nome ?? `Oficina ${acesso.oficina_id}`,
         perfil: acesso.perfil,
+        perfilAcessoId: acesso.perfil_acesso_id,
+        perfilAcessoNome: acesso.perfil_acesso?.nome,
       }));
     });
 
@@ -92,7 +126,13 @@ export async function login(req: Request, res: Response) {
     }
 
     const offices = Array.from(officesById.values());
-    const oficinas = offices.map(({ id, nome, perfil }) => ({ id, nome, perfil }));
+    const oficinas = offices.map(({ id, nome, perfil, perfilAcessoId, perfilAcessoNome }) => ({
+      id,
+      nome,
+      perfil,
+      perfilAcessoId,
+      perfilAcessoNome,
+    }));
 
     if (!oficinas.length) {
       return res.status(403).json({ message: "Usuario sem acesso a nenhuma oficina." });
@@ -126,8 +166,9 @@ export async function login(req: Request, res: Response) {
 
     const selected = offices[0];
     const oficina = oficinas[0];
+    const perfil = await resolvePerfil(selected.id, selected.usuario.acessos[0]?.perfil_acesso, selected.perfil);
     return res.json({
-      ...signFinalToken(selected.usuario, oficina, oficina.perfil),
+      ...signFinalToken(selected.usuario, oficina, perfil),
       oficinas,
     });
   } catch (err) {
@@ -169,7 +210,7 @@ export async function selectOficina(req: Request, res: Response) {
       include: {
         acessos: {
           where: { oficina_id: oficinaId, deleted_at: null, status: "ativo" },
-          include: { oficina: true },
+          include: { oficina: true, perfil_acesso: true },
         },
       },
     });
@@ -184,7 +225,8 @@ export async function selectOficina(req: Request, res: Response) {
       return res.status(403).json({ message: "Usuario sem acesso a esta oficina." });
     }
 
-    return res.json(signFinalToken(usuario, acesso.oficina, acesso.perfil));
+    const perfil = await resolvePerfil(oficinaId, acesso.perfil_acesso, acesso.perfil);
+    return res.json(signFinalToken(usuario, acesso.oficina, perfil));
   } catch (err) {
     console.error("Erro ao selecionar oficina:", err);
     return res.status(401).json({ message: "Nao foi possivel selecionar a oficina." });

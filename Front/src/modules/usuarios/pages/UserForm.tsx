@@ -20,7 +20,7 @@ import { listarFuncionarios, criarFuncionario, atualizarFuncionario, deletarFunc
 type Funcionario = { id: number; nome: string; email?: string; cargo?: string; telefone?: string; };
 
 export default function FuncionariosPage() {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const { success, error } = useToast();
   const confirm = useConfirm();
 
@@ -112,10 +112,10 @@ export default function FuncionariosPage() {
             sx={{ minWidth: 300, "& .MuiOutlinedInput-root": { borderRadius: 999, bgcolor: "background.paper", px: 1 } }}
             InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> }}
           />
-          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}
+          {can("funcionarios", "create") && <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}
             sx={{ borderRadius: 999, textTransform: "none", px: 2.5 }}>
             Novo Funcionário
-          </Button>
+          </Button>}
         </Stack>
       </Stack>
 
@@ -148,7 +148,9 @@ export default function FuncionariosPage() {
                   <TableCell>{f.email || "—"}</TableCell>
                   <TableCell>{f.telefone || "—"}</TableCell>
                   <TableCell align="right">
-                    <IconButton onClick={(e) => handleMenuOpen(e, f.id)}><MoreVertRoundedIcon /></IconButton>
+                    {(can("funcionarios", "update") || can("funcionarios", "delete")) && (
+                      <IconButton onClick={(e) => handleMenuOpen(e, f.id)}><MoreVertRoundedIcon /></IconButton>
+                    )}
                   </TableCell>
                 </TableRow>
               )) : (
@@ -169,9 +171,9 @@ export default function FuncionariosPage() {
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}>
-        <MenuItem onClick={handleEdit}><EditRoundedIcon fontSize="small" sx={{ mr: 1 }} /> Editar</MenuItem>
-        <Divider />
-        <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}><DeleteRoundedIcon fontSize="small" sx={{ mr: 1 }} /> Excluir</MenuItem>
+        {can("funcionarios", "update") && <MenuItem onClick={handleEdit}><EditRoundedIcon fontSize="small" sx={{ mr: 1 }} /> Editar</MenuItem>}
+        {can("funcionarios", "delete") && <Divider />}
+        {can("funcionarios", "delete") && <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}><DeleteRoundedIcon fontSize="small" sx={{ mr: 1 }} /> Excluir</MenuItem>}
       </Menu>
 
       <FuncionarioDialog open={openDialog} mode={mode} initial={current} onClose={() => setOpenDialog(false)}

@@ -1,6 +1,7 @@
 import { prisma } from "../prisma/client.js";
 import bcrypt from "bcryptjs";
 import type { tipo_usuario, status_usuario } from "@prisma/client";
+import { PerfisAcessoService } from "./perfisAcesso.service.js";
 
 export const UsuarioService = {
   async create(data: {
@@ -10,6 +11,7 @@ export const UsuarioService = {
     tipo?: tipo_usuario;
     status?: status_usuario;
     oficina_id: number;
+    perfil_acesso_id?: number;
   }) {
     const email = data.email?.trim().toLowerCase();
     const { senha, nome, tipo = "gestoroficina", status = "ativo", oficina_id } = data;
@@ -22,6 +24,15 @@ export const UsuarioService = {
     if (!oficina) throw new Error("Oficina nao encontrada.");
 
     const senhaHash = await bcrypt.hash(senha, 10);
+    const perfilAcesso = data.perfil_acesso_id
+      ? await prisma.perfil_acesso.findFirst({
+          where: { id: Number(data.perfil_acesso_id), oficina_id, deleted_at: null },
+        })
+      : await PerfisAcessoService.findDefault(
+          oficina_id,
+          tipo === "gestoroficina" || tipo === "sistema" ? "proprietario" : "recepcao"
+        );
+    if (!perfilAcesso) throw new Error("Perfil de acesso nao encontrado.");
 
     const existing = await prisma.usuario.findUnique({ where: { email } });
     const usuario = existing
@@ -47,11 +58,12 @@ export const UsuarioService = {
 
     await prisma.usuario_oficina.upsert({
       where: { usuario_id_oficina_id: { usuario_id: usuario.id, oficina_id } },
-      update: { perfil: tipo, status, deleted_at: null },
+      update: { perfil: tipo, perfil_acesso_id: perfilAcesso.id, status, deleted_at: null },
       create: {
         usuario_id: usuario.id,
         oficina_id,
         perfil: tipo,
+        perfil_acesso_id: perfilAcesso.id,
         status,
       },
     });
@@ -59,7 +71,7 @@ export const UsuarioService = {
     const usuarioComAcessos = await prisma.usuario.findUniqueOrThrow({
       where: { id: usuario.id },
       include: {
-        acessos: { include: { oficina: { select: { id: true, nome: true } } } },
+        acessos: { include: { oficina: { select: { id: true, nome: true } }, perfil_acesso: true } },
       },
     });
 
@@ -73,6 +85,8 @@ export const UsuarioService = {
         id: acesso.oficina_id,
         nome: acesso.oficina.nome,
         perfil: acesso.perfil,
+        perfil_acesso_id: acesso.perfil_acesso_id,
+        perfil_acesso_nome: acesso.perfil_acesso?.nome,
         status: acesso.status,
       })),
     };

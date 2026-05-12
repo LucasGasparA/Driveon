@@ -14,7 +14,9 @@ import pecasRouter from "./pecas.routes.js";
 import pagamentosRouter from "./pagamentos.routes.js";
 import orcamentosRouter from "./orcamentos.routes.js";
 import agendamentosRouter from "./agendamento.routes.js";
-import { authMiddleware, officeScopeMiddleware } from "../middlewares/ensureAuth.js";
+import perfisAcessoRouter from "./perfisAcesso.routes.js";
+import { authMiddleware, officeScopeMiddleware, requirePermission } from "../middlewares/ensureAuth.js";
+import type { AccessModule, AccessAction } from "../permissions/accessProfiles.js";
 
 export const router = Router();
 
@@ -23,19 +25,31 @@ router.use("/auth", authRouter);
 router.use(authMiddleware);
 router.use(officeScopeMiddleware);
 
+const actionByMethod: Record<string, AccessAction> = {
+  GET: "read",
+  POST: "create",
+  PUT: "update",
+  PATCH: "update",
+  DELETE: "delete",
+};
+
+const modulePermission = (module: AccessModule) => (req: any, res: any, next: any) =>
+  requirePermission(module, actionByMethod[req.method] ?? "read")(req, res, next);
+
 router.use("/cidade", cidadeRouter);
-router.use("/oficinas", oficinasRouter);
-router.use("/clientes", clientesRouter);
-router.use("/funcionarios", funcionariosRouter);
-router.use("/veiculos", veiculosRouter);
-router.use("/fornecedores", fornecedoresRouter);
-router.use("/estoque", estoqueRouter);
-router.use("/usuario", usuarioRouter);
-router.use("/servicos", servicosRouter);
-router.use("/ordens", ordensRouter);
-router.use("/pecas", pecasRouter);
-router.use("/pagamentos", pagamentosRouter);
-router.use("/orcamentos", orcamentosRouter);
-router.use("/agendamentos", agendamentosRouter);
+router.use("/perfis-acesso", perfisAcessoRouter);
+router.use("/oficinas", modulePermission("configuracoes"), oficinasRouter);
+router.use("/clientes", modulePermission("clientes"), clientesRouter);
+router.use("/funcionarios", modulePermission("funcionarios"), funcionariosRouter);
+router.use("/veiculos", modulePermission("veiculos"), veiculosRouter);
+router.use("/fornecedores", modulePermission("fornecedores"), fornecedoresRouter);
+router.use("/estoque", modulePermission("estoque"), estoqueRouter);
+router.use("/usuario", modulePermission("funcionarios"), usuarioRouter);
+router.use("/servicos", modulePermission("servicos"), servicosRouter);
+router.use("/ordens", modulePermission("ordens"), ordensRouter);
+router.use("/pecas", modulePermission("estoque"), pecasRouter);
+router.use("/pagamentos", modulePermission("financeiro"), pagamentosRouter);
+router.use("/orcamentos", modulePermission("orcamentos"), orcamentosRouter);
+router.use("/agendamentos", modulePermission("agenda"), agendamentosRouter);
 
 export default router;

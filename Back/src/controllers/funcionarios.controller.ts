@@ -40,6 +40,7 @@ export const FuncionariosController = {
         senha,
         data_contratacao,
         oficina_id,
+        perfil_acesso_id,
       } = req.body;
 
       if (!oficina_id) {
@@ -59,6 +60,7 @@ export const FuncionariosController = {
         senha,
         data_contratacao,
         oficina_id: Number(oficina_id),
+        perfil_acesso_id,
       });
 
       res.status(201).json(funcionario);

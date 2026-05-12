@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import type { AccessAction, AccessModule, PermissionsMap } from "../permissions/accessProfiles.js";
+import { canAccess } from "../permissions/accessProfiles.js";
 
 export type UserPayload = {
   id: number;
@@ -8,6 +10,9 @@ export type UserPayload = {
   tipo: string;
   oficinaId: number;
   oficina_id?: number;
+  perfilAcessoId?: number | null;
+  perfilAcessoNome?: string | null;
+  permissoes?: PermissionsMap;
 };
 
 export const authMiddleware = (
@@ -50,4 +55,16 @@ export const officeScopeMiddleware = (
   }
 
   next();
+};
+
+export const requirePermission = (module: AccessModule, action: AccessAction = "read") => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (canAccess(req.user?.permissoes, module, action)) return next();
+
+    return res.status(403).json({
+      message: "Voce nao tem permissao para executar esta acao.",
+      module,
+      action,
+    });
+  };
 };

@@ -76,6 +76,7 @@ model oficina {
   cidade   cidade    @relation(fields: [cidade_id], references: [id])
   gestor   usuario?  @relation("GestorOficina", fields: [gestor_usuario_id], references: [id])
   acessos  usuario_oficina[]
+  perfis_acesso perfil_acesso[]
 
   clientes       cliente[]
   funcionarios   funcionario[]
@@ -356,6 +357,7 @@ model usuario_oficina {
   usuario_id Int
   oficina_id Int
   perfil     tipo_usuario   @default(funcionario)
+  perfil_acesso_id Int?
   status     status_usuario @default(ativo)
   created_at DateTime       @default(now())
   updated_at DateTime       @updatedAt
@@ -363,10 +365,33 @@ model usuario_oficina {
 
   usuario usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
   oficina oficina @relation(fields: [oficina_id], references: [id])
+  perfil_acesso perfil_acesso? @relation(fields: [perfil_acesso_id], references: [id])
 
   @@unique([usuario_id, oficina_id])
   @@index([oficina_id])
+  @@index([perfil_acesso_id])
   @@index([status])
+  @@index([deleted_at])
+}
+
+model perfil_acesso {
+  id          Int       @id @default(autoincrement())
+  oficina_id  Int?
+  nome        String
+  descricao   String?
+  chave       String?
+  permissoes  Json
+  padrao      Boolean   @default(false)
+  sistema     Boolean   @default(false)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime?
+
+  oficina oficina? @relation(fields: [oficina_id], references: [id])
+  acessos usuario_oficina[]
+
+  @@unique([oficina_id, nome])
+  @@index([oficina_id])
   @@index([deleted_at])
 }
 

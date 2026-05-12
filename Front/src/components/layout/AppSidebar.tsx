@@ -19,15 +19,17 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { paths } from '../../routes/paths';
-import { useSidebar } from '../../context/SidebarContext';
-import { useState } from 'react';
-import logo from '../../assets/logo.png';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import StoreIcon from '@mui/icons-material/Store';
 import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useState, type ReactNode } from 'react';
+import { paths } from '../../routes/paths';
+import { useSidebar } from '../../context/SidebarContext';
+import { useAuth } from '../../context/AuthContext';
+import type { AccessModule } from '../../permissions/accessProfiles';
+import logo from '../../assets/logo.png';
 
 type Props = {
   drawerWidth: number;
@@ -35,29 +37,38 @@ type Props = {
   onCloseMobile?: () => void;
 };
 
-const navItems = [
-  { label: 'Início', icon: <HomeOutlineIcon />, to: paths.root },
-  { label: 'Agenda', icon: <EventOutlineIcon />, to: paths.agenda },
-  { label: 'Clientes', icon: <PeopleOutlineIcon />, to: paths.clients },
-  { label: 'Veículos', icon: <DirectionsCarIcon />, to: paths.veiculos },
-  { label: 'Estoque', icon: <InventoryIcon />, to: paths.estoque },
-  { label: 'Serviços', icon: <MiscellaneousServicesIcon />, to: paths.servicos },
-  { label: 'Ordens de serviço', icon: <ChecklistOutlineIcon />, to: paths.tasks },
+type NavItem = {
+  label: string;
+  icon: ReactNode;
+  to: string;
+  module: AccessModule;
+  subItems?: Array<{ label: string; icon: ReactNode; to: string; module: AccessModule }>;
+};
+
+const navItems: NavItem[] = [
+  { label: 'Inicio', icon: <HomeOutlineIcon />, to: paths.root, module: 'painel' },
+  { label: 'Agenda', icon: <EventOutlineIcon />, to: paths.agenda, module: 'agenda' },
+  { label: 'Clientes', icon: <PeopleOutlineIcon />, to: paths.clients, module: 'clientes' },
+  { label: 'Veiculos', icon: <DirectionsCarIcon />, to: paths.veiculos, module: 'veiculos' },
+  { label: 'Estoque', icon: <InventoryIcon />, to: paths.estoque, module: 'estoque' },
+  { label: 'Servicos', icon: <MiscellaneousServicesIcon />, to: paths.servicos, module: 'servicos' },
+  { label: 'Ordens de servico', icon: <ChecklistOutlineIcon />, to: paths.tasks, module: 'ordens' },
   {
     label: 'Financeiro',
     icon: <PaymentsOutlineIcon />,
     to: paths.payments,
+    module: 'financeiro',
     subItems: [
-      { label: 'Extrato', icon: <AccountBalanceWalletOutlinedIcon />, to: paths.payments },
-      { label: 'Recebimentos', icon: <ArrowDownwardRoundedIcon />, to: paths.contasReceber },
-      { label: 'Pagamentos', icon: <ArrowUpwardRoundedIcon />, to: paths.contasPagar },
+      { label: 'Extrato', icon: <AccountBalanceWalletOutlinedIcon />, to: paths.payments, module: 'financeiro' },
+      { label: 'Recebimentos', icon: <ArrowDownwardRoundedIcon />, to: paths.contasReceber, module: 'financeiro' },
+      { label: 'Pagamentos', icon: <ArrowUpwardRoundedIcon />, to: paths.contasPagar, module: 'financeiro' },
     ]
   },
-  { label: 'Fornecedores', icon: <StoreIcon />, to: paths.fornecedores },
-  { label: 'Orçamentos', icon: <RequestQuoteOutlineIcon />, to: paths.quotes },
-  { label: 'Funcionários', icon: <PersonOutlineIcon />, to: paths.users },
-  { label: 'Relatórios', icon: <BarChartOutlineIcon />, to: paths.reports },
-  { label: 'Configurações', icon: <SettingsOutlineIcon />, to: paths.settings },
+  { label: 'Fornecedores', icon: <StoreIcon />, to: paths.fornecedores, module: 'fornecedores' },
+  { label: 'Orcamentos', icon: <RequestQuoteOutlineIcon />, to: paths.quotes, module: 'orcamentos' },
+  { label: 'Funcionarios', icon: <PersonOutlineIcon />, to: paths.users, module: 'funcionarios' },
+  { label: 'Relatorios', icon: <BarChartOutlineIcon />, to: paths.reports, module: 'relatorios' },
+  { label: 'Configuracoes', icon: <SettingsOutlineIcon />, to: paths.settings, module: 'configuracoes' },
 ];
 
 const navLabels: Record<string, string> = {
@@ -82,6 +93,7 @@ function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collaps
   const { pathname } = useLocation();
   const nav = useNavigate();
   const theme = useTheme();
+  const { can } = useAuth();
   const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
 
   const toggleMenu = (label: string) => {
@@ -90,12 +102,13 @@ function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collaps
 
   return (
     <List sx={{ px: collapsed ? 1 : 1.5, py: 0.5, flex: 1, overflow: 'auto' }}>
-      {navItems.map(({ label, icon, to, subItems }) => {
+      {navItems.filter((item) => can(item.module)).map(({ label, icon, to, subItems }) => {
+        const allowedSubItems = subItems?.filter((item) => can(item.module));
         const displayLabel = navLabels[to] ?? label;
         const selected =
           (to === paths.root && pathname === '/') ||
           pathname === to ||
-          subItems?.some((s) => pathname === s.to);
+          allowedSubItems?.some((s) => pathname === s.to);
         const isOpen = !!openMenus[label];
 
         const button = (
@@ -103,7 +116,7 @@ function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collaps
             key={to}
             selected={selected}
             onClick={() => {
-              if (subItems) toggleMenu(label);
+              if (allowedSubItems?.length) toggleMenu(label);
               else {
                 nav(to);
                 onItemClick?.();
@@ -121,39 +134,24 @@ function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collaps
               border: '1px solid transparent',
               boxShadow: selected ? `0 14px 28px ${alpha(theme.palette.primary.main, 0.28)}` : 'none',
               '&:hover': {
-                bgcolor: selected
-                  ? theme.palette.primary.dark
-                  : alpha(theme.palette.primary.main, 0.08),
+                bgcolor: selected ? theme.palette.primary.dark : alpha(theme.palette.primary.main, 0.08),
                 color: selected ? '#FFFFFF' : theme.palette.primary.main,
               },
-              '&.Mui-selected': {
-                bgcolor: theme.palette.primary.main,
-              },
-              '&.Mui-selected:hover': {
-                bgcolor: theme.palette.primary.dark,
-              },
+              '&.Mui-selected': { bgcolor: theme.palette.primary.main },
+              '&.Mui-selected:hover': { bgcolor: theme.palette.primary.dark },
             }}
           >
-            <ListItemIcon
-              sx={{
-                minWidth: collapsed ? 0 : 38,
-                justifyContent: 'center',
-                color: 'inherit',
-              }}
-            >
+            <ListItemIcon sx={{ minWidth: collapsed ? 0 : 38, justifyContent: 'center', color: 'inherit' }}>
               {icon}
             </ListItemIcon>
 
             {!collapsed && (
               <ListItemText
                 primary={displayLabel}
-                primaryTypographyProps={{
-                  fontSize: 14,
-                  fontWeight: selected ? 750 : 650,
-                }}
+                primaryTypographyProps={{ fontSize: 14, fontWeight: selected ? 750 : 650 }}
               />
             )}
-            {!collapsed && subItems && (isOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />)}
+            {!collapsed && allowedSubItems?.length && (isOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />)}
           </ListItemButton>
         );
 
@@ -167,10 +165,10 @@ function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collaps
               button
             )}
 
-            {!collapsed && subItems && (
+            {!collapsed && allowedSubItems?.length && (
               <Collapse in={isOpen} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
-                  {subItems.map((sub) => (
+                  {allowedSubItems.map((sub) => (
                     <ListItemButton
                       key={sub.to}
                       selected={pathname === sub.to}
@@ -183,10 +181,7 @@ function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collaps
                         py: 0.75,
                         minHeight: 36,
                         borderRadius: 1.5,
-                        color:
-                          pathname === sub.to
-                            ? theme.palette.primary.main
-                            : theme.palette.text.secondary,
+                        color: pathname === sub.to ? theme.palette.primary.main : theme.palette.text.secondary,
                         '&:hover': {
                           bgcolor: alpha(theme.palette.text.primary, 0.045),
                           color: theme.palette.text.primary,
@@ -196,13 +191,7 @@ function NavList({ onItemClick, collapsed }: { onItemClick?: () => void; collaps
                         },
                       }}
                     >
-                      <ListItemIcon
-                        sx={{
-                          minWidth: 36,
-                          justifyContent: 'center',
-                          color: 'inherit',
-                        }}
-                      >
+                      <ListItemIcon sx={{ minWidth: 36, justifyContent: 'center', color: 'inherit' }}>
                         {sub.icon}
                       </ListItemIcon>
                       <ListItemText
@@ -273,25 +262,13 @@ export default function AppSidebar({
         ) : (
           <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box
-                component="img"
-                src={logo}
-                alt="Logo"
-                sx={{
-                  height: 54,
-                  maxHeight: 48,
-                  width: 'auto',
-                  objectFit: 'contain',
-                }}
-              />
+              <Box component="img" src={logo} alt="Logo" sx={{ height: 54, maxHeight: 48, width: 'auto', objectFit: 'contain' }} />
             </Box>
             <IconButton
               onClick={toggleCollapsed}
               size="small"
               sx={{
-              '&:hover': {
-                  bgcolor: alpha(theme.palette.primary.main, 0.08),
-                },
+                '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.08) },
                 color: 'text.secondary',
               }}
             >
@@ -306,9 +283,7 @@ export default function AppSidebar({
             onClick={toggleCollapsed}
             size="small"
             sx={{
-              '&:hover': {
-                bgcolor: alpha(theme.palette.primary.main, 0.08),
-              },
+              '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.08) },
               color: 'text.secondary',
             }}
           >

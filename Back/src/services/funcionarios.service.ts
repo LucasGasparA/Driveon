@@ -1,6 +1,7 @@
 import { prisma } from "../prisma/client.js";
 import type { cargo_funcionario } from "@prisma/client";
 import bcrypt from "bcrypt";
+import { PerfisAcessoService } from "./perfisAcesso.service.js";
 
 function normTelefone(t?: string) {
   return (t || "").replace(/\D/g, "");
@@ -53,6 +54,7 @@ export const FuncionariosService = {
     const cargo = toCargoEnum(data?.cargo);
     const senhaPura = String(data?.senha ?? "123456");
     const oficinaId = Number(data?.oficina_id);
+    const perfilAcessoId = data?.perfil_acesso_id ? Number(data.perfil_acesso_id) : null;
 
     if (!oficinaId || Number.isNaN(oficinaId)) {
       throw new Error("oficina_id é obrigatório.");
@@ -62,6 +64,17 @@ export const FuncionariosService = {
     }
 
     const senhaHash = await bcrypt.hash(senhaPura, 10);
+    const perfilAcesso =
+      perfilAcessoId
+        ? await prisma.perfil_acesso.findFirst({
+            where: { id: perfilAcessoId, oficina_id: oficinaId, deleted_at: null },
+          })
+        : await PerfisAcessoService.findDefault(
+            oficinaId,
+            cargo === "mecanico" ? "mecanico" : cargo === "administrador" || cargo === "gerente" ? "proprietario" : "recepcao"
+          );
+
+    if (!perfilAcesso) throw new Error("Perfil de acesso nao encontrado.");
 
     const dataContratacao = data?.data_contratacao
       ? new Date(data.data_contratacao)
@@ -86,11 +99,17 @@ export const FuncionariosService = {
 
       await tx.usuario_oficina.upsert({
         where: { usuario_id_oficina_id: { usuario_id: usuario.id, oficina_id: oficinaId } },
-        update: { perfil: "funcionario", status: "ativo", deleted_at: null },
+        update: {
+          perfil: cargo === "administrador" || cargo === "gerente" ? "gestoroficina" : "funcionario",
+          perfil_acesso_id: perfilAcesso.id,
+          status: "ativo",
+          deleted_at: null,
+        },
         create: {
           usuario_id: usuario.id,
           oficina_id: oficinaId,
-          perfil: "funcionario",
+          perfil: cargo === "administrador" || cargo === "gerente" ? "gestoroficina" : "funcionario",
+          perfil_acesso_id: perfilAcesso.id,
           status: "ativo",
         },
       });
@@ -139,6 +158,30 @@ export const FuncionariosService = {
           senha: await bcrypt.hash(data.senha, 10),
         },
       };
+    }
+
+    if (data?.perfil_acesso_id) {
+      const funcionario = await prisma.funcionario.findUnique({
+        where: { id },
+        select: { usuario_id: true, oficina_id: true },
+      });
+      if (!funcionario?.usuario_id) throw new Error("Funcionario sem usuario vinculado.");
+
+      const perfilAcessoId = Number(data.perfil_acesso_id);
+      const perfilAcesso = await prisma.perfil_acesso.findFirst({
+        where: { id: perfilAcessoId, oficina_id: funcionario.oficina_id, deleted_at: null },
+      });
+      if (!perfilAcesso) throw new Error("Perfil de acesso nao encontrado.");
+
+      await prisma.usuario_oficina.update({
+        where: {
+          usuario_id_oficina_id: {
+            usuario_id: funcionario.usuario_id,
+            oficina_id: funcionario.oficina_id,
+          },
+        },
+        data: { perfil_acesso_id: perfilAcessoId },
+      });
     }
 
     const funcionario = await prisma.funcionario.update({

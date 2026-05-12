@@ -30,7 +30,7 @@ usuario_seed AS (
     'Admin Teste',
     'admin@teste.com',
     '$2b$10$kg.y0CCtupxnbUZB0zdV/uGFdmZbIN6M/hbTYmxFfcKhZSldGMt42',
-    'funcionario',
+    'gestoroficina',
     'ativo',
     NOW(),
     NOW()
@@ -48,8 +48,37 @@ usuario_ref AS (
   CROSS JOIN oficina_seed o
   WHERE u.email = 'admin@teste.com'
   LIMIT 1
+),
+perfil_proprietario AS (
+  SELECT pa.id
+  FROM perfil_acesso pa
+  JOIN usuario_ref ur ON ur.oficina_id = pa.oficina_id
+  WHERE pa.chave = 'proprietario'
+    AND pa.deleted_at IS NULL
+  LIMIT 1
 )
-INSERT INTO usuario_oficina (usuario_id, oficina_id, perfil, status, created_at, updated_at)
-SELECT id, oficina_id, tipo, status, NOW(), NOW()
+INSERT INTO usuario_oficina (usuario_id, oficina_id, perfil, perfil_acesso_id, status, created_at, updated_at)
+SELECT ur.id, ur.oficina_id, 'gestoroficina', pp.id, ur.status, NOW(), NOW()
 FROM usuario_ref
-ON CONFLICT (usuario_id, oficina_id) DO NOTHING;
+ur
+CROSS JOIN perfil_proprietario pp
+ON CONFLICT (usuario_id, oficina_id) DO UPDATE
+  SET perfil = 'gestoroficina',
+      perfil_acesso_id = EXCLUDED.perfil_acesso_id,
+      status = EXCLUDED.status,
+      deleted_at = NULL,
+      updated_at = NOW();
+
+UPDATE usuario
+SET tipo = 'gestoroficina',
+    status = 'ativo',
+    deleted_at = NULL,
+    updated_at = NOW()
+WHERE email = 'admin@teste.com';
+
+UPDATE oficina
+SET gestor_usuario_id = u.id,
+    updated_at = NOW()
+FROM usuario u
+WHERE oficina.nome = 'Oficina Teste'
+  AND u.email = 'admin@teste.com';

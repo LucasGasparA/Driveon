@@ -12,6 +12,7 @@ import WorkRoundedIcon from "@mui/icons-material/WorkRounded";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import { useToast } from "../../../context/ToastContext";
+import { listarPerfisAcesso, type PerfilAcesso } from "../../configuracoes/api/perfisAcesso";
 
 const cargos = ["Mecanico", "Atendente", "Gerente", "Administrador"];
 
@@ -23,6 +24,7 @@ export type FuncionarioForm = {
   senha: string;
   data_contratacao: string;
   oficina_id: number;
+  perfil_acesso_id?: number;
 };
 
 type Props = {
@@ -51,10 +53,16 @@ export default function FuncionarioDialog({ open, onClose, onSubmit, oficina_id 
     nome: "", email: "", telefone: "", cargo: "Mecanico",
     senha: "", data_contratacao: new Date().toISOString(), oficina_id,
   });
+  const [perfis, setPerfis] = React.useState<PerfilAcesso[]>([]);
 
   React.useEffect(() => {
     if (!open) return;
     setForm({ nome: "", email: "", telefone: "", cargo: "Mecanico", senha: "", data_contratacao: new Date().toISOString(), oficina_id });
+    listarPerfisAcesso().then((data) => {
+      setPerfis(data);
+      const recepcao = data.find((perfil) => perfil.chave === "recepcao") ?? data.find((perfil) => perfil.padrao) ?? data[0];
+      if (recepcao) setForm((prev) => ({ ...prev, perfil_acesso_id: recepcao.id }));
+    }).catch(() => setPerfis([]));
   }, [open, oficina_id]);
 
   const handleSubmit = () => {
@@ -109,6 +117,13 @@ export default function FuncionarioDialog({ open, onClose, onSubmit, oficina_id 
               onChange={(e) => setForm({ ...form, cargo: e.target.value })}
               InputProps={{ startAdornment: <InputAdornment position="start"><WorkRoundedIcon fontSize="small" /></InputAdornment> }}>
               {cargos.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+            </TextField>
+          </Grid>
+          <Grid item xs={12}>
+            <TextField select label="Perfil de acesso" fullWidth value={form.perfil_acesso_id ?? ""}
+              onChange={(e) => setForm({ ...form, perfil_acesso_id: Number(e.target.value) })}
+              InputProps={{ startAdornment: <InputAdornment position="start"><WorkRoundedIcon fontSize="small" /></InputAdornment> }}>
+              {perfis.map((perfil) => <MenuItem key={perfil.id} value={perfil.id}>{perfil.nome}</MenuItem>)}
             </TextField>
           </Grid>
           <Grid item xs={12}>

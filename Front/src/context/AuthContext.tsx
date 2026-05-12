@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 import api from "../api/api";
+import type { AccessAction, AccessModule, PermissionsMap } from "../permissions/accessProfiles";
+import { hasPermission } from "../permissions/accessProfiles";
 
 type User = {
   id: number;
@@ -7,12 +9,18 @@ type User = {
   nome: string;
   tipo: string;
   oficina_id: number;
+  oficinaId: number;
+  perfilAcessoId?: number | null;
+  perfilAcessoNome?: string | null;
+  permissoes?: PermissionsMap;
 };
 
 type OfficeOption = {
   id: number;
   nome: string;
   perfil: string;
+  perfilAcessoId?: number | null;
+  perfilAcessoNome?: string | null;
 };
 
 type SignInResult =
@@ -25,6 +33,7 @@ type AuthContextType = {
   isAuthenticated: boolean;
   signIn: (email: string, password: string, remember: boolean) => Promise<SignInResult>;
   selectOffice: (selectionToken: string, oficinaId: number, remember: boolean) => Promise<void>;
+  can: (module: AccessModule, action?: AccessAction) => boolean;
   signOut: () => void;
 };
 
@@ -41,13 +50,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   // ✅ Normaliza o usuário retornado pelo backend
-  const normalizeUser = (u: any): User => ({
-    id: u.id,
-    email: u.email,
-    nome: u.nome,
-    tipo: u.tipo,
-    oficina_id: Number(u.oficina_id ?? u.oficinaId ?? 0),
-  });
+  const normalizeUser = (u: any): User => {
+    const oficinaId = Number(u.oficina_id ?? u.oficinaId ?? 0);
+    return {
+      id: u.id,
+      email: u.email,
+      nome: u.nome,
+      tipo: u.tipo,
+      oficina_id: oficinaId,
+      oficinaId,
+      perfilAcessoId: u.perfilAcessoId ?? null,
+      perfilAcessoNome: u.perfilAcessoNome ?? null,
+      permissoes: u.permissoes ?? {},
+    };
+  };
 
   // ✅ Armazena token e usuário de forma persistente
   const persist = (t: string, u: User, remember: boolean) => {
@@ -92,6 +108,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     delete api.defaults.headers.common["Authorization"];
   };
 
+  const can = (module: AccessModule, action: AccessAction = "read") =>
+    hasPermission(user?.permissoes, module, action);
+
   // ✅ Garante que o header Authorization sempre exista
   if (token && !api.defaults.headers.common["Authorization"]) {
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -104,6 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAuthenticated: !!token,
       signIn,
       selectOffice,
+      can,
       signOut,
     }),
     [user, token]
