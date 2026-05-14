@@ -1,8 +1,8 @@
 import * as React from "react";
 import {
   Box, Stack, Typography,
-  Paper, IconButton, Menu, MenuItem, Divider,
-  Avatar, Table, TableBody, TableCell, TableContainer,
+  IconButton, Menu, MenuItem, Divider,
+  Avatar, Table, TableBody, TableCell,
   TableHead, TableRow, TablePagination, Fade, Chip
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
@@ -19,6 +19,7 @@ import {
   excluirEstoque,
 } from "../api/api";
 import ModuleHeader from "../../../components/layout/ModuleHeader";
+import ListTableContainer from "../../../components/common/ListTableContainer";
 
 export default function EstoquePage() {
   const { user } = useAuth();
@@ -154,16 +155,7 @@ export default function EstoquePage() {
 
       {/* Tabela */}
       <Fade in timeout={400}>
-        <TableContainer
-          component={Paper}
-          sx={{
-            borderRadius: 2,
-            minHeight: 400,
-            maxHeight: 680,
-            border: (t) => `1px solid ${t.palette.divider}`,
-            overflowY: "auto",
-          }}
-        >
+        <ListTableContainer>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
@@ -222,7 +214,7 @@ export default function EstoquePage() {
               )}
             </TableBody>
           </Table>
-        </TableContainer>
+        </ListTableContainer>
       </Fade>
 
       {/* Paginação */}

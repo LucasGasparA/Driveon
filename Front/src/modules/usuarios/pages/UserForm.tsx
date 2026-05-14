@@ -1,8 +1,8 @@
 import * as React from "react";
 import {
   Box, Stack, Typography, TextField, InputAdornment, Button, IconButton,
-  Paper, Avatar, Chip, Menu, MenuItem, Fade, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, TablePagination, Divider, CircularProgress,
+  Avatar, Chip, Menu, MenuItem, Fade, Table, TableBody, TableCell,
+  TableHead, TableRow, TablePagination, Divider, CircularProgress,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
@@ -16,6 +16,7 @@ import { useToast } from "../../../context/ToastContext";
 import { useConfirm } from "../../../context/ConfirmContext";
 import FuncionarioDialog, { type FuncionarioForm } from "../dialog";
 import { listarFuncionarios, criarFuncionario, atualizarFuncionario, deletarFuncionario } from "../api/api";
+import ListTableContainer from "../../../components/common/ListTableContainer";
 
 type Funcionario = { id: number; nome: string; email?: string; cargo?: string; telefone?: string; };
 
@@ -120,7 +121,7 @@ export default function FuncionariosPage() {
       </Stack>
 
       <Fade in timeout={400}>
-        <TableContainer component={Paper} sx={{ borderRadius: 2, border: (t) => `1px solid ${t.palette.divider}`, minHeight: 400, maxHeight: 680, overflowY: "auto" }}>
+        <ListTableContainer>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
@@ -158,7 +159,7 @@ export default function FuncionariosPage() {
               )}
             </TableBody>
           </Table>
-        </TableContainer>
+        </ListTableContainer>
       </Fade>
 
       <TablePagination component="div" count={filtered.length} page={page}

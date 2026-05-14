@@ -1,8 +1,8 @@
 import * as React from "react";
 import {
   Box, Stack, Typography, IconButton,
-  Paper, Avatar, Chip, Menu, MenuItem, Divider, Fade, Table, TableBody,
-  TableCell, TableContainer, TableHead, TableRow, TablePagination, CircularProgress,
+  Avatar, Chip, Menu, MenuItem, Divider, Fade, Table, TableBody,
+  TableCell, TableHead, TableRow, TablePagination, CircularProgress,
 } from "@mui/material";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
 import GroupsRoundedIcon from "@mui/icons-material/GroupsRounded";
@@ -13,6 +13,7 @@ import { useConfirm } from "../../../context/ConfirmContext";
 import ClientDialog, { type Client, type ClientForm } from "../dialog";
 import api from "../../../api/api";
 import ModuleHeader from "../../../components/layout/ModuleHeader";
+import ListTableContainer from "../../../components/common/ListTableContainer";
 
 // ── helpers de mapeamento ──────────────────────────────────────────────────
 
@@ -176,7 +177,7 @@ export default function ClientsPage() {
       />
 
       <Fade in timeout={400}>
-        <TableContainer component={Paper} sx={{ borderRadius: 3, border: (t) => `1px solid ${t.palette.divider}`, minHeight: 400, maxHeight: 680, overflowY: "auto" }}>
+        <ListTableContainer sx={{ borderRadius: 3 }}>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
@@ -214,7 +215,7 @@ export default function ClientsPage() {
               )}
             </TableBody>
           </Table>
-        </TableContainer>
+        </ListTableContainer>
       </Fade>
 
       <TablePagination component="div" count={filtered.length} page={page}

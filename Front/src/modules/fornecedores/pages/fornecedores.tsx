@@ -1,7 +1,7 @@
 import * as React from "react";
 import {
   Box, Stack, Typography, IconButton,
-  Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Table, TableBody, TableCell, TableHead, TableRow,
   TablePagination, Fade, Menu, MenuItem, Divider, CircularProgress,
 } from "@mui/material";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
@@ -14,6 +14,7 @@ import { useConfirm } from "../../../context/ConfirmContext";
 import SupplierDialog, { type Supplier, type SupplierForm } from "../dialog";
 import api from "../../../api/api";
 import ModuleHeader from "../../../components/layout/ModuleHeader";
+import ListTableContainer from "../../../components/common/ListTableContainer";
 
 export default function SuppliersPage() {
   const { user } = useAuth();
@@ -124,7 +125,7 @@ export default function SuppliersPage() {
       />
 
       <Fade in timeout={400}>
-        <TableContainer component={Paper} sx={{ borderRadius: 2, border: (t) => `1px solid ${t.palette.divider}`, minHeight: 400, maxHeight: 640, overflowY: "auto" }}>
+        <ListTableContainer>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
@@ -156,7 +157,7 @@ export default function SuppliersPage() {
               )}
             </TableBody>
           </Table>
-        </TableContainer>
+        </ListTableContainer>
       </Fade>
 
       <TablePagination component="div" count={filtered.length} page={page}

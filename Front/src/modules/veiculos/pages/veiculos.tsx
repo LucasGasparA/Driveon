@@ -1,8 +1,8 @@
 import * as React from "react";
 import {
   Box, Stack, Typography, IconButton,
-  Paper, Chip, Avatar, Menu, MenuItem, Divider, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, TablePagination, Fade, CircularProgress,
+  Chip, Avatar, Menu, MenuItem, Divider, Table, TableBody, TableCell,
+  TableHead, TableRow, TablePagination, Fade, CircularProgress,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
@@ -15,6 +15,7 @@ import { useConfirm } from "../../../context/ConfirmContext";
 import VehicleDialog, { type Vehicle, type VehicleForm } from "../dialog";
 import { listarVeiculos, criarVeiculo, atualizarVeiculo, excluirVeiculo } from "../api/api";
 import ModuleHeader from "../../../components/layout/ModuleHeader";
+import ListTableContainer from "../../../components/common/ListTableContainer";
 
 export default function VehiclesPage() {
   const { user } = useAuth();
@@ -129,7 +130,7 @@ export default function VehiclesPage() {
       />
 
       <Fade in timeout={400}>
-        <TableContainer component={Paper} sx={{ borderRadius: 2, minHeight: 400, maxHeight: 680, border: (t) => `1px solid ${t.palette.divider}`, overflowY: "auto" }}>
+        <ListTableContainer>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
@@ -177,7 +178,7 @@ export default function VehiclesPage() {
               )}
             </TableBody>
           </Table>
-        </TableContainer>
+        </ListTableContainer>
       </Fade>
 
       <TablePagination component="div" count={filtered.length} page={page}

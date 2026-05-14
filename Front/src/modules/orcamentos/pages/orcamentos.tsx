@@ -1,7 +1,7 @@
 import * as React from "react";
 import {
-  Box, Stack, Typography, Paper, Button,
-  IconButton, Table, TableBody, TableCell, TableContainer, TableHead,
+  Box, Stack, Typography, Button,
+  IconButton, Table, TableBody, TableCell, TableHead,
   TableRow, Menu, MenuItem, Fade, Chip, TablePagination,
   CircularProgress, Divider, ToggleButton, ToggleButtonGroup, Tooltip,
 } from "@mui/material";
@@ -21,6 +21,7 @@ import { useToast } from "../../../context/ToastContext";
 import { useConfirm } from "../../../context/ConfirmContext";
 import DialogOrcamento from "../dialog";
 import api from "../../../api/api";
+import ListTableContainer from "../../../components/common/ListTableContainer";
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────
 
@@ -259,7 +260,7 @@ export default function OrcamentosPage() {
 
       {/* ── Tabela ── */}
       <Fade in timeout={400}>
-        <TableContainer component={Paper} sx={{ borderRadius: 2, border: (t) => `1px solid ${t.palette.divider}`, minHeight: 400, maxHeight: 640, overflowY: "auto" }}>
+        <ListTableContainer>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
@@ -371,7 +372,7 @@ export default function OrcamentosPage() {
               )}
             </TableBody>
           </Table>
-        </TableContainer>
+        </ListTableContainer>
       </Fade>
 
       {/* ── Paginação ── */}
