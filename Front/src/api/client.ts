@@ -1,5 +1,7 @@
 import api from "./api";
 
+export default api;
+
 export async function listarClientes() {
   const { data } = await api.get("/clientes");
   return data;

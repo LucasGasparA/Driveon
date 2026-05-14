@@ -50,7 +50,7 @@ export default function SuppliersPage() {
     if (!menuId) return;
     const ok = await confirm({
       title: "Excluir fornecedor?",
-      message: "Esta aÃ§Ã£o nÃ£o pode ser desfeita.",
+      message: "Esta ação não pode ser desfeita.",
       confirmLabel: "Sim, excluir",
       variant: "danger",
     });
@@ -58,9 +58,9 @@ export default function SuppliersPage() {
     try {
       await api.delete(`/fornecedores/${menuId}`);
       setRows((prev) => prev.filter((x) => x.id !== menuId));
-      success("Fornecedor excluÃ­do com sucesso.");
+      success("Fornecedor excluído com sucesso.");
     } catch {
-      error("NÃ£o foi possÃ­vel excluir o fornecedor.");
+      error("Não foi possível excluir o fornecedor.");
     } finally {
       handleMenuClose();
     }
@@ -80,7 +80,7 @@ export default function SuppliersPage() {
       setOpenDialog(false);
     } catch (err) {
       console.error("Erro ao salvar fornecedor:", err);
-      error("NÃ£o foi possÃ­vel salvar o fornecedor.");
+      error("Não foi possível salvar o fornecedor.");
     }
   };
 
@@ -88,9 +88,9 @@ export default function SuppliersPage() {
     try {
       await api.delete(`/fornecedores/${id}`);
       setRows((prev) => prev.filter((x) => x.id !== id));
-      success("Fornecedor excluÃ­do com sucesso.");
+      success("Fornecedor excluído com sucesso.");
     } catch {
-      error("NÃ£o foi possÃ­vel excluir o fornecedor.");
+      error("Não foi possível excluir o fornecedor.");
     }
   };
 
@@ -132,7 +132,7 @@ export default function SuppliersPage() {
                 <TableCell>Contato</TableCell>
                 <TableCell>Email</TableCell>
                 <TableCell>Telefone</TableCell>
-                <TableCell align="right">AÃ§Ãµes</TableCell>
+                <TableCell align="right">Ações</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -144,9 +144,9 @@ export default function SuppliersPage() {
                       <Typography fontWeight={600}>{s.nome}</Typography>
                     </Stack>
                   </TableCell>
-                  <TableCell>{s.contato ?? "â€”"}</TableCell>
-                  <TableCell>{s.email ? <Stack direction="row" spacing={1} alignItems="center"><EmailRoundedIcon sx={{ fontSize: 16, opacity: 0.7 }} />{s.email}</Stack> : "â€”"}</TableCell>
-                  <TableCell>{s.telefone ? <Stack direction="row" spacing={1} alignItems="center"><PhoneRoundedIcon sx={{ fontSize: 16, opacity: 0.7 }} />{s.telefone}</Stack> : "â€”"}</TableCell>
+                  <TableCell>{s.contato ?? "—"}</TableCell>
+                  <TableCell>{s.email ? <Stack direction="row" spacing={1} alignItems="center"><EmailRoundedIcon sx={{ fontSize: 16, opacity: 0.7 }} />{s.email}</Stack> : "—"}</TableCell>
+                  <TableCell>{s.telefone ? <Stack direction="row" spacing={1} alignItems="center"><PhoneRoundedIcon sx={{ fontSize: 16, opacity: 0.7 }} />{s.telefone}</Stack> : "—"}</TableCell>
                   <TableCell align="right">
                     <IconButton onClick={(e) => handleMenuOpen(e, s.id)}><MoreVertRoundedIcon /></IconButton>
                   </TableCell>
@@ -162,8 +162,8 @@ export default function SuppliersPage() {
       <TablePagination component="div" count={filtered.length} page={page}
         onPageChange={(_, p) => setPage(p)} rowsPerPage={rowsPerPage}
         onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-        rowsPerPageOptions={[5, 10, 20]} labelRowsPerPage="Linhas por pÃ¡gina:"
-        labelDisplayedRows={({ from, to, count }) => `${from}â€“${to} de ${count !== -1 ? count : `mais de ${to}`}`}
+        rowsPerPageOptions={[5, 10, 20]} labelRowsPerPage="Linhas por página:"
+        labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`}
         sx={{ mt: 1.5, borderRadius: 2, bgcolor: "background.paper" }}
       />
 

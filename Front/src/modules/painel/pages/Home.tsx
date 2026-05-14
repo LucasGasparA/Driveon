@@ -231,7 +231,7 @@ function OSRow({ order, onClick }: { order: any; onClick?: () => void }) {
   );
 }
 
-// â”€â”€â”€ Componente: Linha de orÃ§amento pendente â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€â”€ Componente: Linha de orçamento pendente â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function OrcRow({ orc, onClick }: { orc: any; onClick?: () => void }) {
   const dias = diasDesde(orc.data ?? orc.created_at);
@@ -272,7 +272,7 @@ function OrcRow({ orc, onClick }: { orc: any; onClick?: () => void }) {
   );
 }
 
-// â”€â”€â”€ Componente: CabeÃ§alho de painel interno â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€â”€ Componente: Cabeçalho de painel interno â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function PanelHeader({
   icon, title, count, countBg, countColor, onAction, actionLabel,
@@ -327,7 +327,7 @@ function PanelHeader({
   );
 }
 
-// â”€â”€â”€ PÃ¡gina principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€â”€ Página principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function Home() {
   const { user } = useAuth();
@@ -365,7 +365,7 @@ export default function Home() {
     })();
   }, [oficinaId]);
 
-  // â”€â”€ MÃ©tricas operacionais â”€â”€
+  // â”€â”€ Métricas operacionais â”€â”€
   const ordensEmAndamento = tasks.filter((t) => t.status === "em_andamento");
   const ordensAbertas = tasks.filter((t) => t.status === "aberta");
   const ordensAtivas = [...ordensEmAndamento, ...ordensAbertas];
@@ -392,7 +392,7 @@ export default function Home() {
   const receber = payments.filter((p) => getTipo(p) === "receber");
   const pagar = payments.filter((p) => getTipo(p) === "pagar");
 
-  // Recebido no mÃªs atual (status pago)
+  // Recebido no mês atual (status pago)
   const recebidoMes = receber
     .filter((p) => {
       const pago = getStatus(p) === "pago";
@@ -401,7 +401,7 @@ export default function Home() {
     })
     .reduce((s, p) => s + Number(p.valor ?? p.valor_total ?? 0), 0);
 
-  // A receber: contas com status pendente (OS, peÃ§as, qualquer origem)
+  // A receber: contas com status pendente (OS, peças, qualquer origem)
   const totalAReceber = receber
     .filter((p) => getStatus(p) === "pendente")
     .reduce((s, p) => s + Number(p.valor ?? p.valor_total ?? 0), 0);
@@ -429,7 +429,7 @@ export default function Home() {
     ? Math.min(100, Math.round((saldo / totalRecebido) * 100))
     : 0;
 
-  // â”€â”€ SaudaÃ§Ã£o â”€â”€
+  // â”€â”€ Saudação â”€â”€
   const hora = new Date().getHours();
   const saudacao = hora < 12 ? "Bom dia" : hora < 18 ? "Boa tarde" : "Boa noite";
   const hoje = new Date().toLocaleDateString("pt-BR", {
@@ -518,7 +518,7 @@ export default function Home() {
       </Paper>
 
       {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          GAUGE CARDS â€” status operacional
+          GAUGE CARDS — status operacional
       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={3}>
         <StatusCard
@@ -556,7 +556,7 @@ export default function Home() {
       </Stack>
 
       {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          FINANCEIRO â€” faixa compacta
+          FINANCEIRO — faixa compacta
       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <Paper
         elevation={0}
@@ -684,7 +684,7 @@ export default function Home() {
       </Paper>
 
       {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          LINHA INFERIOR â€” OS abertas + OrÃ§amentos
+          LINHA INFERIOR — OS abertas + Orçamentos
       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <Stack direction={{ xs: "column", lg: "row" }} spacing={2.5}>
 
@@ -811,7 +811,7 @@ export default function Home() {
           )}
         </Paper>
 
-        {/* â”€â”€ OrÃ§amentos pendentes â”€â”€ */}
+        {/* â”€â”€ Orçamentos pendentes â”€â”€ */}
         <Paper
           elevation={0}
           sx={{

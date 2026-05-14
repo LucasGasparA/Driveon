@@ -1,16 +1,12 @@
-import axios from "axios";
-
-const api = axios.create({
-  baseURL: "http://localhost:4000/api/servicos",
-});
+import api from "../../../api/api";
 
 export async function listarServicos() {
-  const res = await api.get("/");
+  const res = await api.get("/servicos");
   return res.data;
 }
 
 export async function criarServico(data: any, oficinaId: number) {
-  const res = await api.post("/", {
+  const res = await api.post("/servicos", {
     nome: data.nome,
     descricao: data.descricao,
     preco: Number(data.preco),
@@ -20,7 +16,7 @@ export async function criarServico(data: any, oficinaId: number) {
 }
 
 export async function atualizarServico(id: number, data: any) {
-  const res = await api.put(`/${id}`, {
+  const res = await api.put(`/servicos/${id}`, {
     nome: data.nome,
     descricao: data.descricao,
     preco: Number(data.preco),
@@ -29,5 +25,5 @@ export async function atualizarServico(id: number, data: any) {
 }
 
 export async function excluirServico(id: number) {
-  await api.delete(`/${id}`);
+  await api.delete(`/servicos/${id}`);
 }

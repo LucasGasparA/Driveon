@@ -73,7 +73,7 @@ export default function EstoquePage() {
     if (!menuId) return;
     const ok = await confirm({
       title: "Excluir item do estoque?",
-      message: "Esta aÃ§Ã£o nÃ£o pode ser desfeita.",
+      message: "Esta ação não pode ser desfeita.",
       confirmLabel: "Sim, excluir",
       variant: "danger",
     });
@@ -81,9 +81,9 @@ export default function EstoquePage() {
     try {
       await excluirEstoque(menuId);
       setRows((p) => p.filter((x) => x.id !== menuId));
-      success("Item excluÃ­do com sucesso.");
+      success("Item excluído com sucesso.");
     } catch {
-      error("NÃ£o foi possÃ­vel excluir o item.");
+      error("Não foi possível excluir o item.");
     } finally {
       handleMenuClose();
     }
@@ -93,7 +93,7 @@ export default function EstoquePage() {
     try {
       const oficinaId = user?.oficinaId ?? user?.oficina_id ?? 0;
       if (!oficinaId) {
-        warning("UsuÃ¡rio sem oficina vinculada. RefaÃ§a o login.");
+        warning("Usuário sem oficina vinculada. Refaça o login.");
         return;
       }
       if (mode === "create") {
@@ -108,7 +108,7 @@ export default function EstoquePage() {
       setOpenDialog(false);
     } catch (err: any) {
       console.error("Erro ao salvar item:", err);
-      error(err.response?.data?.message || "NÃ£o foi possÃ­vel salvar o item.");
+      error(err.response?.data?.message || "Não foi possível salvar o item.");
     }
   };
 
@@ -116,9 +116,9 @@ export default function EstoquePage() {
     try {
       await excluirEstoque(id);
       setRows((p) => p.filter((x) => x.id !== id));
-      success("Item excluÃ­do com sucesso.");
+      success("Item excluído com sucesso.");
     } catch {
-      error("NÃ£o foi possÃ­vel excluir o item.");
+      error("Não foi possível excluir o item.");
     }
   };
 
@@ -168,11 +168,11 @@ export default function EstoquePage() {
             <TableHead>
               <TableRow>
                 <TableCell>Produto</TableCell>
-                <TableCell>DescriÃ§Ã£o</TableCell>
+                <TableCell>Descrição</TableCell>
                 <TableCell>Custo</TableCell>
                 <TableCell>Venda</TableCell>
                 <TableCell>Estoque</TableCell>
-                <TableCell align="right">AÃ§Ãµes</TableCell>
+                <TableCell align="right">Ações</TableCell>
               </TableRow>
             </TableHead>
 
@@ -188,7 +188,7 @@ export default function EstoquePage() {
                         <Typography fontWeight={400}>{i.nome}</Typography>
                       </Stack>
                     </TableCell>
-                    <TableCell sx={{ fontSize: 14 }}>{i.descricao || "â€”"}</TableCell>
+                    <TableCell sx={{ fontSize: 14 }}>{i.descricao || "—"}</TableCell>
                     <TableCell sx={{ fontSize: 14 }}>R$ {Number(i.preco_custo).toFixed(2)}</TableCell>
                     <TableCell sx={{ fontSize: 14, color: "success.main" }}>
                       R$ {Number(i.preco_venda).toFixed(2)}
@@ -225,7 +225,7 @@ export default function EstoquePage() {
         </TableContainer>
       </Fade>
 
-      {/* PaginaÃ§Ã£o */}
+      {/* Paginação */}
       <TablePagination
         component="div"
         count={filtered.length}
@@ -237,9 +237,9 @@ export default function EstoquePage() {
           setPage(0);
         }}
         rowsPerPageOptions={[5, 10, 20]}
-        labelRowsPerPage="Linhas por pÃ¡gina:"
+        labelRowsPerPage="Linhas por página:"
         labelDisplayedRows={({ from, to, count }) =>
-          `${from}â€“${to} de ${count !== -1 ? count : `mais de ${to}`}`
+          `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`
         }
         sx={{ mt: 1.5, borderRadius: 2, bgcolor: "background.paper" }}
       />

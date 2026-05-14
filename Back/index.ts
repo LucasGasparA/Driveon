@@ -6,8 +6,18 @@ import { errorHandler } from "./src/middlewares/errorHandler.js";
 
 const app = express();
 
-app.use(cors({ origin: "*", methods: "GET,POST,PUT,DELETE" }));
+const corsOrigins = (process.env.CORS_ORIGIN ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin: corsOrigins.length ? corsOrigins : false,
+  credentials: true,
+  methods: "GET,POST,PUT,PATCH,DELETE",
+}));
 app.use(express.json());
+app.get("/health", (_req, res) => res.json({ status: "ok" }));
 app.use("/api", router);
 app.use(errorHandler);
 

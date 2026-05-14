@@ -15,12 +15,12 @@ export type LoginResponse = {
 };
 
 export async function login(req: LoginRequest): Promise<LoginResponse> {
-  const { data } = await api.post<LoginResponse>("/api/auth/login", req);
+  const { data } = await api.post<LoginResponse>("/auth/login", req);
   return data;
 }
 
 export async function LoginResponse(req: LoginRequest): Promise<LoginResponse> {
-  const { data } = await api.post<LoginResponse>("/api/auth/login-email", req);
+  const { data } = await api.post<LoginResponse>("/auth/login-email", req);
   return data;
 }
 

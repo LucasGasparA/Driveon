@@ -33,7 +33,7 @@ export default function ServicosPage() {
   React.useEffect(() => {
     listarServicos()
       .then(setRows)
-      .catch((err) => console.error("Erro ao carregar serviÃ§os:", err))
+      .catch((err) => console.error("Erro ao carregar serviços:", err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -46,8 +46,8 @@ export default function ServicosPage() {
   const handleDelete = async () => {
     if (!menuId) return;
     const ok = await confirm({
-      title: "Excluir serviÃ§o?",
-      message: "Ordens jÃ¡ criadas com este serviÃ§o nÃ£o serÃ£o afetadas.",
+      title: "Excluir serviço?",
+      message: "Ordens já criadas com este serviço não serão afetadas.",
       confirmLabel: "Sim, excluir",
       variant: "danger",
     });
@@ -55,9 +55,9 @@ export default function ServicosPage() {
     try {
       await excluirServico(menuId);
       setRows((p) => p.filter((x) => x.id !== menuId));
-      success("ServiÃ§o excluÃ­do com sucesso.");
+      success("Serviço excluído com sucesso.");
     } catch {
-      error("NÃ£o foi possÃ­vel excluir o serviÃ§o.");
+      error("Não foi possível excluir o serviço.");
     } finally {
       handleMenuClose();
     }
@@ -66,20 +66,20 @@ export default function ServicosPage() {
   const onSubmit = async (data: ServicoForm) => {
     try {
       const oficinaId = user?.oficinaId ?? user?.oficina_id;
-      if (!oficinaId) { warning("UsuÃ¡rio sem oficina vinculada."); return; }
+      if (!oficinaId) { warning("Usuário sem oficina vinculada."); return; }
       if (mode === "create") {
         const novo = await criarServico(data, oficinaId);
         setRows((p) => [novo, ...p]);
-        success("ServiÃ§o cadastrado com sucesso!");
+        success("Serviço cadastrado com sucesso!");
       } else if (current) {
         const atualizado = await atualizarServico(current.id, data);
         setRows((p) => p.map((r) => (r.id === current.id ? atualizado : r)));
-        success("ServiÃ§o atualizado com sucesso!");
+        success("Serviço atualizado com sucesso!");
       }
       setOpenDialog(false);
     } catch (err) {
-      console.error("Erro ao salvar serviÃ§o:", err);
-      error("NÃ£o foi possÃ­vel salvar o serviÃ§o.");
+      console.error("Erro ao salvar serviço:", err);
+      error("Não foi possível salvar o serviço.");
     }
   };
 
@@ -87,9 +87,9 @@ export default function ServicosPage() {
     try {
       await excluirServico(id);
       setRows((p) => p.filter((x) => x.id !== id));
-      success("ServiÃ§o excluÃ­do com sucesso.");
+      success("Serviço excluído com sucesso.");
     } catch {
-      error("NÃ£o foi possÃ­vel excluir o serviÃ§o.");
+      error("Não foi possível excluir o serviço.");
     }
   };
 
@@ -106,18 +106,18 @@ export default function ServicosPage() {
   return (
     <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
       <ModuleHeader
-        title="Servicos"
-        subtitle="Catalogo de mao de obra, valores e servicos recorrentes."
+        title="Serviços"
+        subtitle="Catálogo de mão de obra, valores e serviços recorrentes."
         icon={<BuildRoundedIcon />}
         metrics={[
           { label: "Cadastrados", value: rows.length, tone: "primary" },
-          { label: "Valor medio", value: rows.length ? `R$ ${(rows.reduce((s, r) => s + Number(r.preco ?? 0), 0) / rows.length).toFixed(2)}` : "R$ 0.00", tone: "success" },
+          { label: "Valor médio", value: rows.length ? `R$ ${(rows.reduce((s, r) => s + Number(r.preco ?? 0), 0) / rows.length).toFixed(2)}` : "R$ 0.00", tone: "success" },
           { label: "Filtrados", value: filtered.length, tone: "neutral" },
         ]}
         searchValue={query}
-        searchPlaceholder="Pesquisar servico ou descricao"
+        searchPlaceholder="Pesquisar serviço ou descrição"
         onSearchChange={setQuery}
-        actionLabel="Novo Servico"
+        actionLabel="Novo Serviço"
         onAction={openCreate}
       />
 
@@ -126,10 +126,10 @@ export default function ServicosPage() {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell>ServiÃ§o</TableCell>
-                <TableCell>DescriÃ§Ã£o</TableCell>
-                <TableCell>PreÃ§o</TableCell>
-                <TableCell align="right">AÃ§Ãµes</TableCell>
+                <TableCell>Serviço</TableCell>
+                <TableCell>Descrição</TableCell>
+                <TableCell>Preço</TableCell>
+                <TableCell align="right">Ações</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -141,7 +141,7 @@ export default function ServicosPage() {
                       <Typography fontWeight={500}>{s.nome}</Typography>
                     </Stack>
                   </TableCell>
-                  <TableCell sx={{ color: "text.secondary" }}>{s.descricao || "â€”"}</TableCell>
+                  <TableCell sx={{ color: "text.secondary" }}>{s.descricao || "—"}</TableCell>
                   <TableCell>
                     <Stack direction="row" alignItems="center" spacing={1}>
                       <PaidRoundedIcon sx={{ fontSize: 16, opacity: 0.7 }} />
@@ -153,7 +153,7 @@ export default function ServicosPage() {
                   </TableCell>
                 </TableRow>
               )) : (
-                <TableRow><TableCell colSpan={4} align="center" sx={{ py: 8, color: "text.secondary" }}>Nenhum serviÃ§o encontrado</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} align="center" sx={{ py: 8, color: "text.secondary" }}>Nenhum serviço encontrado</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -163,8 +163,8 @@ export default function ServicosPage() {
       <TablePagination component="div" count={filtered.length} page={page}
         onPageChange={(_, p) => setPage(p)} rowsPerPage={rowsPerPage}
         onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-        rowsPerPageOptions={[5, 10, 20]} labelRowsPerPage="Linhas por pÃ¡gina:"
-        labelDisplayedRows={({ from, to, count }) => `${from}â€“${to} de ${count !== -1 ? count : `mais de ${to}`}`}
+        rowsPerPageOptions={[5, 10, 20]} labelRowsPerPage="Linhas por página:"
+        labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count !== -1 ? count : `mais de ${to}`}`}
         sx={{ mt: 1.5, borderRadius: 2, bgcolor: "background.paper" }}
       />
 

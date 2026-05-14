@@ -1,16 +1,12 @@
-import axios from "axios";
-
-const api = axios.create({
-  baseURL: "http://localhost:4000/api/estoque",
-});
+import api from "../../../api/api";
 
 export async function listarEstoque() {
-  const res = await api.get("/");
+  const res = await api.get("/estoque");
   return res.data;
 }
 
 export async function criarEstoque(data: any, oficinaId: number) {
-  const res = await api.post("/", {
+  const res = await api.post("/estoque", {
     nome: data.nome,
     descricao: data.descricao,
     preco_custo: Number(data.preco_custo),
@@ -22,7 +18,7 @@ export async function criarEstoque(data: any, oficinaId: number) {
 }
 
 export async function atualizarEstoque(id: number, data: any) {
-  const res = await api.put(`/${id}`, {
+  const res = await api.put(`/estoque/${id}`, {
     nome: data.nome,
     descricao: data.descricao,
     preco_custo: Number(data.preco_custo),
@@ -33,5 +29,5 @@ export async function atualizarEstoque(id: number, data: any) {
 }
 
 export async function excluirEstoque(id: number) {
-  await api.delete(`/${id}`);
+  await api.delete(`/estoque/${id}`);
 }

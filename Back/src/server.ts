@@ -6,11 +6,20 @@ import routes from "./routes/index.js";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+const corsOrigins = (process.env.CORS_ORIGIN ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin: corsOrigins.length ? corsOrigins : false,
+  credentials: true,
+  methods: "GET,POST,PUT,PATCH,DELETE",
+}));
 app.use(express.json());
 app.use(routes);
 
-app.get('/', (_, res) => res.send('API DriveOn funcionando'));
+app.get("/health", (_, res) => res.json({ status: "ok" }));
 
 const port = process.env.PORT || 4000;
 app.listen(port, () => console.log(`🚀 Servidor rodando em http://localhost:${port}`));

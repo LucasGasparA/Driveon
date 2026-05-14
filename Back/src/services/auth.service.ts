@@ -2,7 +2,12 @@ import { prisma } from "../prisma/client.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "driveon_secret";
+function getJwtSecret() {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET nao configurado.");
+  }
+  return process.env.JWT_SECRET;
+}
 
 export const AuthService = {
   async login(email: string, senha: string) {
@@ -17,7 +22,7 @@ export const AuthService = {
 
     const token = jwt.sign(
       { id: user.id, tipo: user.tipo },
-      JWT_SECRET,
+      getJwtSecret(),
       { expiresIn: "8h" }
     );
 
