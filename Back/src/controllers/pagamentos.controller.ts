@@ -1,12 +1,11 @@
 import { Request, Response } from "express";
 import { PagamentosService } from "../services/pagamentos.service.js";
+import { getRequiredOfficeId } from "../middlewares/ensureAuth.js";
 
 export const pagamentosController = {
   async listar(req: Request, res: Response) {
     try {
-      const oficina_id = Number(req.query.oficina_id);
-      if (!oficina_id)
-        return res.status(400).json({ error: "oficina_id é obrigatório." });
+      const oficina_id = getRequiredOfficeId(req);
 
       const pagamentos = await PagamentosService.list(oficina_id);
       res.json(pagamentos);
@@ -22,7 +21,7 @@ export const pagamentosController = {
       if (!cliente_id)
         return res.status(400).json({ error: "cliente_id é obrigatório." });
 
-      const pagamentos = await PagamentosService.listByCliente(cliente_id);
+      const pagamentos = await PagamentosService.listByCliente(cliente_id, getRequiredOfficeId(req));
       res.json(pagamentos);
     } catch (err: any) {
       console.error("Erro ao listar pagamentos do cliente:", err);
@@ -35,7 +34,7 @@ export const pagamentosController = {
       const id = Number(req.params.id);
       if (!id) return res.status(400).json({ error: "ID inválido." });
 
-      const pagamento = await PagamentosService.getById(id);
+      const pagamento = await PagamentosService.getById(id, getRequiredOfficeId(req));
       res.json(pagamento);
     } catch (err: any) {
       console.error("Erro ao buscar pagamento:", err);
@@ -45,7 +44,7 @@ export const pagamentosController = {
 
   async criar(req: Request, res: Response) {
     try {
-      const novo = await PagamentosService.create(req.body);
+      const novo = await PagamentosService.create({ ...req.body, oficina_id: getRequiredOfficeId(req) });
       res.status(201).json(novo);
     } catch (err: any) {
       console.error("Erro ao criar pagamento:", err);
@@ -58,7 +57,7 @@ export const pagamentosController = {
       const id = Number(req.params.id);
       if (!id) return res.status(400).json({ error: "ID inválido." });
 
-      const atualizado = await PagamentosService.update(id, req.body);
+      const atualizado = await PagamentosService.update(id, req.body, getRequiredOfficeId(req));
       res.json(atualizado);
     } catch (err: any) {
       console.error("Erro ao atualizar pagamento:", err);
@@ -71,7 +70,7 @@ export const pagamentosController = {
       const id = Number(req.params.id);
       if (!id) return res.status(400).json({ error: "ID inválido." });
 
-      const resultado = await PagamentosService.delete(id);
+      const resultado = await PagamentosService.delete(id, getRequiredOfficeId(req));
       res.json(resultado);
     } catch (err: any) {
       console.error("Erro ao excluir pagamento:", err);
@@ -81,9 +80,7 @@ export const pagamentosController = {
 
   async extrato(req: Request, res: Response) {
     try {
-      const oficina_id = Number(req.query.oficina_id);
-      if (!oficina_id)
-        return res.status(400).json({ error: "oficina_id é obrigatório." });
+      const oficina_id = getRequiredOfficeId(req);
 
       const from = req.query.from?.toString();
       const to = req.query.to?.toString();

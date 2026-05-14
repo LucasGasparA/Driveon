@@ -51,13 +51,36 @@ const includeRelations = {
   funcionario: true,
 };
 
+async function validateAgendamentoRelations(data: any, oficinaId: number) {
+  if (data.cliente_id != null) {
+    const cliente = await prisma.cliente.findFirst({
+      where: { id: Number(data.cliente_id), oficina_id: oficinaId, deleted_at: null },
+    });
+    if (!cliente) throw new Error("Cliente nao encontrado nesta oficina.");
+  }
+
+  if (data.veiculo_id != null) {
+    const veiculo = await prisma.veiculo.findFirst({
+      where: { id: Number(data.veiculo_id), oficina_id: oficinaId, deleted_at: null },
+    });
+    if (!veiculo) throw new Error("Veiculo nao encontrado nesta oficina.");
+  }
+
+  if (data.funcionario_id != null) {
+    const funcionario = await prisma.funcionario.findFirst({
+      where: { id: Number(data.funcionario_id), oficina_id: oficinaId, deleted_at: null },
+    });
+    if (!funcionario) throw new Error("Funcionario nao encontrado nesta oficina.");
+  }
+}
+
 export const AgendamentoService = {
-  async list() {
-    return prisma.agendamento.findMany({ where: { deleted_at: null }, include: includeRelations });
+  async list(oficina_id: number) {
+    return prisma.agendamento.findMany({ where: { oficina_id, deleted_at: null }, include: includeRelations });
   },
 
-  async getById(id: number) {
-    return prisma.agendamento.findFirst({ where: { id, deleted_at: null }, include: includeRelations });
+  async getById(id: number, oficina_id: number) {
+    return prisma.agendamento.findFirst({ where: { id, oficina_id, deleted_at: null }, include: includeRelations });
   },
 
   async listByOficina(oficina_id: number) {
@@ -65,18 +88,29 @@ export const AgendamentoService = {
   },
 
   async create(data: any) {
-    return prisma.agendamento.create({ data: toAgendamentoData(data), include: includeRelations });
+    const payload = toAgendamentoData(data);
+    await validateAgendamentoRelations(payload, payload.oficina_id);
+    return prisma.agendamento.create({ data: payload, include: includeRelations });
   },
 
-  async update(id: number, data: any) {
+  async update(id: number, data: any, oficina_id: number) {
+    const existing = await prisma.agendamento.findFirst({ where: { id, oficina_id, deleted_at: null } });
+    if (!existing) throw new Error("Agendamento nao encontrado nesta oficina.");
+    const patch = toAgendamentoData(data, true);
+    patch.oficina_id = oficina_id;
+    await validateAgendamentoRelations(patch, oficina_id);
+
     return prisma.agendamento.update({
       where: { id },
-      data: toAgendamentoData(data, true),
+      data: patch,
       include: includeRelations,
     });
   },
 
-  async remove(id: number) {
+  async remove(id: number, oficina_id: number) {
+    const existing = await prisma.agendamento.findFirst({ where: { id, oficina_id, deleted_at: null } });
+    if (!existing) throw new Error("Agendamento nao encontrado nesta oficina.");
+
     return prisma.agendamento.update({ where: { id }, data: { deleted_at: new Date(), status: "cancelado" } });
   }
 };

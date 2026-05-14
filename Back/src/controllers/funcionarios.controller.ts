@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 import { FuncionariosService } from "../services/funcionarios.service.js";
+import { getRequiredOfficeId } from "../middlewares/ensureAuth.js";
 
 export const FuncionariosController = {
   async list(req: Request, res: Response) {
     try {
-      const funcionarios = await FuncionariosService.list(req.user?.oficinaId);
+      const funcionarios = await FuncionariosService.list(getRequiredOfficeId(req));
       res.json(funcionarios);
     } catch (error: any) {
       console.error("Erro ao listar funcionários:", error);
@@ -15,7 +16,7 @@ export const FuncionariosController = {
   async getById(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const funcionario = await FuncionariosService.getById(Number(id), req.user?.oficinaId);
+      const funcionario = await FuncionariosService.getById(Number(id), getRequiredOfficeId(req));
 
       if (!funcionario) {
         return res.status(404).json({ error: "Funcionário não encontrado." });
@@ -39,13 +40,9 @@ export const FuncionariosController = {
         cargo,
         senha,
         data_contratacao,
-        oficina_id,
         perfil_acesso_id,
       } = req.body;
 
-      if (!oficina_id) {
-        return res.status(400).json({ error: "oficina_id é obrigatório." });
-      }
       if (!nome || !email || !telefone || !cargo || !senha) {
         return res
           .status(400)
@@ -59,7 +56,7 @@ export const FuncionariosController = {
         cargo,
         senha,
         data_contratacao,
-        oficina_id: Number(oficina_id),
+        oficina_id: getRequiredOfficeId(req),
         perfil_acesso_id,
       });
 
@@ -75,7 +72,7 @@ export const FuncionariosController = {
       const { id } = req.params;
       const data = req.body;
 
-      const funcionario = await FuncionariosService.update(Number(id), data);
+      const funcionario = await FuncionariosService.update(Number(id), data, getRequiredOfficeId(req));
       res.json(funcionario);
     } catch (error: any) {
       console.error("Erro ao atualizar funcionário:", error);
@@ -86,7 +83,7 @@ export const FuncionariosController = {
   async delete(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      await FuncionariosService.delete(Number(id));
+      await FuncionariosService.delete(Number(id), getRequiredOfficeId(req));
       res.json({ message: "Funcionário removido com sucesso." });
     } catch (error: any) {
       console.error("Erro ao excluir funcionário:", error);

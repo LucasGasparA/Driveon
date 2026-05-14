@@ -26,8 +26,9 @@ export const OficinaService = {
     return oficina;
   },
 
-  async list() {
+  async list(oficinaId: number) {
     return prisma.oficina.findMany({
+      where: { id: oficinaId, deleted_at: null },
       include: {
         acessos: {
           where: { deleted_at: null },

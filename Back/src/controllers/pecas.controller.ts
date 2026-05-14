@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 import { PecasService } from "../services/pecas.service.js";
+import { getRequiredOfficeId } from "../middlewares/ensureAuth.js";
 
 export const PecasController = {
   async list(req: Request, res: Response) {
     try {
-      const pecas = await PecasService.list(req.user?.oficinaId);
+      const pecas = await PecasService.list(getRequiredOfficeId(req));
       return res.json(pecas);
     } catch (error) {
       console.error("Erro ao listar peças:", error);
@@ -14,7 +15,7 @@ export const PecasController = {
 
   async create(req: Request, res: Response) {
     try {
-      const novaPeca = await PecasService.create(req.body);
+      const novaPeca = await PecasService.create({ ...req.body, oficina_id: getRequiredOfficeId(req) });
       return res.status(201).json(novaPeca);
     } catch (error) {
       console.error("Erro ao criar peça:", error);
@@ -25,7 +26,7 @@ export const PecasController = {
   async update(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
-      const pecaAtualizada = await PecasService.update(id, req.body);
+      const pecaAtualizada = await PecasService.update(id, req.body, getRequiredOfficeId(req));
       return res.json(pecaAtualizada);
     } catch (error) {
       console.error("Erro ao atualizar peça:", error);
@@ -36,7 +37,7 @@ export const PecasController = {
   async delete(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
-      await PecasService.delete(id);
+      await PecasService.delete(id, getRequiredOfficeId(req));
       return res.status(204).send();
     } catch (error) {
       console.error("Erro ao excluir peça:", error);

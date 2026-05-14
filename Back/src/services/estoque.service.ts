@@ -1,16 +1,16 @@
 import { prisma } from "../prisma/client.js";
 
 export const EstoqueService = {
-  list: (oficinaId?: number) =>
+  list: (oficinaId: number) =>
     prisma.estoque.findMany({
-      where: { deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
+      where: { deleted_at: null, oficina_id: oficinaId },
       orderBy: { id: "desc" },
       include: { oficina: true },
     }),
 
-  getById: (id: number, oficinaId?: number) =>
+  getById: (id: number, oficinaId: number) =>
     prisma.estoque.findFirst({
-      where: { id, deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
+      where: { id, deleted_at: null, oficina_id: oficinaId },
       include: { oficina: true },
     }),
 
@@ -32,7 +32,10 @@ export const EstoqueService = {
     });
   },
 
-  update: async (id: number, data: any) => {
+  update: async (id: number, data: any, oficinaId: number) => {
+    const existing = await prisma.estoque.findFirst({ where: { id, oficina_id: oficinaId, deleted_at: null } });
+    if (!existing) throw new Error("Item de estoque nao encontrado nesta oficina.");
+
     return prisma.estoque.update({
       where: { id },
       data: {
@@ -45,7 +48,15 @@ export const EstoqueService = {
     });
   },
 
-  delete: (id: number) => prisma.estoque.update({ where: { id }, data: { deleted_at: new Date() } }),
+  delete: async (id: number, oficinaId: number) => {
+    const existing = await prisma.estoque.findFirst({ where: { id, oficina_id: oficinaId, deleted_at: null } });
+    if (!existing) throw new Error("Item de estoque nao encontrado nesta oficina.");
+    return prisma.estoque.update({ where: { id }, data: { deleted_at: new Date() } });
+  },
 
-  remove: (id: number) => prisma.estoque.update({ where: { id }, data: { deleted_at: new Date() } }),
+  remove: async (id: number, oficinaId: number) => {
+    const existing = await prisma.estoque.findFirst({ where: { id, oficina_id: oficinaId, deleted_at: null } });
+    if (!existing) throw new Error("Item de estoque nao encontrado nesta oficina.");
+    return prisma.estoque.update({ where: { id }, data: { deleted_at: new Date() } });
+  },
 };

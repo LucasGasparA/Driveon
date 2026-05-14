@@ -3,9 +3,9 @@ import { Response } from "express";
 import { prisma } from "../prisma/client.js";
 
 export const PdfHtmlService = {
-  async gerarOrdemServicoPDF(id: number, res: Response, oficinaId?: number) {
+  async gerarOrdemServicoPDF(id: number, res: Response, oficinaId: number) {
     const ordem = await prisma.ordem_servico.findFirst({
-      where: { id, deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
+      where: { id, deleted_at: null, oficina_id: oficinaId },
       include: {
         cliente: true,
         veiculo: true,

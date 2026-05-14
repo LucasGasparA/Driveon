@@ -26,6 +26,29 @@ function validatePagamento(data: Partial<PagamentoInput>) {
   }
 }
 
+async function validatePagamentoRelations(data: any, oficinaId: number) {
+  if (data.cliente_id) {
+    const cliente = await prisma.cliente.findFirst({
+      where: { id: Number(data.cliente_id), oficina_id: oficinaId, deleted_at: null },
+    });
+    if (!cliente) throw new Error("Cliente nao encontrado nesta oficina.");
+  }
+
+  if (data.fornecedor_id) {
+    const fornecedor = await prisma.fornecedor.findFirst({
+      where: { id: Number(data.fornecedor_id), oficina_id: oficinaId, deleted_at: null },
+    });
+    if (!fornecedor) throw new Error("Fornecedor nao encontrado nesta oficina.");
+  }
+
+  if (data.ordem_servico_id) {
+    const ordem = await prisma.ordem_servico.findFirst({
+      where: { id: Number(data.ordem_servico_id), oficina_id: oficinaId, deleted_at: null },
+    });
+    if (!ordem) throw new Error("Ordem de servico nao encontrada nesta oficina.");
+  }
+}
+
 export const PagamentosService = {
   async list(oficina_id: number, cliente_id?: number) {
     if (!oficina_id) throw new Error("oficina_id e obrigatorio.");
@@ -44,11 +67,11 @@ export const PagamentosService = {
     });
   },
 
-  async listByCliente(cliente_id: number) {
+  async listByCliente(cliente_id: number, oficina_id: number) {
     if (!cliente_id) throw new Error("cliente_id e obrigatorio.");
 
     return await prisma.pagamento.findMany({
-      where: { cliente_id, deleted_at: null },
+      where: { cliente_id, oficina_id, deleted_at: null },
       orderBy: { data_vencimento: "desc" },
       include: {
         oficina: { select: { id: true, nome: true } },
@@ -57,11 +80,11 @@ export const PagamentosService = {
     });
   },
 
-  async getById(id: number, oficinaId?: number) {
+  async getById(id: number, oficinaId: number) {
     if (!id) throw new Error("ID do pagamento e obrigatorio.");
 
     const pagamento = await prisma.pagamento.findFirst({
-      where: { id, deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
+      where: { id, deleted_at: null, oficina_id: oficinaId },
       include: {
         cliente: true,
         oficina: true,
@@ -76,6 +99,7 @@ export const PagamentosService = {
 
   async create(data: PagamentoInput) {
     validatePagamento(data);
+    await validatePagamentoRelations(data, data.oficina_id);
 
     return await prisma.pagamento.create({
       data: {
@@ -96,28 +120,29 @@ export const PagamentosService = {
     });
   },
 
-  async update(id: number, data: Partial<PagamentoInput>, oficinaId?: number) {
+  async update(id: number, data: Partial<PagamentoInput>, oficinaId: number) {
     if (!id) throw new Error("ID do pagamento e obrigatorio.");
 
     const existing = await prisma.pagamento.findFirst({
-      where: { id, deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
+      where: { id, deleted_at: null, oficina_id: oficinaId },
     });
     if (!existing) throw new Error("Pagamento nao encontrado.");
 
     const merged = { ...existing, ...data };
     validatePagamento({
-      oficina_id: oficinaId ?? merged.oficina_id,
+      oficina_id: oficinaId,
       valor: Number(merged.valor),
       tipo: merged.tipo,
       cliente_id: merged.cliente_id,
       ordem_servico_id: merged.ordem_servico_id,
     });
+    await validatePagamentoRelations(merged, oficinaId);
 
     return await prisma.pagamento.update({
       where: { id },
       data: {
         ...data,
-        oficina_id: oficinaId ?? data.oficina_id,
+        oficina_id: oficinaId,
         cliente_id: data.cliente_id === undefined ? existing.cliente_id : data.cliente_id,
         fornecedor_id: data.fornecedor_id === undefined ? existing.fornecedor_id : data.fornecedor_id,
         ordem_servico_id: data.ordem_servico_id === undefined ? existing.ordem_servico_id : data.ordem_servico_id,
@@ -131,10 +156,10 @@ export const PagamentosService = {
     });
   },
 
-  async delete(id: number, oficinaId?: number) {
+  async delete(id: number, oficinaId: number) {
     if (!id) throw new Error("ID do pagamento e obrigatorio.");
 
-    const existing = await prisma.pagamento.findFirst({ where: { id, deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) } });
+    const existing = await prisma.pagamento.findFirst({ where: { id, deleted_at: null, oficina_id: oficinaId } });
     if (!existing) throw new Error("Pagamento nao encontrado.");
 
     await prisma.pagamento.update({

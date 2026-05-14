@@ -92,12 +92,15 @@ export const UsuarioService = {
     };
   },
 
-  async list() {
+  async list(oficinaId: number) {
     return prisma.usuario.findMany({
-      where: { deleted_at: null },
+      where: {
+        deleted_at: null,
+        acessos: { some: { oficina_id: oficinaId, deleted_at: null } },
+      },
       include: {
         acessos: {
-          where: { deleted_at: null },
+          where: { oficina_id: oficinaId, deleted_at: null },
           include: { oficina: { select: { id: true, nome: true } } },
         },
       },
@@ -105,12 +108,16 @@ export const UsuarioService = {
     });
   },
 
-  async getById(id: number) {
+  async getById(id: number, oficinaId: number) {
     const usuario = await prisma.usuario.findFirst({
-      where: { id, deleted_at: null },
+      where: {
+        id,
+        deleted_at: null,
+        acessos: { some: { oficina_id: oficinaId, deleted_at: null } },
+      },
       include: {
         acessos: {
-          where: { deleted_at: null },
+          where: { oficina_id: oficinaId, deleted_at: null },
           include: { oficina: { select: { id: true, nome: true } } },
         },
       },
@@ -119,8 +126,14 @@ export const UsuarioService = {
     return usuario;
   },
 
-  async update(id: number, data: { email?: string; senha?: string; nome?: string; tipo?: tipo_usuario; status?: status_usuario; oficina_id?: number }) {
-    const usuario = await prisma.usuario.findFirst({ where: { id, deleted_at: null } });
+  async update(id: number, data: { email?: string; senha?: string; nome?: string; tipo?: tipo_usuario; status?: status_usuario; oficina_id?: number }, oficinaId: number) {
+    const usuario = await prisma.usuario.findFirst({
+      where: {
+        id,
+        deleted_at: null,
+        acessos: { some: { oficina_id: oficinaId, deleted_at: null } },
+      },
+    });
     if (!usuario) throw new Error("Usuario nao encontrado.");
 
     const patch: any = { ...data };
@@ -131,20 +144,39 @@ export const UsuarioService = {
     return prisma.usuario.update({ where: { id }, data: patch });
   },
 
-  async delete(id: number) {
-    const usuario = await prisma.usuario.findFirst({ where: { id, deleted_at: null } });
+  async delete(id: number, oficinaId: number) {
+    const usuario = await prisma.usuario.findFirst({
+      where: {
+        id,
+        deleted_at: null,
+        acessos: { some: { oficina_id: oficinaId, deleted_at: null } },
+      },
+    });
     if (!usuario) throw new Error("Usuario nao encontrado.");
+
+    const outrosAcessos = await prisma.usuario_oficina.count({
+      where: { usuario_id: id, oficina_id: { not: oficinaId }, deleted_at: null },
+    });
+
+    if (outrosAcessos > 0) {
+      await prisma.usuario_oficina.update({
+        where: { usuario_id_oficina_id: { usuario_id: id, oficina_id: oficinaId } },
+        data: { deleted_at: new Date(), status: "inativo" },
+      });
+      return this.getById(id, oficinaId).catch(() => ({ id, removedFromOffice: true }));
+    }
+
     return prisma.usuario.update({
       where: { id },
       data: {
         deleted_at: new Date(),
         status: "inativo",
-        acessos: {
-          updateMany: {
-            where: { deleted_at: null },
-            data: { deleted_at: new Date(), status: "inativo" },
-          },
-        },
+              acessos: {
+                updateMany: {
+                  where: { oficina_id: oficinaId, deleted_at: null },
+                  data: { deleted_at: new Date(), status: "inativo" },
+                },
+              },
       },
     });
   },

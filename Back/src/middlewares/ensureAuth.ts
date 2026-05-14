@@ -42,7 +42,7 @@ export const officeScopeMiddleware = (
   next: NextFunction
 ) => {
   const oficinaId = Number(req.user?.oficinaId ?? req.user?.oficina_id);
-  if (!oficinaId) {
+  if (!oficinaId || Number.isNaN(oficinaId)) {
     return res.status(403).json({ message: "Token sem oficina ativa." });
   }
 
@@ -56,6 +56,14 @@ export const officeScopeMiddleware = (
 
   next();
 };
+
+export function getRequiredOfficeId(req: Request) {
+  const oficinaId = Number(req.user?.oficinaId ?? req.user?.oficina_id);
+  if (!oficinaId || Number.isNaN(oficinaId)) {
+    throw new Error("Token sem oficina ativa.");
+  }
+  return oficinaId;
+}
 
 export const requirePermission = (module: AccessModule, action: AccessAction = "read") => {
   return (req: Request, res: Response, next: NextFunction) => {

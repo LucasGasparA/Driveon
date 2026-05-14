@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { OficinaService } from "../services/oficinas.service.js";
+import { getRequiredOfficeId } from "../middlewares/ensureAuth.js";
 
 export const OficinaController = {
   async create(req: Request, res: Response) {
@@ -14,7 +15,7 @@ export const OficinaController = {
 
   async list(req: Request, res: Response) {
     try {
-      const oficinas = await OficinaService.list();
+      const oficinas = await OficinaService.list(getRequiredOfficeId(req));
       return res.status(200).json(oficinas);
     } catch (error: any) {
       console.error("Erro ao listar oficinas:", error);

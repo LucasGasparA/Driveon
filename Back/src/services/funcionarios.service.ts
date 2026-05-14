@@ -27,9 +27,7 @@ function toCargoEnum(cargo: any): cargo_funcionario {
   }
 }
 
-async function ensureGestorComoFuncionario(oficinaId?: number) {
-  if (!oficinaId) return;
-
+async function ensureGestorComoFuncionario(oficinaId: number) {
   const oficina = await prisma.oficina.findFirst({
     where: { id: oficinaId, deleted_at: null },
     include: {
@@ -74,11 +72,11 @@ async function ensureGestorComoFuncionario(oficinaId?: number) {
 }
 
 export const FuncionariosService = {
-  list: async (oficinaId?: number) => {
+  list: async (oficinaId: number) => {
     await ensureGestorComoFuncionario(oficinaId);
 
     return prisma.funcionario.findMany({
-      where: { deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
+      where: { deleted_at: null, oficina_id: oficinaId },
       orderBy: { id: "desc" },
       include: {
         usuario: { select: { id: true, email: true, nome: true, status: true } },
@@ -87,9 +85,9 @@ export const FuncionariosService = {
     });
   },
 
-  getById: (id: number, oficinaId?: number) =>
+  getById: (id: number, oficinaId: number) =>
     prisma.funcionario.findFirst({
-      where: { id, deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
+      where: { id, deleted_at: null, oficina_id: oficinaId },
       include: {
         usuario: { select: { id: true, email: true, nome: true, status: true } },
         oficina: true,
@@ -183,7 +181,13 @@ export const FuncionariosService = {
     return funcionario;
   },
 
-  update: async (id: number, data: any) => {
+  update: async (id: number, data: any, oficinaId: number) => {
+    const existing = await prisma.funcionario.findFirst({
+      where: { id, oficina_id: oficinaId, deleted_at: null },
+      select: { usuario_id: true, oficina_id: true },
+    });
+    if (!existing) throw new Error("Funcionario nao encontrado nesta oficina.");
+
     const patch: any = {};
 
     if (data?.nome != null) patch.nome = String(data.nome).trim();
@@ -192,14 +196,6 @@ export const FuncionariosService = {
     if (data?.cargo != null) patch.cargo = toCargoEnum(data.cargo);
     if (data?.data_contratacao)
       patch.data_contratacao = new Date(data.data_contratacao);
-
-    if (data?.oficina_id) {
-      const oficinaId = Number(data.oficina_id);
-      if (!oficinaId || Number.isNaN(oficinaId)) {
-        throw new Error("oficina_id inválido.");
-      }
-      patch.oficina = { connect: { id: oficinaId } };
-    }
 
     if (data?.senha) {
       patch.usuario = {
@@ -210,23 +206,19 @@ export const FuncionariosService = {
     }
 
     if (data?.perfil_acesso_id) {
-      const funcionario = await prisma.funcionario.findUnique({
-        where: { id },
-        select: { usuario_id: true, oficina_id: true },
-      });
-      if (!funcionario?.usuario_id) throw new Error("Funcionario sem usuario vinculado.");
+      if (!existing.usuario_id) throw new Error("Funcionario sem usuario vinculado.");
 
       const perfilAcessoId = Number(data.perfil_acesso_id);
       const perfilAcesso = await prisma.perfil_acesso.findFirst({
-        where: { id: perfilAcessoId, oficina_id: funcionario.oficina_id, deleted_at: null },
+        where: { id: perfilAcessoId, oficina_id: existing.oficina_id, deleted_at: null },
       });
       if (!perfilAcesso) throw new Error("Perfil de acesso nao encontrado.");
 
       await prisma.usuario_oficina.update({
         where: {
           usuario_id_oficina_id: {
-            usuario_id: funcionario.usuario_id,
-            oficina_id: funcionario.oficina_id,
+            usuario_id: existing.usuario_id,
+            oficina_id: existing.oficina_id,
           },
         },
         data: { perfil_acesso_id: perfilAcessoId },
@@ -245,22 +237,23 @@ export const FuncionariosService = {
     return funcionario;
   },
 
-  delete: async (id: number) => {
+  delete: async (id: number, oficinaId: number) => {
     try {
-      const funcionario = await prisma.funcionario.findUnique({
-        where: { id },
+      const funcionario = await prisma.funcionario.findFirst({
+        where: { id, oficina_id: oficinaId, deleted_at: null },
         select: {
           usuario_id: true,
           oficina: { select: { gestor_usuario_id: true } },
         },
       });
+      if (!funcionario) throw new Error("Funcionario nao encontrado nesta oficina.");
 
       if (funcionario?.usuario_id && funcionario.usuario_id === funcionario.oficina.gestor_usuario_id) {
         throw new Error("O gestor da oficina nao pode ser excluido da lista de funcionarios.");
       }
 
       const ordensVinculadas = await prisma.ordem_servico.count({
-        where: { funcionario_id: id },
+        where: { funcionario_id: id, oficina_id: oficinaId },
       });
 
       if (ordensVinculadas > 0) {

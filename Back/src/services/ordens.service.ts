@@ -1,9 +1,36 @@
 import { prisma } from "../prisma/client.js";
 
+async function validateOrdemRelations(data: any, oficinaId: number) {
+  const [cliente, veiculo, funcionario] = await Promise.all([
+    prisma.cliente.findFirst({ where: { id: Number(data.cliente_id), oficina_id: oficinaId, deleted_at: null } }),
+    prisma.veiculo.findFirst({ where: { id: Number(data.veiculo_id), oficina_id: oficinaId, deleted_at: null } }),
+    prisma.funcionario.findFirst({ where: { id: Number(data.funcionario_id), oficina_id: oficinaId, deleted_at: null } }),
+  ]);
+
+  if (!cliente) throw new Error("Cliente nao encontrado nesta oficina.");
+  if (!veiculo) throw new Error("Veiculo nao encontrado nesta oficina.");
+  if (!funcionario) throw new Error("Funcionario nao encontrado nesta oficina.");
+
+  for (const item of data.itens ?? []) {
+    if ((item.tipo_item ?? item.tipo) === "servico" && item.servico_id) {
+      const servico = await prisma.servico.findFirst({
+        where: { id: Number(item.servico_id), oficina_id: oficinaId, deleted_at: null },
+      });
+      if (!servico) throw new Error("Servico nao encontrado nesta oficina.");
+    }
+    if ((item.tipo_item ?? item.tipo) === "peca" && item.peca_id) {
+      const peca = await prisma.peca.findFirst({
+        where: { id: Number(item.peca_id), oficina_id: oficinaId, deleted_at: null },
+      });
+      if (!peca) throw new Error("Peca nao encontrada nesta oficina.");
+    }
+  }
+}
+
 export const OrdensService = {
-  list: async (oficinaId?: number) => {
+  list: async (oficinaId: number) => {
     return prisma.ordem_servico.findMany({
-      where: { deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
+      where: { deleted_at: null, oficina_id: oficinaId },
       orderBy: { created_at: "desc" },
       include: {
         cliente: true,
@@ -19,9 +46,9 @@ export const OrdensService = {
     });
   },
 
-  getById: async (id: number, oficinaId?: number) => {
+  getById: async (id: number, oficinaId: number) => {
     const os = await prisma.ordem_servico.findFirst({
-      where: { id, deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
+      where: { id, deleted_at: null, oficina_id: oficinaId },
       include: {
         cliente: true,
         veiculo: true,
@@ -53,6 +80,7 @@ export const OrdensService = {
     if (!oficina_id || !cliente_id || !veiculo_id || !funcionario_id) {
       throw new Error("Campos obrigatórios não informados.");
     }
+    await validateOrdemRelations({ cliente_id, veiculo_id, funcionario_id, itens }, oficina_id);
 
     return prisma.ordem_servico.create({
       data: {
@@ -89,14 +117,29 @@ export const OrdensService = {
     });
   },
 
-  update: async (id: number, data: any, oficinaId?: number) => {
+  update: async (id: number, data: any, oficinaId: number) => {
     const { itens, ...rest } = data;
+    const existing = await prisma.ordem_servico.findFirst({
+      where: { id, oficina_id: oficinaId, deleted_at: null },
+    });
+    if (!existing) throw new Error("Ordem de servico nao encontrada nesta oficina.");
+    delete rest.oficina_id;
+    delete rest.oficinaId;
+    await validateOrdemRelations(
+      {
+        cliente_id: rest.cliente_id ?? existing.cliente_id,
+        veiculo_id: rest.veiculo_id ?? existing.veiculo_id,
+        funcionario_id: rest.funcionario_id ?? existing.funcionario_id,
+        itens,
+      },
+      oficinaId
+    );
 
     const osAtualizada = await prisma.ordem_servico.update({
       where: { id },
       data: {
         ...rest,
-        ...(oficinaId ? { oficina_id: oficinaId } : {}),
+        oficina_id: oficinaId,
         updated_at: new Date(),
       },
       include: {
@@ -138,12 +181,10 @@ export const OrdensService = {
     });
   },
 
-  delete: async (id: number, oficinaId?: number) => {
+  delete: async (id: number, oficinaId: number) => {
     try {
-      if (oficinaId) {
-        const existing = await prisma.ordem_servico.findFirst({ where: { id, oficina_id: oficinaId, deleted_at: null } });
-        if (!existing) throw new Error("Ordem de servico nao encontrada nesta oficina.");
-      }
+      const existing = await prisma.ordem_servico.findFirst({ where: { id, oficina_id: oficinaId, deleted_at: null } });
+      if (!existing) throw new Error("Ordem de servico nao encontrada nesta oficina.");
       await prisma.item_ordem_servico.updateMany({
         where: { ordem_servico_id: id, deleted_at: null },
         data: { deleted_at: new Date() },
