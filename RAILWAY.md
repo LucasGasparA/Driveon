@@ -57,3 +57,12 @@ OFICINA_EMAIL="oficina@dominio.com"
 ```
 
 O script cria a cidade, a oficina, os perfis padrao, o usuario proprietario e o vinculo `usuario_oficina`. Depois que confirmar o login, remova `ADMIN_PASSWORD` das variaveis do Railway.
+
+Se voce estiver rodando localmente com `railway run` e receber erro em `postgres.railway.internal`, isso acontece porque esse host interno so resolve dentro da rede do Railway. Nesse caso, use o caminho de startup temporario:
+
+1. No servico Back, defina `RUN_SEED_ADMIN=true`.
+2. Garanta que as variaveis `ADMIN_*` e `OFICINA_*` estao preenchidas.
+3. Faca redeploy do Back.
+4. Confira nos logs a mensagem `Admin inicial pronto.`
+5. Remova `RUN_SEED_ADMIN` e `ADMIN_PASSWORD`.
+6. Faca redeploy novamente.
