@@ -8,8 +8,14 @@ declare global {
   }
 }
 
+function normalizeApiUrl(url: string) {
+  const cleanUrl = url.replace(/\/+$/, "");
+  if (!cleanUrl || cleanUrl === "/api" || cleanUrl.endsWith("/api")) return cleanUrl || "/api";
+  return `${cleanUrl}/api`;
+}
+
 const api = axios.create({
-  baseURL: window.__DRIVEON_CONFIG__?.API_URL ?? import.meta.env.VITE_API_URL ?? "/api",
+  baseURL: normalizeApiUrl(window.__DRIVEON_CONFIG__?.API_URL ?? import.meta.env.VITE_API_URL ?? "/api"),
 });
 
 api.interceptors.request.use((config) => {
