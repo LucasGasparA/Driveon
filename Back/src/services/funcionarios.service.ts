@@ -27,16 +27,65 @@ function toCargoEnum(cargo: any): cargo_funcionario {
   }
 }
 
+async function ensureGestorComoFuncionario(oficinaId?: number) {
+  if (!oficinaId) return;
+
+  const oficina = await prisma.oficina.findFirst({
+    where: { id: oficinaId, deleted_at: null },
+    include: {
+      gestor: { select: { id: true, nome: true, email: true, deleted_at: true } },
+    },
+  });
+
+  if (!oficina?.gestor || oficina.gestor.deleted_at) return;
+
+  const funcionario = await prisma.funcionario.findFirst({
+    where: { oficina_id: oficinaId, usuario_id: oficina.gestor.id },
+    select: { id: true, deleted_at: true },
+  });
+
+  if (funcionario?.deleted_at) {
+    await prisma.funcionario.update({
+      where: { id: funcionario.id },
+      data: {
+        nome: oficina.gestor.nome,
+        email: oficina.gestor.email,
+        telefone: oficina.telefone,
+        cargo: "administrador",
+        deleted_at: null,
+      },
+    });
+    return;
+  }
+
+  if (funcionario) return;
+
+  await prisma.funcionario.create({
+    data: {
+      nome: oficina.gestor.nome,
+      email: oficina.gestor.email,
+      telefone: oficina.telefone,
+      cargo: "administrador",
+      data_contratacao: new Date(),
+      oficina: { connect: { id: oficinaId } },
+      usuario: { connect: { id: oficina.gestor.id } },
+    },
+  });
+}
+
 export const FuncionariosService = {
-  list: (oficinaId?: number) =>
-    prisma.funcionario.findMany({
+  list: async (oficinaId?: number) => {
+    await ensureGestorComoFuncionario(oficinaId);
+
+    return prisma.funcionario.findMany({
       where: { deleted_at: null, ...(oficinaId ? { oficina_id: oficinaId } : {}) },
       orderBy: { id: "desc" },
       include: {
         usuario: { select: { id: true, email: true, nome: true, status: true } },
         oficina: true,
       },
-    }),
+    });
+  },
 
   getById: (id: number, oficinaId?: number) =>
     prisma.funcionario.findFirst({
@@ -198,6 +247,18 @@ export const FuncionariosService = {
 
   delete: async (id: number) => {
     try {
+      const funcionario = await prisma.funcionario.findUnique({
+        where: { id },
+        select: {
+          usuario_id: true,
+          oficina: { select: { gestor_usuario_id: true } },
+        },
+      });
+
+      if (funcionario?.usuario_id && funcionario.usuario_id === funcionario.oficina.gestor_usuario_id) {
+        throw new Error("O gestor da oficina nao pode ser excluido da lista de funcionarios.");
+      }
+
       const ordensVinculadas = await prisma.ordem_servico.count({
         where: { funcionario_id: id },
       });
