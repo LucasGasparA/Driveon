@@ -1,12 +1,30 @@
 import { prisma } from "../prisma/client.js";
+import type { status_cliente } from "@prisma/client";
 
 type ClienteInput = {
   nome: string;
-  email?: string;
-  telefone?: string;
-  observacoes?: string;
+  email?: string | null;
+  cpf?: string | null;
+  telefone?: string | null;
+  data_nascimento?: string | Date | null;
+  status?: status_cliente | null;
+  observacao?: string | null;
+  observacoes?: string | null;
   oficina_id?: number;
 };
+
+function parseDataNascimento(value: ClienteInput["data_nascimento"]) {
+  if (value == null || value === "") return value === null ? null : undefined;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("data_nascimento inválida.");
+  }
+  return date;
+}
+
+function getObservacao(data: ClienteInput) {
+  return data.observacao ?? data.observacoes;
+}
 
 export const ClienteService = {
 
@@ -74,8 +92,11 @@ export const ClienteService = {
       data: {
         nome: data.nome,
         email: data.email,
+        cpf: data.cpf,
         telefone: data.telefone,
-        observacao: data.observacoes,
+        data_nascimento: parseDataNascimento(data.data_nascimento),
+        status: data.status ?? undefined,
+        observacao: getObservacao(data),
         oficina_id: data.oficina_id,
       },
     });
@@ -90,8 +111,11 @@ export const ClienteService = {
       data: {
         nome: data.nome,
         email: data.email,
+        cpf: data.cpf,
         telefone: data.telefone,
-        observacao: data.observacoes,
+        data_nascimento: parseDataNascimento(data.data_nascimento),
+        status: data.status ?? undefined,
+        observacao: getObservacao(data),
       },
     });
   },
