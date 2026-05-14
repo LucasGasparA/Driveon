@@ -14,6 +14,11 @@ export default function ListTableContainer({ sx, ...props }: TableContainerProps
         border: (theme) => `1px solid ${theme.palette.divider}`,
         height: TABLE_CONTAINER_HEIGHT,
         overflowY: "auto",
+        "& .MuiTableBody-root .MuiTableRow-root:only-child .MuiTableCell-root[colspan]": {
+          height: TABLE_ROW_HEIGHT * VISIBLE_ROWS,
+          p: 0,
+          verticalAlign: "middle",
+        },
         ...sx,
       }}
       {...props}

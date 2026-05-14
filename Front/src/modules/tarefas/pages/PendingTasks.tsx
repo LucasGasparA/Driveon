@@ -1,7 +1,7 @@
 import * as React from "react";
 import {
   Box, Stack, Typography, TextField, Button, IconButton,
-  Paper, Chip, Menu, MenuItem, Table, TableBody, TableCell, TableContainer,
+  Paper, Chip, Menu, MenuItem, Table, TableBody, TableCell,
   TableHead, TableRow, TablePagination, Fade, Divider, Select, FormControl,
   InputLabel, type SelectChangeEvent,
 } from "@mui/material";
@@ -18,6 +18,7 @@ import { listarOrdens, excluirOrdem, criarOrdem, atualizarOrdem } from "../api/a
 import OrdemDialog from "../dialog";
 import TableSkeleton from "../../../components/common/TableSkeleton";
 import EmptyState from "../../../components/common/EmptyState";
+import ListTableContainer from "../../../components/common/ListTableContainer";
 
 // ─── Status config ─────────────────────────────────────────────────────────
 
@@ -30,6 +31,18 @@ const STATUS_CONFIG: Record<string, { label: string; color: "default" | "warning
 
 const STATUS_VALIDOS = Object.keys(STATUS_CONFIG);
 
+type Ordem = {
+  id: number;
+  status?: string;
+  data_abertura?: string;
+  valor_total?: number | string | null;
+  cliente?: { nome?: string | null };
+  veiculo?: { modelo?: string | null; placa?: string | null };
+  funcionario?: { id?: number; nome?: string | null };
+};
+
+type OrdemPayload = Record<string, unknown>;
+
 // ─── Componente ─────────────────────────────────────────────────────────────
 
 export default function OrdensPage() {
@@ -38,14 +51,14 @@ export default function OrdensPage() {
   const { success, error } = useToast();
   const confirm = useConfirm();
 
-  const [rows, setRows] = React.useState<any[]>([]);
+  const [rows, setRows] = React.useState<Ordem[]>([]);
   const [funcionarios, setFuncionarios] = React.useState<{ id: number; nome: string }[]>([]);
   const [filtroFuncionario, setFiltroFuncionario] = React.useState("todos");
   const [filtroData, setFiltroData] = React.useState("");
   const [showFilters, setShowFilters] = React.useState(false);
   const [openDialog, setOpenDialog] = React.useState(false);
   const [mode, setMode] = React.useState<"create" | "edit">("create");
-  const [current, setCurrent] = React.useState<any | null>(null);
+  const [current, setCurrent] = React.useState<Ordem | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [menuId, setMenuId] = React.useState<number | null>(null);
@@ -77,7 +90,7 @@ export default function OrdensPage() {
   }, []);
 
   const handleCreate = () => { setMode("create"); setCurrent(null); setOpenDialog(true); };
-  const handleEdit = (os: any) => { setMode("edit"); setCurrent(os); setOpenDialog(true); };
+  const handleEdit = (os: Ordem) => { setMode("edit"); setCurrent(os); setOpenDialog(true); };
   const handleMenuOpen = (e: React.MouseEvent<HTMLButtonElement>, id: number) => { setAnchorEl(e.currentTarget); setMenuId(id); };
   const handleMenuClose = () => { setAnchorEl(null); setMenuId(null); };
 
@@ -98,7 +111,7 @@ export default function OrdensPage() {
     finally { handleMenuClose(); }
   };
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: OrdemPayload) => {
     try {
       if (mode === "create") {
         const nova = await criarOrdem(data);
@@ -218,8 +231,8 @@ export default function OrdensPage() {
         <TableSkeleton rows={6} cols={6} />
       ) : (
         <Fade in timeout={400}>
-          <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3, border: (t) => `1px solid ${t.palette.divider}` }}>
-            <Table>
+          <ListTableContainer sx={{ borderRadius: 3 }}>
+            <Table stickyHeader>
               <TableHead>
                 <TableRow sx={{ bgcolor: (t) => alpha(t.palette.primary.main, 0.03) }}>
                   <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>OS</TableCell>
@@ -284,7 +297,7 @@ export default function OrdensPage() {
                 )}
               </TableBody>
             </Table>
-          </TableContainer>
+          </ListTableContainer>
         </Fade>
       )}
 
